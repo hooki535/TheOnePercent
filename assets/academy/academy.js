@@ -237,11 +237,33 @@ window.AcademyUI = (() => {
     const outcomes = live ? c.content.outcomes : c.syllabus.map((m) => m.title + ": " + m.lessons.slice(0, 3).join(", ").toLowerCase());
     const doneMap = s.done[c.id] || {};
     const related = A.courses.filter((x) => x.school === c.school && x.id !== c.id).slice(0, 4);
+    const nextPanel =
+      enrolled && live
+        ? '<section class="panel ac-next-panel"><div class="panel-head"><h2>Continue learning</h2><span>' +
+          p.done +
+          " of " +
+          p.total +
+          " lessons · " +
+          p.pct +
+          '% complete</span></div><div class="panel-body"><div class="ac-next"><div><b>' +
+          (nx ? esc(nx.title) : "Final quiz") +
+          "</b><small>" +
+          (nx ? "Your next lesson is ready." : "Complete the quiz to earn your certificate.") +
+          '</small></div><a class="btn btn-primary" href="#mc/' +
+          c.id +
+          "/" +
+          (nx ? nx.id : "quiz") +
+          '">' +
+          (nx ? "Continue" : "Take the quiz") +
+          '</a></div><div class="bar"><span style="width:' +
+          p.pct +
+          '%"></span></div></div></section>'
+        : "";
 
     let cta;
     if (!enrolled) {
       cta =
-        '<div class="ac-enroll"><button class="btn btn-primary btn-lg" data-enroll="' + c.id + '">Enroll for the course</button>' +
+        '<div class="ac-enroll"><button class="btn btn-primary btn-lg" data-enroll="' + c.id + '">Enroll and start Lesson 1</button>' +
         "<small>Free while " + esc(A.BRAND) + " is in beta. Your progress is saved to your account on this device.</small></div>";
     } else if (!live) {
       cta =
@@ -299,9 +321,13 @@ window.AcademyUI = (() => {
       cta +
       "</div></section>" +
       '<div class="ac-course-grid"><div>' +
+      nextPanel +
       '<section class="panel"><div class="panel-head"><h2>What you will learn</h2></div><div class="panel-body"><ul class="ac-outcomes">' +
       outcomes.map((o) => "<li>" + esc(o) + "</li>").join("") +
       "</ul></div></section>" +
+      (c.id === "starter-setup"
+        ? '<div class="notice ac-broker-note"><b>Broker example:</b> Exness is used for illustration only. The1% does not recommend or endorse any broker. Always verify regulation, fees and withdrawal terms in your country.</div>'
+        : "") +
       courseVideos(c) +
       (!live ? '<div class="notice ac-soon"><b>Lessons in production.</b> <small>The syllabus below is final. Enroll now to keep your place. While you wait, these full masterclasses are ready: ' + A.courses.filter(A.isLive).map((x) => '<a href="#mc/' + x.id + '">' + esc(x.title.replace(/ Masterclass$/, "")) + "</a>").join(", ") + ".</small></div>" : "") +
       '<section class="ac-syllabus"><h2>Syllabus</h2>' + syllabus + quizRow + "</section>" +
@@ -478,7 +504,7 @@ window.AcademyUI = (() => {
   function videoTile(v) {
     return '<div class="ac-video"><button type="button" class="ac-vthumb" data-yt="' + esc(v.id) + '" aria-label="Play video: ' + esc(v.title) + '">' +
       '<img src="https://i.ytimg.com/vi/' + esc(v.id) + '/hqdefault.jpg" alt="" loading="lazy"><span class="ac-vplay" aria-hidden="true">▶</span></button>' +
-      '<div class="ac-vcap"><b>' + esc(v.title) + '</b><a href="https://www.youtube.com/watch?v=' + esc(v.id) + '" target="_blank" rel="noopener">Watch on YouTube ↗</a></div></div>';
+      '<div class="ac-vcap"><b>' + esc(v.title) + '</b><a href="https://www.youtube.com/watch?v=' + esc(v.id) + '" target="_blank" rel="noopener">Watch on YouTube ↗</a><small>External video · opens YouTube</small></div></div>';
   }
   function courseVideos(c) {
     const list = V.course[c.id] || [];
