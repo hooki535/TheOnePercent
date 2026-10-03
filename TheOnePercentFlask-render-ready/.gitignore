@@ -1,0 +1,20 @@
+
+# Dependencies
+# OS files
+# VS Code local settings
+.DS_Store
+.vscode/
+Thumbs.db
+node_modules
+node_modules/
+
+# Python / Flask backend
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+data.db
+data.db-wal
+data.db-shm
+.pytest_cache/

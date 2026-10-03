@@ -1,0 +1,337 @@
+/* The1% Academy — Order Blocks Masterclass (full course) */
+Academy.register("order-blocks", {
+  hours: 4,
+  outcomes: [
+    "Define an order block precisely: the last opposite candle before a displacement that breaks structure.",
+    "Separate valid order blocks from ordinary candles using displacement, imbalance and a break of structure.",
+    "Refine an order block, choose an entry level and place a stop that respects the idea.",
+    "Recognise breaker and mitigation blocks, and plan a complete order block trade with a liquidity target.",
+  ],
+  lessons: [
+    {
+      id: "ob1",
+      module: "Definition",
+      title: "What an order block is",
+      minutes: 9,
+      summary: "An order block is the last opposite-coloured candle before a strong move. It marks where large orders were placed, and where the unfilled remainder may still wait.",
+      sections: [
+        {
+          h: "Why large orders leave a footprint",
+          p: [
+            "A large participant cannot buy their full size at one price. They build the position in pieces, often by selling into a dip first, or by absorbing sellers in a small area. When their buying finally overwhelms the market, price leaves in one aggressive move.",
+            "The last bearish candle before that bullish move is where the final part of the accumulation happened. We call that candle a bullish order block. The mirror image, the last bullish candle before an aggressive drop, is a bearish order block.",
+          ],
+          fig: {
+            title: "Bullish order block: the last down candle before displacement",
+            tag: "Diagram",
+            n: 32, seed: 41, vol: 0.5,
+            path: [[0, 110], [8, 105], [11, 104.2], [12, 103.6], [13, 106.2], [16, 111], [22, 109], [26, 105.3], [31, 111.5]],
+            set: [[12, 104.3, 104.5, 103.3, 103.6], [13, 103.6, 106.4, 103.5, 106.2], [14, 106.2, 108.6, 106.1, 108.4]],
+            overlays: [
+              { zone: [12, null, 103.3, 104.5], kind: "demand", label: "Order block (last down candle)", labelPos: "below" },
+              { label: "Displacement", at: [14, 109.5], pos: "left", kind: "up" },
+              { ring: [26, 104.6], kind: "up" },
+            ],
+            caption: "The block is drawn from the high to the low of the last bearish candle. When price returns (circled), the remaining buy orders can push it away again.",
+          },
+        },
+        {
+          h: "Order blocks and supply and demand",
+          p: [
+            "An order block is a specific, tighter version of a demand or supply zone. A zone may include several candles of a base. The order block narrows it to one candle, which gives a tighter stop and a larger reward for the same risk, but also more chance of being run through.",
+          ],
+          note: "The order block is a hypothesis about where orders sit. Everything in this course is about filtering which hypotheses are worth trading.",
+        },
+      ],
+      takeaways: [
+        "Bullish OB = last bearish candle before an aggressive bullish move.",
+        "Bearish OB = last bullish candle before an aggressive bearish move.",
+        "Draw it from the candle's high to its low, wicks included.",
+      ],
+      mistakes: [
+        "Marking every opposite candle as an order block.",
+        "Drawing the block on a candle that sits in the middle of the move, not before it.",
+        "Treating an order block as certain support.",
+      ],
+      psych: "Order blocks can make you feel you know what institutions are doing. You don't. You know where a probability sits. Keep the humility and keep the stop.",
+      practice: "On a 4H chart, find five aggressive moves. For each, mark the last opposite candle before it. Note which ones price has returned to.",
+      apply: { label: "Mark a block on the chart", href: "charts.html", why: "Use the rectangle tool from the high to the low of the candle and label it OB." },
+    },
+    {
+      id: "ob2",
+      module: "Validity",
+      title: "Valid order blocks: displacement, imbalance and BOS",
+      minutes: 10,
+      summary: "Most opposite candles are just candles. A valid order block needs three things: a displacement away from it, an imbalance left behind, and a break of structure.",
+      sections: [
+        {
+          h: "The three tests",
+          ul: [
+            "Displacement: the move away is fast and large, several candles with big bodies and small wicks.",
+            "Imbalance: the move leaves a fair value gap, a place where one candle's wick does not overlap the candle two bars later. It shows orders were one-sided.",
+            "Break of structure: the move closes beyond a previous swing. Without a break, the move may only be noise inside a range.",
+          ],
+          fig: {
+            title: "A valid bearish order block: all three tests pass",
+            tag: "Diagram",
+            n: 34, seed: 9, vol: 0.5,
+            path: [[0, 100], [6, 104], [9, 102], [13, 106.4], [14, 107], [15, 104.4], [16, 101.2], [19, 99.4], [24, 102.6], [27, 106.2], [33, 98.5]],
+            set: [[14, 106.4, 107.4, 106.2, 107], [15, 107, 107.1, 104.2, 104.4], [16, 104.4, 104.5, 101, 101.2]],
+            overlays: [
+              { zone: [14, null, 106.2, 107.4], kind: "supply" },
+              { label: "Bearish OB", at: [12, 108.4], pos: "left", kind: "down" },
+              { zone: [15, 17, 104.5, 106.2], kind: "brand" },
+              { label: "Imbalance (FVG)", at: [17, 105.3], pos: "right", kind: "brand" },
+              { hline: 102, from: 9, to: 18, kind: "down" },
+              { label: "BOS", at: [11, 101.4], pos: "below", kind: "down" },
+              { label: "Return and rejection", at: [26, 108.6], pos: "left", kind: "down" },
+              { ring: [27, 106.6], kind: "down" },
+            ],
+            caption: "Displacement out of the block, a gap left behind, and a close below the swing low. Price returned, filled the imbalance and rejected the block.",
+          },
+        },
+        {
+          h: "Why each test matters",
+          p: [
+            "Displacement shows urgency, which suggests orders were left unfilled. The imbalance shows the move was one-sided. The break of structure shows the move changed the market, not just a small swing inside a range. A block that fails any of the three is marked as low grade or ignored.",
+          ],
+        },
+      ],
+      takeaways: [
+        "Displacement, imbalance, break of structure: all three or no trade.",
+        "The imbalance often gets filled on the way back to the block.",
+        "The stronger the displacement, the higher the grade.",
+      ],
+      mistakes: [
+        "Trading blocks with slow, overlapping moves away from them.",
+        "Ignoring whether the move actually broke structure.",
+        "Confusing an imbalance with a normal wick overlap.",
+      ],
+      psych: "A strict validity test will mean fewer trades. That is the point. Fewer, better trades are what keep a small edge from being eaten by boredom.",
+      practice: "Take the five blocks you marked in ob1. Test each against the three rules. How many survive?",
+      apply: { label: "Log the grade", href: "journal.html", why: "Add a tag for how many validity tests the block passed (1/3, 2/3, 3/3)." },
+    },
+    {
+      id: "ob3",
+      module: "Validity",
+      title: "Refinement, mean threshold and stops",
+      minutes: 9,
+      summary: "Where inside the block you enter, and where you put the stop, decides both your R and your hit rate.",
+      sections: [
+        {
+          h: "Three entry levels",
+          ul: [
+            "Proximal edge: the side of the block closest to current price. Most fills, lowest reward.",
+            "Mean threshold: the 50% level of the block. A common balance between fill rate and reward.",
+            "Body open: for a bullish OB, the open of the bearish candle. Tighter again, but fewer fills.",
+          ],
+          fig: {
+            title: "Entry options inside a bullish order block",
+            tag: "Close-up",
+            n: 26, seed: 14, vol: 0.4,
+            path: [[0, 108], [5, 104.4], [6, 104], [7, 106.4], [11, 110], [18, 104.6], [19, 104.3], [25, 108.8]],
+            set: [[6, 104.8, 105, 103.4, 104]],
+            overlays: [
+              { zone: [6, null, 103.4, 105], kind: "demand" },
+              { hline: 105, from: 6, kind: "up", label: "Proximal 105.0" },
+              { hline: 104.2, from: 6, kind: "brand", label: "Mean threshold 104.2", dash: true },
+              { hline: 103.4, from: 6, to: 16, kind: "up", label: "Distal 103.4", labelPos: "below" },
+              { hline: 103.1, from: 18, kind: "down", label: "Stop 103.1", labelPos: "below" },
+            ],
+            caption: "The stop sits a buffer beyond the distal edge. Entering at the mean threshold instead of the proximal edge nearly halves the stop distance.",
+          },
+        },
+        {
+          h: "Refining a wide block",
+          p: [
+            "If a 4H block is too wide for your risk, drop to the 1H or 15M and look for a smaller order block inside it. The higher-timeframe block gives the reason; the lower-timeframe block gives the precise entry. Do not refine so far down that the block no longer reflects meaningful orders.",
+          ],
+          note: "A block that is closed through by a full candle body is considered failed. Wicks through the block are fine; bodies through it are not.",
+        },
+      ],
+      takeaways: [
+        "Choose one entry method and test it; do not change it trade by trade.",
+        "Stop beyond the distal edge plus a buffer for spread.",
+        "A body close through the block invalidates it.",
+      ],
+      mistakes: [
+        "Putting the stop exactly on the distal line.",
+        "Refining down to the 1-minute chart.",
+        "Keeping a trade open after a body has closed through the block.",
+      ],
+      psych: "Missing a trade because your limit at the mean threshold did not fill will sting. That sting is the price of a better R. Record it, and let the statistics decide.",
+      practice: "Backtest 20 blocks. For each, record the result for all three entry levels. Which level had the best expectancy for you?",
+      apply: { label: "Size it at 1%", href: "calculators.html", why: "Use the entry-to-stop distance of each option in the position size calculator and compare lot sizes." },
+    },
+    {
+      id: "ob4",
+      module: "Breakers and mitigation",
+      title: "Breaker blocks and mitigation blocks",
+      minutes: 9,
+      summary: "When an order block fails, it can flip. The failed block becomes a level for the other side.",
+      sections: [
+        {
+          h: "The breaker block",
+          p: [
+            "A bullish order block that price closes through has failed. The buyers who entered there are now trapped. When price comes back up to the block, many of them close at break-even, adding selling pressure. The failed bullish block has become a bearish breaker.",
+          ],
+          fig: {
+            title: "A failed bullish OB becomes a bearish breaker",
+            tag: "Diagram",
+            n: 34, seed: 28, vol: 0.5,
+            path: [[0, 104], [5, 101], [6, 100.6], [7, 103], [11, 106], [14, 103.4], [17, 99.4], [20, 97.6], [25, 101.2], [26, 101.5], [33, 95.8]],
+            set: [[6, 101.3, 101.6, 100.2, 100.6]],
+            overlays: [
+              { zone: [6, null, 100.2, 101.6], kind: "supply", label: "Bullish OB fails, now a breaker", labelPos: "below" },
+              { label: "Body closes through", at: [17, 98.4], pos: "left", kind: "down" },
+              { ring: [26, 101.6], kind: "down" },
+              { label: "Retest from below", at: [26, 102.6], pos: "right", kind: "down" },
+            ],
+            caption: "Buyers trapped in the failed block sell to get out when price returns, which is why the breaker often rejects price.",
+          },
+        },
+        {
+          h: "Mitigation blocks",
+          p: [
+            "A mitigation block forms when price fails to make a new extreme, then breaks structure the other way. The last opposite candle before that break is where traders who were caught offside can exit, or 'mitigate', their losing positions. It behaves like a breaker but without the prior liquidity sweep.",
+          ],
+          ul: [
+            "Breaker: price swept a high or low first, then broke structure.",
+            "Mitigation: no sweep; price simply failed to make a new extreme, then broke structure.",
+            "Both are traded on the retest, with the stop beyond the block.",
+          ],
+        },
+      ],
+      takeaways: [
+        "A block closed through by a body has failed and may flip.",
+        "Breakers form after a sweep; mitigation blocks form without one.",
+        "Trapped traders exiting at break-even create the reaction.",
+      ],
+      mistakes: [
+        "Continuing to buy a bullish block after it has been broken.",
+        "Calling every retest a breaker without a clear break of structure.",
+        "Trading a breaker against the higher-timeframe trend without a target.",
+      ],
+      psych: "When a block fails, the natural reaction is to hope. A breaker teaches the opposite: a failed idea is information, and the other side of it may be the trade.",
+      practice: "Find three failed order blocks in the last month on one pair. Did price react when it returned to them from the other side?",
+      apply: { label: "Journal the flip", href: "journal.html", why: "Log breaker trades with their own tag so you can compare them with regular blocks." },
+    },
+    {
+      id: "ob5",
+      module: "The complete trade",
+      title: "The order block entry model",
+      minutes: 11,
+      summary: "Liquidity sweep, displacement, break of structure, return to the block. This sequence turns an order block from a guess into a planned trade.",
+      sections: [
+        {
+          h: "The sequence",
+          fig: {
+            type: "flow",
+            title: "The1% order block entry model",
+            tag: "Model",
+            perRow: 5,
+            steps: ["Sweep of a clear low", "Displacement up", "Break of structure", "Return to the OB", "Entry, stop, target"],
+          },
+        },
+        {
+          h: "A worked example",
+          p: [
+            "Price takes out a clean pair of equal lows, which fires sell stops. The last bearish candle before the aggressive rally becomes our order block. The rally breaks the most recent swing high. We place a limit order at the block's mean threshold, the stop below the sweep low, and the target at the next buy-side liquidity.",
+          ],
+          fig: {
+            title: "Sweep, displacement, BOS, and the return to the order block",
+            tag: "Worked example",
+            n: 40, seed: 52, vol: 0.45,
+            path: [[0, 108], [5, 103.4], [9, 106.2], [14, 103.5], [16, 102.6], [17, 102.3], [18, 105], [21, 108.4], [27, 104.2], [28, 103.4], [34, 109], [39, 112.2]],
+            set: [[17, 103, 103.2, 101.8, 102.3], [18, 102.3, 105.2, 102.2, 105]],
+            overlays: [
+              { hline: 103.4, from: 4, to: 17, kind: "muted" },
+              { label: "Equal lows", at: [5, 102.9], pos: "below", kind: "muted" },
+              { ring: [17, 101.8], kind: "warn" },
+              { zone: [17, null, 101.8, 103.2], kind: "demand" },
+              { label: "Order block", at: [16, 101.3], pos: "left", kind: "up" },
+              { hline: 106.4, from: 9, to: 21, kind: "up", label: "BOS" },
+              { hline: 102.5, from: 22, kind: "brand", label: "Entry 102.5" },
+              { hline: 101.5, from: 22, kind: "down", label: "Stop 101.5", labelPos: "below" },
+              { hline: 111.5, from: 22, kind: "up", label: "Target 111.5 (buy-side liquidity)" },
+            ],
+            caption: "Risk 1.0 point to make 9.0: a 9R idea. Most will not reach it, which is why the first partial goes at the BOS level.",
+          },
+        },
+      ],
+      takeaways: [
+        "The sweep gives the reason, the BOS gives the confirmation, the block gives the entry.",
+        "Stop below the sweep low, not just below the block.",
+        "Target the next pool of liquidity.",
+      ],
+      mistakes: [
+        "Entering on the sweep itself, before displacement and BOS.",
+        "Targeting a random R multiple instead of a liquidity pool.",
+        "Moving the stop to break-even too early and getting wicked out.",
+      ],
+      psych: "The model gives you permission to wait. If one step is missing, the answer is no trade. Missing out on a move is not a loss.",
+      practice: "Find ten examples of the full five-step model in historical data. Record entry, stop, target and outcome in R for each.",
+      apply: { label: "Pre-trade checklist", href: "learn.html#library", why: "Add the five steps to your checklist and tick each before placing the order." },
+    },
+    {
+      id: "ob6",
+      module: "The complete trade",
+      title: "Grading blocks and managing the trade",
+      minutes: 9,
+      summary: "Not every valid block deserves full risk. Grade the block, set the risk, and manage the trade with rules you wrote before the entry.",
+      sections: [
+        {
+          h: "The1% order block grade",
+          fig: {
+            type: "bars",
+            title: "Example: grading a 1H bullish order block",
+            tag: "Scorecard",
+            max: 2,
+            items: [
+              { label: "Swept liquidity first", value: 2, text: "2 / 2", kind: "up" },
+              { label: "Displacement + imbalance", value: 2, text: "2 / 2", kind: "up" },
+              { label: "Broke structure", value: 2, text: "2 / 2", kind: "up" },
+              { label: "In discount (HTF)", value: 1, text: "1 / 2", kind: "brand" },
+              { label: "Fresh (untested)", value: 2, text: "2 / 2", kind: "up" },
+            ],
+            caption: "Total 9 / 10. The1% rule: 9 to 10 full risk, 7 to 8 half risk, below 7 no trade.",
+          },
+        },
+        {
+          h: "Managing the trade",
+          ul: [
+            "First partial at the BOS level or 2R, whichever comes first.",
+            "Move the stop to break-even only after price closes beyond the BOS level, not on the first push.",
+            "Close the rest at the liquidity target, or if a body closes back through the block.",
+            "Write the management plan before entry and follow it exactly.",
+          ],
+        },
+      ],
+      takeaways: [
+        "Grade before you size.",
+        "Risk scales with the grade, never with how confident you feel.",
+        "Management rules are written before the entry.",
+      ],
+      mistakes: [
+        "Giving every block full risk.",
+        "Changing the management plan in the middle of a trade.",
+        "Skipping the freshness check.",
+      ],
+      psych: "Grading takes the emotion out of sizing. Confidence is a feeling; a score is a record you can review.",
+      practice: "Grade the next ten blocks you see before looking at the outcome. After they play out, compare the results of 9+ blocks with the rest.",
+      apply: { label: "Tag by grade", href: "journal.html", why: "Add the block's score as a tag so the journal shows your results by grade." },
+    },
+  ],
+  quiz: [
+    { q: "A bullish order block is…", options: ["The first green candle of a rally", "The last bearish candle before an aggressive bullish move", "Any doji", "The highest candle of the day"], a: 1, why: "It is the last opposite candle before displacement.", lesson: "ob1" },
+    { q: "Compared with a supply or demand zone, an order block is usually…", options: ["Wider", "Tighter, often a single candle", "Unrelated", "Only on daily charts"], a: 1, why: "It narrows the zone to the last opposite candle.", lesson: "ob1" },
+    { q: "Which three tests make an order block valid?", options: ["Colour, size and time", "Displacement, imbalance, break of structure", "RSI, MACD and volume", "Round number, news, session"], a: 1, why: "All three show the move was urgent, one-sided and meaningful.", lesson: "ob2" },
+    { q: "An imbalance (fair value gap) is…", options: ["A candle with no body", "A gap between one candle's wick and the candle two bars later", "A news spike", "A spread widening"], a: 1, why: "It shows price moved so fast the wicks did not overlap.", lesson: "ob2" },
+    { q: "The mean threshold is…", options: ["The block's 50% level", "The top of the block", "A moving average", "The stop"], a: 0, why: "It is the midpoint of the block.", lesson: "ob3" },
+    { q: "An order block is usually invalidated when…", options: ["A wick touches it", "A full candle body closes through it", "It is older than a day", "Price reaches it"], a: 1, why: "Wicks through are fine; a body close through means the orders are gone.", lesson: "ob3" },
+    { q: "A breaker block is…", options: ["A block that price never returned to", "A failed order block that flips to the other side", "A candle with long wicks", "A broker error"], a: 1, why: "Trapped traders exit at break-even and create the reaction.", lesson: "ob4" },
+    { q: "In the entry model, what comes right before the return to the order block?", options: ["The sweep", "The break of structure", "The target", "News"], a: 1, why: "Sweep, displacement, BOS, then the return.", lesson: "ob5" },
+    { q: "Where does the stop go in the order block entry model?", options: ["At the mean threshold", "Below the sweep low", "At the BOS level", "No stop"], a: 1, why: "The sweep low is where the idea is proved wrong.", lesson: "ob5" },
+    { q: "Using The1% grading, a block scoring 7 or 8 gets…", options: ["Full risk", "Half risk", "Double risk", "No trade"], a: 1, why: "9 to 10 full risk, 7 to 8 half, below 7 no trade.", lesson: "ob6" },
+  ],
+});

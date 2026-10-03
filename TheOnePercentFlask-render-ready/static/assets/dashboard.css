@@ -1,0 +1,744 @@
+/* Dashboard (pages/dashboard.html) — page-specific styling.
+   Load after assets/shell.css. */
+
+.dash {
+  padding: 22px 0 60px;
+}
+
+/* placeholder metric cards */
+
+/* two column body */
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+/* guided empty state */
+
+.steps {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.steps li:last-child {
+  border-bottom: none;
+}
+
+.steps .num {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.steps b {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.steps small {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.empty-cta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+/* watchlist proof panel */
+
+.wl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.wl-row:last-child {
+  border-bottom: none;
+}
+
+.wl-row b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.wl-row small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.wl-price {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.wl-price small {
+  display: block;
+  font-size: 11.5px;
+}
+
+.panel-foot {
+  padding: 11px 18px;
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+@media (max-width: 1000px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dash-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .page-head {
+    padding-top: 24px;
+  }
+  .page-head h1 {
+    font-size: 23px;
+  }
+  .dash {
+    padding-bottom: 86px; /* clear the bottom rail on phones */
+  }
+}
+
+/* ── the live grid ─────────────────────────────────────────────────
+   Only rendered once the journal has something in it. Until then the
+   guided block below holds this space, because a dashboard of zeroes
+   teaches a new trader nothing.                                    */
+
+.dh-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.dh-filter {
+  display: flex;
+  gap: 10px;
+  padding-bottom: 2px;
+}
+
+.panel.span-2 {
+  grid-column: 1 / -1;
+}
+
+.panel-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.panel-link:hover {
+  text-decoration: underline;
+}
+
+.muted-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#equity {
+  display: block;
+  width: 100%;
+}
+
+.eq-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 12px;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.eq-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.dot.brand {
+  background: var(--up);
+}
+
+.dot.down {
+  background: var(--down);
+}
+
+/* ── R by setup ───────────────────────────────────────────────────
+   Diverging bars off a centre line: positive right, negative left,
+   so a losing setup is visible without reading a single number.   */
+
+.bs-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.bs-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.bs-row .lab {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.bs-row .lab small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.bs-row .track {
+  position: relative;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+}
+
+/* the centre line is the zero-expectancy mark */
+.bs-row .track::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--line-strong);
+}
+
+.bs-row .track i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: var(--up);
+}
+
+.bs-row .track i.neg {
+  background: var(--down);
+}
+
+.bs-row .val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  min-width: 62px;
+  text-align: right;
+  color: var(--muted);
+}
+
+.bs-row .val.up {
+  color: var(--up);
+}
+
+.bs-row .val.down {
+  color: var(--down);
+}
+
+/* ── recent trades ───────────────────────────────────────────────── */
+
+.rt-scroll {
+  overflow-x: auto;
+  contain: paint;
+}
+
+.rt-scroll table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+}
+
+.rt-scroll th {
+  padding: 9px 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.rt-scroll th.num {
+  text-align: right;
+}
+
+.rt-scroll td {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.rt-scroll tr:last-child td {
+  border-bottom: 0;
+}
+
+.rt-scroll tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* Once trades exist the guided block collapses to the watchlist alone,
+   so it spans the full width and lays its rows out in columns rather
+   than leaving half the row empty. */
+.dash-grid.started {
+  margin-top: 18px;
+}
+
+.dash-grid.started > .panel {
+  grid-column: 1 / -1;
+}
+
+.dash-grid.started #watchlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0 28px;
+}
+
+.dash-grid.started .wl-row:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .dh-row {
+    align-items: stretch;
+  }
+
+  .dh-filter {
+    gap: 8px;
+  }
+
+  .dh-filter .sel {
+    flex: 1;
+  }
+
+  .rt-scroll th,
+  .rt-scroll td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* setup drops first — the symbol and the R matter more on a phone */
+  .rt-scroll th:nth-child(3),
+  .rt-scroll td:nth-child(3) {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------ equity hover
+   The canvas sits in a relative wrapper so the readout can be positioned
+   over it in CSS pixels, which is the only coordinate space both the
+   canvas geometry and the DOM agree on. */
+
+.eq-wrap {
+  position: relative;
+}
+
+.eq-tip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  min-width: 118px;
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-s);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.eq-tip b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.eq-tip span {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.eq-tip span.up {
+  color: var(--up);
+}
+
+.eq-tip span.down {
+  color: var(--down);
+}
+
+.eq-tip small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+/* ------------------------------------------------------------ open risk */
+
+.or-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 18px;
+  align-items: center;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.or-fig span {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.or-fig b {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.or-fig.hot b {
+  color: var(--down);
+}
+
+.or-fig small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.or-track {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.or-track i {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+}
+
+.or-track i.hot {
+  background: var(--down);
+}
+
+.or-cap small {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.or-rows {
+  display: grid;
+  gap: 1px;
+}
+
+.or-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.or-row:last-child {
+  border-bottom: 0;
+}
+
+.or-sym {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.or-sym b {
+  font-size: 13.5px;
+}
+
+.or-sym small {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.or-risk {
+  flex: 0 0 auto;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--down);
+}
+
+.or-risk small {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+/* ------------------------------------------------------------ leaks
+   Cards, not a table: each one is a sentence the user has to read, and a
+   table invites scanning past it. Rules carry a left edge in the loss
+   colour; patterns carry a neutral one, so the weight of the claim is
+   visible before a word of it is read. */
+
+.lk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+  gap: 12px;
+}
+
+.lk {
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+}
+
+.lk.rule {
+  border-left-color: var(--down);
+}
+
+.lk-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.lk-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.lk.rule .lk-tag {
+  color: var(--down);
+}
+
+.lk-cost {
+  flex: 0 0 auto;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--down);
+}
+
+.lk-cost.none {
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.lk-cost small {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.lk b {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.lk p {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.lk-conc {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.lk-wins {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.lk-wins h3 {
+  margin: 0 0 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.lk-win {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--up);
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+}
+
+.lk-win + .lk-win {
+  margin-top: 8px;
+}
+
+.lk-win b {
+  display: block;
+  font-size: 13.5px;
+}
+
+.lk-win p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.lk-fine {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--faint);
+}
+
+@media (max-width: 680px) {
+  .or-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .lk-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* the label and its value each want a line of their own once the panel
+     is narrower than the sentence "open risk against your daily stop" */
+  .or-cap-top {
+    display: block;
+  }
+
+  .or-cap-top b {
+    display: block;
+    margin-top: 3px;
+    font-size: 14px;
+  }
+}
+
+.or-cap-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.or-cap-top span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.or-cap-top b {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.or-cap-top b.hot {
+  color: var(--down);
+}
+
+/* cards keep their own height instead of stretching to the tallest in the row */
+.lk-grid {
+  align-items: start;
+}

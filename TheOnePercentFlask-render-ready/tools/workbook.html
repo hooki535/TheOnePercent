@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>The1% Academy workbook</title>
+<!--
+  Print source for the Academy PDFs. Not linked from the site.
+  tools/build-pdfs.mjs opens this page once per document:
+    ?c=<course id>&part=cover|body     a course workbook
+    ?doc=risk-plan&part=body           The1% Risk Plan Worksheet
+  and prints it with Chromium. Every word comes from the course files, so
+  the PDF and the online lessons can never disagree.
+-->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/shell.css">
+<link rel="stylesheet" href="../assets/academy/academy.css">
+<style>
+  @page { size: A4; margin: 0; }
+  html, body { background: #fff; }
+  body { margin: 0; font-family: var(--sans); color: #111827; font-size: 10.5pt; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .brandmark { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: .02em; }
+  .brandmark i { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: #3654ff; color: #fff; font: 600 12px var(--mono); font-style: normal; }
+
+  /* ---------- cover */
+  .cover { position: relative; width: 210mm; height: 297mm; overflow: hidden; background: #070b16; color: #fff; }
+  .cover .img { position: absolute; inset: 0 0 42% 0; background-size: cover; background-position: center; }
+  .cover .img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,11,22,.15) 0%, rgba(7,11,22,.35) 55%, #070b16 100%); }
+  .cover .top { position: absolute; top: 18mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; align-items: center; }
+  .cover .top .ed { font: 500 8.5pt var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.75); }
+  .cover .main { position: absolute; left: 18mm; right: 18mm; bottom: 26mm; }
+  .cover .kick { font: 600 9pt var(--mono); letter-spacing: .16em; text-transform: uppercase; color: #8ea2ff; }
+  .cover h1 { font-size: 36pt; line-height: 1.05; margin: 8px 0 6px; letter-spacing: -.01em; }
+  .cover h2 { font-size: 16pt; font-weight: 500; margin: 0 0 16px; color: #c7d0ff; }
+  .cover p.desc { font-size: 11pt; color: rgba(255,255,255,.82); max-width: 150mm; margin: 0 0 18px; }
+  .cover .facts { display: flex; gap: 28px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.18); }
+  .cover .facts b { display: block; font: 600 15pt var(--mono); }
+  .cover .facts small { font-size: 8pt; color: rgba(255,255,255,.65); text-transform: uppercase; letter-spacing: .08em; }
+
+  /* ---------- body */
+  .body { padding: 0; }
+  .pg { page-break-after: always; break-after: page; }
+  .pg:last-child { page-break-after: auto; break-after: auto; }
+  h1.t { font-size: 22pt; line-height: 1.15; margin: 0 0 6px; letter-spacing: -.01em; }
+  .kick2 { font: 600 8.5pt var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #3654ff; }
+  .lead2 { font-size: 11.5pt; color: #374151; margin: 4px 0 14px; }
+  h3 { font-size: 12.5pt; margin: 16px 0 6px; break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul { margin: 0 0 8px; padding-left: 18px; }
+  li { margin: 0 0 3px; }
+  .note { border-left: 3px solid #3654ff; background: #f3f5ff; padding: 8px 12px; margin: 8px 0 10px; font-size: 10pt; border-radius: 0 6px 6px 0; }
+  .fig { break-inside: avoid; margin: 10px 0 12px; border-color: #e5e7eb; background: #fbfcfe; }
+  .boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
+  .box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; break-inside: avoid; }
+  .box h4 { margin: 0 0 6px; font: 600 8.5pt var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .box.ok h4 { color: #14824a; } .box.bad h4 { color: #c7303a; } .box.psy { background: #fdf8ec; border-color: #eedfb4; } .box.psy h4 { color: #8a6416; } .box.do { background: #f3f5ff; border-color: #d7ddff; } .box.do h4 { color: #3654ff; }
+  .box ul { margin: 0; font-size: 9.8pt; }
+  .box p { margin: 0; font-size: 9.8pt; }
+  .notes { border: 1px dashed #cbd2df; border-radius: 8px; padding: 10px 12px; margin-top: 10px; break-inside: avoid; }
+  .notes h4 { margin: 0 0 4px; font: 600 8.5pt var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #6b7280; }
+  .line { border-bottom: 1px solid #e5e7eb; height: 22px; }
+  .lessonhead { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #111827; padding-bottom: 6px; margin-bottom: 12px; }
+  .lessonhead span { font: 500 8.5pt var(--mono); color: #6b7280; }
+
+  .toc { list-style: none; padding: 0; margin: 14px 0 0; }
+  .toc .mod { font: 600 8.5pt var(--mono); letter-spacing: .12em; text-transform: uppercase; color: #3654ff; margin: 14px 0 4px; }
+  .toc .row { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid #eef1f6; }
+  .toc .row b { font: 600 9pt var(--mono); color: #6b7280; width: 26px; }
+  .toc .row span { flex: 1; } .toc .row small { color: #6b7280; font: 400 8.5pt var(--mono); }
+  .outc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; padding: 0; list-style: none; }
+  .outc li { padding-left: 18px; position: relative; font-size: 10pt; }
+  .outc li::before { content: "✓"; position: absolute; left: 0; color: #14824a; font-weight: 700; }
+
+  .q { break-inside: avoid; margin: 0 0 12px; }
+  .q b { display: block; margin-bottom: 4px; }
+  .q ol { list-style: upper-alpha; margin: 0; padding-left: 22px; }
+  .key { width: 100%; border-collapse: collapse; font-size: 9.6pt; }
+  .key td, .key th { border-bottom: 1px solid #eef1f6; padding: 6px 6px; text-align: left; vertical-align: top; }
+  .key th { font: 600 8pt var(--mono); text-transform: uppercase; letter-spacing: .08em; color: #6b7280; }
+  .fine { font-size: 8.6pt; color: #6b7280; }
+
+  /* worksheet */
+  .ws-field { display: grid; grid-template-columns: 62mm 1fr; gap: 10px; align-items: end; margin: 0 0 10px; }
+  .ws-field label { font-size: 10pt; }
+  .ws-field .line { height: 20px; }
+  .ws-q { margin: 0 0 12px; break-inside: avoid; }
+  .ws-q b { display: block; font-size: 10.2pt; margin-bottom: 2px; }
+  .ws-q small { color: #6b7280; display: block; margin-bottom: 4px; }
+  table.ws { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 9.8pt; }
+  table.ws th, table.ws td { border: 1px solid #d9dee8; padding: 7px 8px; text-align: left; }
+  table.ws th { background: #f5f7fb; font: 600 8pt var(--mono); text-transform: uppercase; letter-spacing: .06em; color: #4b5563; }
+  .ticks { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin: 8px 0 14px; }
+  .ticks span { border: 1.5px solid #3654ff; border-radius: 6px; height: 34px; display: grid; place-items: center; font: 600 9pt var(--mono); color: #3654ff; }
+  .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px; }
+  .sign div { border-top: 1px solid #111827; padding-top: 4px; font-size: 9pt; color: #6b7280; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script src="../assets/academy/catalog.js"></script>
+<script src="../assets/academy/figures.js"></script>
+<script src="../assets/academy/courses/market-structure.js"></script>
+<script src="../assets/academy/courses/supply-demand.js"></script>
+<script src="../assets/academy/courses/liquidity.js"></script>
+<script src="../assets/academy/courses/psychology.js"></script>
+<script src="../assets/academy/courses/candlesticks.js"></script>
+<script src="../assets/academy/courses/order-blocks.js"></script>
+<script src="../assets/academy/courses/risk-management.js"></script>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  const part = q.get("part") || "body";
+  /* the cover prints full-bleed; everything else gets real page margins */
+  if (part !== "cover") {
+    const st = document.createElement("style");
+    st.textContent = "@page { size: A4; margin: 16mm 17mm 18mm; }";
+    document.head.appendChild(st);
+  }
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const B = Academy.BRAND;
+  const out = document.getElementById("out");
+  const mark = '<span class="brandmark"><i>1%</i>' + B + " Academy</span>";
+  const lines = (n) => Array.from({ length: n }, () => '<div class="line"></div>').join("");
+
+  /* ------------------------------------------------ The1% Risk Plan Worksheet */
+  if (q.get("doc") === "risk-plan") {
+    if (part === "cover") {
+      out.innerHTML = '<section class="cover"><div class="img" style="background-image:url(../assets/academy/img/risk-management.webp)"></div>' +
+        '<div class="top">' + mark + '<span class="ed">Worksheet · Edition 1</span></div>' +
+        '<div class="main"><div class="kick">Risk &amp; Money Management</div><h1>The1% Risk Plan</h1><h2>Worksheet</h2>' +
+        '<p class="desc">Write your risk rules down once, while you are calm, so you never have to invent them in the middle of a trade. Fill it in, sign it, and keep it next to your screen.</p>' +
+        '<div class="facts"><div><b>1%</b><small>default risk</small></div><div><b>6</b><small>sections</small></div><div><b>10</b><small>trade commitment</small></div></div></div></section>';
+      return;
+    }
+    const f = (l) => '<div class="ws-field"><label>' + l + '</label><div class="line"></div></div>';
+    const wq = (t, hint, n) => '<div class="ws-q"><b>' + t + "</b>" + (hint ? "<small>" + hint + "</small>" : "") + lines(n || 2) + "</div>";
+    out.innerHTML =
+      '<div class="body">' +
+      '<section class="pg"><div class="lessonhead"><div class="kick2">Section 1 · Your numbers</div><span>' + B + ' Risk Plan Worksheet</span></div>' +
+      '<h1 class="t">Your account and your risk</h1><p class="lead2">Start with the numbers. Everything else in this plan is built on them.</p>' +
+      f("Account balance") + f("Risk per trade (% of balance)") + f("Money at risk per trade") + f("Maximum open trades at once") + f("Maximum total open risk") +
+      '<div class="note">' + B + " default: 1% per trade, 0.5% on prop firm challenges or while you are learning a new strategy. Never more than 3% open across all trades.</div>" +
+      '<h3>Section 2 · Stops and targets</h3>' +
+      wq("Where does my stop go, and what buffer do I add?", "Describe the structure your stop sits beyond, e.g. the swing low plus spread.") +
+      wq("What is my minimum reward-to-risk before I take a trade?", "At 2:1 you break even at a 33% win rate before costs.", 1) +
+      wq("When, if ever, do I move my stop to break-even?", "Write the exact condition, not a feeling.") +
+      '<h3>Section 3 · News and events</h3>' +
+      wq("How do I check the calendar each day?", "", 1) +
+      wq("What do I do with open trades and new entries around high-impact news?", "For example: no new entries 30 minutes either side; reduce open risk to half.") +
+      "</section>" +
+      '<section class="pg"><div class="lessonhead"><div class="kick2">Section 4 · Rails</div><span>' + B + ' Risk Plan Worksheet</span></div>' +
+      '<h1 class="t">Your rails</h1><p class="lead2">Rails stop trading for you before emotion can. Set them here and follow them without negotiation.</p>' +
+      '<table class="ws"><tr><th>Rail</th><th>My limit</th><th>What I do when it is hit</th></tr>' +
+      '<tr><td>Daily loss limit</td><td></td><td></td></tr><tr><td>Trades per day</td><td></td><td></td></tr><tr><td>Weekly loss limit</td><td></td><td></td></tr><tr><td>Monthly loss limit</td><td></td><td></td></tr><tr><td>Cool-off after a loss</td><td></td><td></td></tr></table>' +
+      '<h3>Section 5 · Drawdown and streaks</h3>' +
+      '<table class="ws"><tr><th>Drawdown from peak</th><th>Risk per trade</th><th>Setups allowed</th></tr>' +
+      '<tr><td>0% to 5%</td><td></td><td></td></tr><tr><td>5% to 10%</td><td></td><td></td></tr><tr><td>More than 10%</td><td></td><td></td></tr><tr><td>Back to normal when…</td><td colspan="2"></td></tr></table>' +
+      wq("After a winning streak, my risk per trade stays…", "Streaks are variance. Only a written scaling rule should change your size.", 1) +
+      wq("How will I make sure I never trade without a stop?", "", 2) +
+      '<h3>Section 6 · Commitment</h3><p>Tick one box for every trade that follows this plan completely: correct size, stop at structure, rails respected. Ten in a row, then review.</p>' +
+      '<div class="ticks">' + Array.from({ length: 10 }, (_, i) => "<span>" + (i + 1) + "</span>").join("") + "</div>" +
+      '<div class="sign"><div>Signature</div><div>Date</div></div>' +
+      '<p class="fine" style="margin-top:14mm">' + B + " Academy study material. For education only; not financial advice. Trading leveraged products carries a high risk of losing money.</p>" +
+      "</section></div>";
+    return;
+  }
+
+  /* ------------------------------------------------------- course workbook */
+  const c = Academy.course(q.get("c"));
+  const k = c.content;
+  const sc = Academy.school(c.school);
+  const L = k.lessons;
+  const nFig = L.reduce((n, l) => n + l.sections.filter((x) => x.fig).length, 0);
+  const shortT = c.title.replace(/ Masterclass$/, "");
+
+  if (part === "cover") {
+    out.innerHTML =
+      '<section class="cover"><div class="img" style="background-image:url(../assets/academy/img/' + (c.img || sc.img) + '.webp)"></div>' +
+      '<div class="top">' + mark + '<span class="ed">Workbook · Edition 1</span></div>' +
+      '<div class="main"><div class="kick">' + esc(sc.title) + " · " + esc(c.level) + '</div><h1>' + esc(c.title) + "</h1><h2>" + B + " Workbook</h2>" +
+      '<p class="desc">' + esc(c.tagline) + " Every lesson, chart and practice task from the course, with space for your own notes.</p>" +
+      '<div class="facts"><div><b>' + L.length + '</b><small>lessons</small></div><div><b>' + nFig + '</b><small>charts</small></div><div><b>' + k.quiz.length + '</b><small>quiz questions</small></div><div><b>~' + (k.hours || c.hours) + 'h</b><small>study time</small></div></div></div></section>';
+    return;
+  }
+
+  let mods = [];
+  L.forEach((l, i) => {
+    if (!mods.length || mods[mods.length - 1].t !== l.module) mods.push({ t: l.module, ls: [] });
+    mods[mods.length - 1].ls.push([i + 1, l]);
+  });
+
+  const intro =
+    '<section class="pg"><div class="lessonhead"><div class="kick2">' + esc(c.title) + "</div><span>" + B + ' Workbook</span></div>' +
+    '<h1 class="t">What you will learn</h1><ul class="outc">' + k.outcomes.map((o) => "<li>" + esc(o) + "</li>").join("") + "</ul>" +
+    "<h3>Contents</h3><div class=\"toc\">" +
+    mods.map((m) => '<div class="mod">' + esc(m.t) + "</div>" + m.ls.map(([n, l]) => '<div class="row"><b>' + String(n).padStart(2, "0") + "</b><span>" + esc(l.title) + "</span><small>" + l.minutes + " min</small></div>").join("")).join("") +
+    '<div class="mod">Final</div><div class="row"><b>Q</b><span>Final quiz and answer key</span><small>' + k.quiz.length + " questions</small></div></div>" +
+    '<h3>How to use this workbook</h3><ul><li>Read one lesson at a time, then do its practice task on a real chart before moving on.</li><li>Use the notes space at the end of each lesson to write what you saw in the market, not what the page says.</li><li>Take the final quiz without looking back. Then check the answer key and revisit any lesson you missed.</li><li>Take the same quiz online in the ' + B + " Academy to earn your certificate.</li></ul>" +
+    "</section>";
+
+  const lessons = L.map((l, i) => {
+    const secs = l.sections.map((s) =>
+      (s.h ? "<h3>" + esc(s.h) + "</h3>" : "") +
+      (s.p || []).map((t) => "<p>" + esc(t) + "</p>").join("") +
+      (s.fig ? Figures.render(s.fig) : "") +
+      (s.ul ? "<ul>" + s.ul.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul>" : "") +
+      (s.note ? '<div class="note">' + esc(s.note) + "</div>" : "")
+    ).join("");
+    return (
+      '<section class="pg"><div class="lessonhead"><div class="kick2">Lesson ' + (i + 1) + " of " + L.length + " · " + esc(l.module) + "</div><span>" + esc(shortT) + " · " + l.minutes + " min</span></div>" +
+      '<h1 class="t">' + esc(l.title) + '</h1><p class="lead2">' + esc(l.summary) + "</p>" + secs +
+      '<div class="boxes"><div class="box ok"><h4>Key takeaways</h4><ul>' + l.takeaways.map((t) => "<li>" + esc(t) + "</li>").join("") + '</ul></div>' +
+      '<div class="box bad"><h4>Common mistakes</h4><ul>' + l.mistakes.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
+      '<div class="box psy"><h4>Psychology check</h4><p>' + esc(l.psych) + '</p></div><div class="box do"><h4>Practice task</h4><p>' + esc(l.practice) + "</p></div></div>" +
+      "</section>"
+    );
+  }).join("");
+
+  const notes =
+    '<section class="pg"><div class="lessonhead"><div class="kick2">Notes</div><span>' + esc(shortT) + '</span></div><h1 class="t">Your notes</h1><p class="lead2">Write what you saw in the market while doing the practice tasks: the instrument, the date, what the lesson predicted and what actually happened.</p>' +
+    '<div class="notes" style="border-style:solid">' + lines(26) + "</div></section>";
+
+  const quiz =
+    '<section class="pg"><div class="lessonhead"><div class="kick2">Final quiz</div><span>' + esc(shortT) + '</span></div><h1 class="t">Test yourself</h1><p class="lead2">' + k.quiz.length + " questions. Aim for " + Math.round(Academy.PASS_MARK * 100) + "% or better, then take the quiz online for your certificate.</p>" +
+    k.quiz.map((x, i) => '<div class="q"><b>' + (i + 1) + ". " + esc(x.q) + "</b><ol>" + x.options.map((o) => "<li>" + esc(o) + "</li>").join("") + "</ol></div>").join("") +
+    "</section>" +
+    '<section class="pg"><div class="lessonhead"><div class="kick2">Answer key</div><span>' + esc(shortT) + '</span></div><h1 class="t">Answers and explanations</h1>' +
+    '<table class="key"><tr><th>#</th><th>Answer</th><th>Why</th><th>Review</th></tr>' +
+    k.quiz.map((x, i) => {
+      const li = L.findIndex((l) => l.id === x.lesson);
+      return "<tr><td>" + (i + 1) + "</td><td><b>" + "ABCD"[x.a] + ".</b> " + esc(x.options[x.a]) + "</td><td>" + esc(x.why) + "</td><td>" + (li >= 0 ? "Lesson " + (li + 1) : "") + "</td></tr>";
+    }).join("") +
+    "</table>" +
+    '<h3>Keep going</h3><p>Finished the workbook? Enroll in the next masterclass in the ' + B + ' Academy, log every practice trade in the journal, and review your results in R every week.</p>' +
+    '<p class="fine" style="margin-top:12mm">' + B + " Academy study material, written for " + B + " members. For education only; not financial advice. Trading leveraged products such as forex, CFDs and crypto carries a high risk of losing money. Past results do not guarantee future results.</p>" +
+    "</section>";
+
+  out.innerHTML = '<div class="body">' + intro + lessons + notes + quiz + "</div>";
+})();
+</script>
+</body>
+</html>

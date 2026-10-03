@@ -1,0 +1,855 @@
+/* Journal (pages/journal.html) — page-specific styling.
+   Loads after assets/shell.css, which owns every colour token, the
+   button/table/chip primitives and both themes. Nothing here hard-codes
+   a colour. */
+
+/* ---------------------------------------------------------- page head */
+
+.jh-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.jh-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* the shared dropdown panel styles anchors; this one holds buttons */
+
+/* ---------------------------------------------------------- notices */
+
+/* ---------------------------------------------------------- summary strip */
+
+/* ---------------------------------------------------------- filters */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 18px 0 12px;
+}
+
+.jf-search {
+  width: 248px;
+  flex: 0 1 248px;
+}
+
+.chip-set {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.chip-set button {
+  height: 26px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-700);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chip-set button:hover {
+  background: var(--tint);
+}
+
+.chip-set button[aria-pressed="true"] {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------- tabs */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: -1px;
+}
+
+.tabs button {
+  position: relative;
+  padding: 9px 14px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.tabs button:hover {
+  color: var(--ink);
+}
+
+.tabs button[aria-selected="true"] {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.tabs button[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 10px -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--brand);
+}
+
+/* the table is allowed to be wider than a phone and scroll horizontally:
+   traders read rows against each other, and collapsing into cards
+   destroys that comparison */
+
+/* ---------------------------------------------------------- trade table */
+
+#trades tbody tr {
+  cursor: pointer;
+}
+
+#trades tbody tr:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+/* discipline as a bar, because a bare number out of 100 reads as a grade
+   and this is meant to read as a trend */
+
+/* ---------------------------------------------------------- empty state */
+
+/* ---------------------------------------------------------- calendar */
+
+.cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.cal .dow {
+  padding-bottom: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+  text-align: center;
+}
+
+.cal .day {
+  position: relative;
+  min-height: 62px;
+  padding: 6px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface);
+}
+
+.cal .day.pad {
+  border-color: transparent;
+  background: none;
+}
+
+.cal .day .d {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.cal .day .pl {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal .day .ct {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.cal .day.up {
+  border-color: var(--up);
+  background: var(--up-soft);
+}
+
+.cal .day.up .pl {
+  color: var(--up);
+}
+
+.cal .day.down {
+  border-color: var(--down-line);
+  background: var(--down-soft);
+}
+
+.cal .day.down .pl {
+  color: var(--down);
+}
+
+.cal .day.today {
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+
+.cal-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.cal-key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sw {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+
+.sw.up {
+  border-color: var(--up);
+  background: var(--up-soft);
+}
+
+.sw.down {
+  border-color: var(--down-line);
+  background: var(--down-soft);
+}
+
+.sw.flat {
+  background: var(--surface-2);
+}
+
+/* ---------------------------------------------------------- insights */
+
+.ins-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 26px;
+}
+
+.ins h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.ins-row {
+  display: grid;
+  grid-template-columns: 1fr 62px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ins-row:last-child {
+  border-bottom: 0;
+}
+
+.ins-row .lab {
+  font-size: 13px;
+}
+
+.ins-row .lab small {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.ins-row .track {
+  position: relative;
+  height: 6px;
+  margin-top: 5px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.ins-row .track i {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--up);
+}
+
+.ins-row .track i.neg {
+  background: var(--down);
+}
+
+.ins-row .val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ins-row .val.up {
+  color: var(--up);
+}
+
+.ins-row .val.down {
+  color: var(--down);
+}
+
+/* ---------------------------------------------------------- drawer */
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  visibility: hidden;
+}
+
+.drawer[aria-hidden="false"] {
+  visibility: visible;
+}
+
+.drawer-veil {
+  position: absolute;
+  inset: 0;
+  background: var(--veil);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.drawer[aria-hidden="false"] .drawer-veil {
+  opacity: 1;
+}
+
+.drawer-panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow-l);
+  transform: translateX(16px);
+  opacity: 0;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+
+.drawer.wide .drawer-panel {
+  width: min(620px, 100%);
+}
+
+.drawer[aria-hidden="false"] .drawer-panel {
+  transform: none;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-panel,
+  .drawer-veil {
+    transition: none;
+  }
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.drawer-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+/* ---------------------------------------------------------- detail */
+
+.dr-hero {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.dr-hero b {
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.dr-r {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.dr-r.up {
+  color: var(--up);
+}
+
+.dr-r.down {
+  color: var(--down);
+}
+
+.dr-shot {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  margin-bottom: 16px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--line);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.kv div {
+  padding: 9px 12px;
+  background: var(--surface);
+}
+
+.kv dt {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.kv dd {
+  margin: 3px 0 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kv dd.up {
+  color: var(--up);
+}
+
+.kv dd.down {
+  color: var(--down);
+}
+
+.dr-sec {
+  margin-bottom: 16px;
+}
+
+.dr-sec h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.dr-sec p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-700);
+}
+
+.tag-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.exit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.exit-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.dr-foot {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* ---------------------------------------------------------- form
+   Field and live-result primitives now live in components.css, because
+   the calculators need the identical inputs. What is left here is only
+   what the journal form alone has: exit legs and the screenshot. */
+
+.exit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 32px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.exit-row .icon-btn {
+  align-self: end;
+  height: 33px;
+  width: 32px;
+}
+
+.shot-preview {
+  margin-top: 10px;
+}
+
+.shot-preview img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+}
+
+.shot-preview button {
+  margin-top: 6px;
+}
+
+.form-foot {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+#del-trade {
+  margin-left: auto;
+}
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 1080px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ins-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-head {
+    padding-top: 22px;
+  }
+
+  .jh-row {
+    align-items: stretch;
+  }
+
+  .jh-actions {
+    width: 100%;
+  }
+
+  .jh-actions .sel {
+    flex: 1 1 120px;
+  }
+
+  .jh-actions .sel select {
+    width: 100%;
+  }
+
+  #new-trade {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .jf-search {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .filters {
+    gap: 6px;
+  }
+
+  .chip-set {
+    flex: 1 1 100%;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* fades the right edge so it is obvious the row continues */
+    mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
+  }
+
+  .chip-set::-webkit-scrollbar {
+    display: none;
+  }
+
+  .grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .calc {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .kv {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* On a phone the table keeps its shape rather than collapsing into
+     cards — traders read rows against each other. It earns that by
+     dropping to the five columns that decide anything: when, what,
+     R, money, and whether the plan was followed. Risk %, setup,
+     emotion and the thumbnail all live in the detail drawer. */
+  .table-scroll table {
+    min-width: 0;
+  }
+
+  #trades th:nth-child(3),
+  #trades td:nth-child(3),
+  #trades th:nth-child(4),
+  #trades td:nth-child(4),
+  #trades th:nth-child(7),
+  #trades td:nth-child(7),
+  #trades th:nth-child(9),
+  #trades td:nth-child(9) {
+    display: none;
+  }
+
+  #trades thead th,
+  #trades tbody td {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  /* short headers and no secondary lines: the five columns have to fit
+     375px without a sideways scroll */
+  th .lg,
+  th .cur,
+  .t-date small,
+  .t-sym small {
+    display: none;
+  }
+
+  th .xs {
+    display: inline;
+  }
+
+  .side {
+    min-width: 0;
+    padding: 1px 4px;
+    font-size: 9.5px;
+  }
+
+  .disc-bar {
+    width: 16px;
+  }
+
+  .disc {
+    gap: 5px;
+  }
+
+  .cal .day {
+    min-height: 48px;
+    padding: 4px;
+  }
+
+  .cal .day .pl {
+    margin-top: 4px;
+    font-size: 10.5px;
+  }
+
+  .cal .day .ct {
+    display: none;
+  }
+
+  .drawer-panel {
+    inset: auto 0 0 0;
+    width: 100%;
+    max-height: 92vh;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    border-radius: var(--r-l) var(--r-l) 0 0;
+    transform: translateY(20px);
+  }
+}
+
+/* ------------------------------------------------------------ the gate
+   Styled as the one part of the form that is not a record. It carries a
+   brand edge so it reads as an interruption rather than another fieldset,
+   and the two columns are visibly different jobs: a list the app filled in,
+   and questions waiting on you. */
+
+.fs.pretrade {
+  border-left: 3px solid var(--brand);
+  padding-left: 16px;
+}
+
+.pt-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px 24px;
+  margin-top: 12px;
+}
+
+.pt-col h4 {
+  margin: 0 0 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.pt-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.pt-checks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pt-checks b {
+  font-weight: 500;
+}
+
+.pt-checks li.ok b {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.pt-checks small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.pt-mark {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 15px;
+  text-align: center;
+  color: var(--faint);
+}
+
+.pt-checks li.ok .pt-mark {
+  border-color: var(--up);
+  color: var(--up);
+}
+
+.pt-checks li.no .pt-mark {
+  border-color: var(--down);
+  color: var(--down);
+  font-weight: 700;
+}
+
+.pt-col .fld + .fld {
+  margin-top: 10px;
+}
+
+.pt-col .fld.chk span {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.pt-verdict {
+  margin-top: 16px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+}
+
+.pt-verdict b {
+  font-size: 13.5px;
+}
+
+.pt-verdict span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.pt-verdict.ready {
+  border-color: var(--up);
+}
+
+.pt-verdict.ready b {
+  color: var(--up);
+}
+
+.pt-verdict.not {
+  border-color: var(--warn-line);
+  background: var(--warn-soft);
+}
+
+.pt-verdict.not b {
+  color: var(--warn-ink);
+}
+
+.dr-sec.off-plan h3 {
+  color: var(--down);
+}
+
+.pt-verdict.wait b {
+  color: var(--muted);
+}

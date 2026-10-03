@@ -1,0 +1,937 @@
+/* ============================================================== learn.css
+   The Learn screen: the path, the lesson reader, the quiz, the library
+   and the glossary. No raw colours — every value here is a token from
+   shell.css, so both themes and any future re-skin come for free.
+   ====================================================================== */
+
+/* ----------------------------------------------------------- page head */
+
+.lh-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: end;
+}
+
+.lh-row > div p {
+  max-width: 62ch;
+}
+
+/* progress card — deliberately in the header, so it is the first thing
+   seen on every visit rather than something to scroll for */
+.prog {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-l);
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.prog-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.prog-top b {
+  font-family: var(--mono);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.prog-top small,
+.prog-foot {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand);
+  transition: width 0.35s ease;
+}
+
+.prog-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  font-family: var(--mono);
+}
+
+.prog .btn {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* ------------------------------------------------------------ sub-tabs */
+
+.subtabs {
+  display: flex;
+  gap: 4px;
+  margin: 22px 0 18px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subtabs::-webkit-scrollbar {
+  display: none;
+}
+
+.subtabs a {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.subtabs a:hover {
+  color: var(--ink);
+}
+
+.subtabs a[aria-current="page"] {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+.view {
+  padding-bottom: 56px;
+}
+
+/* -------------------------------------------------------------- blocks */
+
+.block {
+  border: 1px solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--surface);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.block.is-locked {
+  background: var(--surface-2);
+}
+
+.block-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.block-head h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.block-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  max-width: 68ch;
+}
+
+.block-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  text-align: right;
+}
+
+.block-meta .bar {
+  width: 140px;
+}
+
+.block-meta small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.level {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--tint);
+  margin-bottom: 8px;
+}
+
+.level.beginner {
+  color: var(--up);
+  background: var(--up-soft);
+  border-color: transparent;
+}
+
+.level.intermediate {
+  color: var(--warn-ink);
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
+}
+
+.level.advanced {
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-color: transparent;
+}
+
+.outcome {
+  margin: 10px 18px 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--brand);
+  background: var(--tint);
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+  font-size: 13px;
+  color: var(--ink-700);
+}
+
+/* -------------------------------------------------------------- lessons */
+
+.lessons {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.lessons li {
+  border-top: 1px solid var(--line-soft);
+}
+
+.lessons li:first-child {
+  border-top: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  padding: 13px 18px;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--tint);
+}
+
+.row .n {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.row.done .n {
+  background: var(--up-soft);
+  border-color: transparent;
+  color: var(--up);
+}
+
+.row.locked {
+  cursor: not-allowed;
+}
+
+/* locked lessons are greyed, never hidden — you should be able to see
+   what you are working towards */
+.row.locked .t,
+.row.locked .s {
+  color: var(--faint);
+}
+
+.row.locked:hover {
+  background: none;
+}
+
+.row .t {
+  display: block;
+  font-weight: 500;
+  font-size: 14.5px;
+}
+
+.row .s {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.row .r {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- gate */
+
+.gate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin: 0;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+  background: var(--tint);
+}
+
+.gate b {
+  display: block;
+  font-size: 14.5px;
+}
+
+.gate small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.gate.passed {
+  background: var(--up-soft);
+}
+
+.gate.cooling {
+  background: var(--warn-soft);
+}
+
+/* --------------------------------------------------------- next / review */
+
+#next-body .rec,
+#review-body .qcard {
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: var(--surface);
+}
+
+#next-body .rec:last-child {
+  margin-bottom: 0;
+}
+
+#next-body .rec b {
+  font-size: 14px;
+}
+
+#next-body .rec p {
+  margin: 4px 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cost {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--down);
+}
+
+/* -------------------------------------------------------------- reader */
+
+.reader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 28px;
+  align-items: start;
+}
+
+.lesson-main {
+  min-width: 0;
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.crumb a {
+  color: var(--muted);
+}
+
+.lesson-main h1 {
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+
+.lead {
+  font-size: 16px;
+  color: var(--ink-700);
+  margin: 0 0 18px;
+  max-width: 66ch;
+}
+
+/* the "short video" slot the roadmap asks for. It is drawn as a real
+   placeholder with an honest label rather than an embed of nothing —
+   Phase 1 has no recordings, and a broken player reads as a bug. */
+.vid {
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 26px 18px;
+  margin-bottom: 20px;
+}
+
+.vid .play {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+}
+
+.vid b {
+  font-size: 14px;
+}
+
+.vid small {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
+  margin-top: 3px;
+}
+
+.sec {
+  margin-bottom: 22px;
+}
+
+.sec h2 {
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+.sec p {
+  margin: 0 0 10px;
+  max-width: 66ch;
+  line-height: 1.62;
+}
+
+.sec ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+  max-width: 66ch;
+}
+
+.sec li {
+  margin-bottom: 6px;
+  line-height: 1.58;
+}
+
+.sec .note {
+  border-left: 2px solid var(--brand);
+  background: var(--tint);
+  padding: 10px 12px;
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+  font-size: 13.5px;
+  color: var(--ink-700);
+  max-width: 68ch;
+}
+
+/* glossary term inside prose: definition on hover AND on keyboard focus,
+   because hover-only tooltips do not exist for half the users */
+.term {
+  border-bottom: 1px dashed var(--line-strong);
+  cursor: help;
+  position: relative;
+}
+
+.term:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* worked examples, one per market the user actually selected */
+.ex {
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.ex-head {
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line-soft);
+  overflow-x: auto;
+}
+
+.ex-head button {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 6px 10px;
+  border-radius: var(--r-s);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ex-head button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+
+.ex-body {
+  padding: 14px 16px;
+}
+
+.ex-body b {
+  font-size: 14px;
+}
+
+.ex-body ol {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.ex-body li {
+  margin-bottom: 6px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+/* the apply strip — every lesson ends in something to do in the app */
+.apply {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--brand);
+  background: var(--brand-soft);
+  border-radius: var(--r-m);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.apply b {
+  display: block;
+  font-size: 14.5px;
+}
+
+.apply small {
+  color: var(--ink-700);
+  font-size: 13px;
+}
+
+.lesson-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.lesson-foot .sp {
+  flex: 1 1 auto;
+}
+
+/* the reader's own side rail: your note, the terms, and what is next */
+.lesson-side {
+  position: sticky;
+  top: calc(var(--nav-h) + 16px);
+  display: grid;
+  gap: 14px;
+}
+
+.side-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  padding: 14px;
+}
+
+.side-card h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.side-card textarea {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  padding: 8px 10px;
+}
+
+.side-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+
+.side-card li {
+  padding: 5px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.side-card li:first-child {
+  border-top: 0;
+}
+
+.side-card li b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.side-card li span {
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- quiz */
+
+.quiz {
+  max-width: 760px;
+}
+
+.quiz h1 {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+
+.quiz-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-family: var(--mono);
+  margin-bottom: 18px;
+}
+
+.q {
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.q > b {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.q .qn {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.opts {
+  display: grid;
+  gap: 8px;
+}
+
+.opt {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  padding: 10px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.opt:hover {
+  border-color: var(--line-strong);
+}
+
+.opt input {
+  margin: 2px 0 0;
+}
+
+.opt.right {
+  border-color: var(--up);
+  background: var(--up-soft);
+}
+
+.opt.wrong {
+  border-color: var(--down);
+  background: var(--down-soft);
+}
+
+.why {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-700);
+  border-left: 2px solid var(--line-strong);
+  padding-left: 10px;
+}
+
+.why a {
+  font-weight: 500;
+}
+
+.score {
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--surface);
+}
+
+.score.pass {
+  border-color: var(--up);
+  background: var(--up-soft);
+}
+
+.score.fail {
+  border-color: var(--warn-line);
+  background: var(--warn-soft);
+}
+
+.score > b {
+  font-family: var(--mono);
+  font-size: 22px;
+  display: block;
+}
+
+/* the score copy names the next block inline; it must not break the line */
+.score p b {
+  display: inline;
+  font-weight: 600;
+}
+
+.score p {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  max-width: 64ch;
+}
+
+/* -------------------------------------------------------------- library */
+
+.lib-intro {
+  max-width: 68ch;
+  margin-bottom: 18px;
+}
+
+.lib-intro h2 {
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+}
+
+.lib-intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.lib {
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lib .kind {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.lib b {
+  font-size: 15px;
+}
+
+.lib p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  flex: 1 1 auto;
+}
+
+.lib-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.lib-row .file {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+/* -------------------------------------------------------------- glossary */
+
+.gl-find {
+  max-width: 340px;
+  margin-bottom: 16px;
+}
+
+.gloss {
+  columns: 2;
+  column-gap: 32px;
+  margin: 0;
+}
+
+.gloss > div {
+  break-inside: avoid;
+  margin-bottom: 14px;
+}
+
+.gloss dt {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.gloss dd {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+/* -------------------------------------------------------------- tooltip */
+
+.tip {
+  position: fixed;
+  z-index: 60;
+  max-width: 280px;
+  background: var(--invert-bg);
+  color: #fff;
+  font-size: 12.5px;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: var(--r-s);
+  box-shadow: var(--shadow-m);
+  pointer-events: none;
+}
+
+.tip b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 1000px) {
+  .lh-row,
+  .reader {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lesson-side {
+    position: static;
+  }
+
+  .gloss {
+    columns: 1;
+  }
+}
+
+@media (max-width: 620px) {
+  .block-head,
+  .gate,
+  .apply {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .block-meta {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .block-meta .bar {
+    width: 100%;
+  }
+
+  .row {
+    grid-template-columns: 24px minmax(0, 1fr);
+    padding: 12px 14px;
+  }
+
+  .row .r {
+    grid-column: 2;
+  }
+
+  .lesson-main h1 {
+    font-size: 24px;
+  }
+}

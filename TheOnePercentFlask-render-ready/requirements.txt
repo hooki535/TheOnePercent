@@ -1,0 +1,6 @@
+flask
+dukascopy-python>=4.0,<5
+pandas
+python-dotenv
+
+gunicorn>=23,<24

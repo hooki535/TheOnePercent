@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Charts · TheOnePercent</title>
+    <meta
+      name="description"
+      content="Plan the trade on the chart: candles, studies, drawings and a position tool sized from your balance and your risk rule, then saved straight into the journal."
+    />
+    <script src="{{ url_for('static', filename='assets/theme.js') }}"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/shell.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/components.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/charts.css') }}" />
+  </head>
+
+  <body data-page="charts" data-depth="1" data-shell="nav">
+    <!-- The chart toolbar. Primary actions only: the symbol, the interval,
+         what is drawn, what is measured, and the one button this screen
+         exists for. Everything occasional lives behind More, because
+         fourteen glyphs in a row is a search problem, not a toolbar. -->
+    <header class="ctoolbar">
+      <div class="ct-l">
+        <button
+          id="symBtn"
+          class="sym"
+          title="Change symbol (S)"
+          aria-label="Change symbol"
+        >
+          <span id="symName">EURUSD</span>
+          <span class="sym-meta" id="symMeta">Forex</span>
+          <svg class="caret" viewBox="0 0 10 7" aria-hidden="true">
+            <path
+              d="M1 1.5l4 4 4-4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            />
+          </svg>
+        </button>
+
+        <div
+          class="chips"
+          id="intervals"
+          role="group"
+          aria-label="Favourite intervals"
+        ></div>
+
+        <div class="menu-wrap">
+          <button
+            id="ivBtn"
+            class="tb-btn"
+            aria-haspopup="true"
+            aria-expanded="false"
+            title="Every interval, grouped"
+          >
+            <span id="ivBtnV">15m</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+              <path
+                d="M1 3l4 4 4-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+          </button>
+          <div
+            id="ivMenu"
+            class="menu ivmenu"
+            role="menu"
+            aria-label="Interval"
+          ></div>
+        </div>
+
+        <div class="menu-wrap">
+          <button id="typeBtn" class="tb-btn" aria-haspopup="true">
+            Candles
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+              <path
+                d="M1 3l4 4 4-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+          </button>
+          <div class="menu" id="typeMenu"></div>
+        </div>
+
+        <button id="indBtn" class="tb-btn" title="Indicators (I)">
+          Indicators <b id="indCount">0</b>
+        </button>
+        <button id="alertBtn" class="tb-btn" title="New alert (A)">
+          Alerts
+        </button>
+      </div>
+
+      <span class="spacer"></span>
+
+      <div class="ct-r">
+        <span id="feedBadge"></span>
+
+        <div
+          class="risk-pill"
+          id="riskPill"
+          title="Risk used today against your daily cap"
+        >
+          <span class="rp-label">Day risk</span>
+          <span class="rp-bar"><i id="rpFill"></i></span>
+          <span class="rp-val" id="rpVal">—</span>
+        </div>
+
+        <div class="menu-wrap">
+          <button
+            id="moreBtn"
+            class="tb-btn"
+            aria-haspopup="true"
+            title="More chart actions"
+          >
+            More
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+              <path
+                d="M1 3l4 4 4-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+          </button>
+          <div class="menu right" id="moreMenu">
+            <div class="mh">Charts on screen</div>
+            <div
+              class="chips small menu-chips"
+              id="layoutMenu"
+              role="group"
+              aria-label="Charts on screen"
+            ></div>
+            <div class="mh">Review</div>
+            <button class="mi" id="replayBtn">Bar replay<span>R</span></button>
+            <button class="mi" id="wsBtn">
+              Saved workspaces<span>Ctrl S</span>
+            </button>
+            <button class="mi" id="wavesBtn">Playbook</button>
+            <div class="mh">This chart</div>
+            <button class="mi" id="undoBtn">Undo<span>Ctrl Z</span></button>
+            <button class="mi" id="redoBtn">Redo<span>Ctrl ⇧ Z</span></button>
+            <button class="mi" id="snapBtn">Download a PNG</button>
+            <button class="mi" id="fsBtn" aria-pressed="false">
+              Focus mode <span>F</span>
+            </button>
+            <button class="mi" id="setBtn">Chart settings</button>
+            <div class="mh">App</div>
+            <button class="mi" id="paletteBtn">
+              Command palette<span>Ctrl K</span>
+            </button>
+            <button class="mi" id="themeBtn">Light</button>
+            <button class="mi" id="keysBtn">
+              Keyboard shortcuts<span>?</span>
+            </button>
+          </div>
+        </div>
+
+        <button
+          id="journalBtn"
+          class="btn primary sm"
+          title="Save this plan to the journal (J)"
+        >
+          Save to journal
+        </button>
+        <button
+          id="mobPanel"
+          class="tb-btn mobonly"
+          title="Show the side panel"
+        >
+          Panel
+        </button>
+      </div>
+    </header>
+
+    <main class="cshell">
+      <nav class="crail" id="crail" aria-label="Drawing tools"></nav>
+
+      <div class="cmid">
+        <section class="grid" id="grid" data-layout="1"></section>
+
+        <!-- Date ranges and the clock. The ranges are durations, not bar
+             counts, so asking for a year on a one-minute chart has to change
+             the interval as well as the zoom — see setRange() in charts.js. -->
+        <div class="cbot">
+          <div
+            class="cbot-r"
+            id="ranges"
+            role="group"
+            aria-label="Date range"
+          ></div>
+          <div class="cbot-s">
+            <button
+              class="cb-btn"
+              id="tzBtn"
+              title="Switch between your local time and UTC"
+              aria-live="off"
+            >
+              <span id="tzClock" class="mono">--:--:--</span>
+              <span id="tzName">UTC</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- The note is the reason the roadmap put a footer here: what you
+             expected, written before the outcome is known, becomes the plan
+             text on the journal entry. -->
+        <footer class="notebar">
+          <label class="nb-l" for="notes">
+            <span>Note for the journal</span>
+            <textarea
+              id="notes"
+              rows="1"
+              placeholder="Why this trade, and what would make you wrong."
+            ></textarea>
+          </label>
+          <button class="btn primary sm" id="attachSave">
+            Attach &amp; save
+          </button>
+        </footer>
+      </div>
+
+      <aside class="panel" id="panel">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="position" role="tab">
+            Position
+          </button>
+          <button
+            class="tab"
+            data-tab="watchlist"
+            role="tab"
+            aria-label="Market Watch"
+          >
+            Watch
+          </button>
+          <button class="tab" data-tab="objects" role="tab">Objects</button>
+          <button class="tab" data-tab="journal" role="tab">Journal</button>
+          <button class="tab" data-tab="alerts" role="tab">Alerts</button>
+        </div>
+
+        <div class="tabpane active" data-pane="position">
+          <div class="card">
+            <div class="mh">Direction</div>
+            <div class="side-toggle">
+              <button class="st on" data-side="long">Long</button>
+              <button class="st" data-side="short">Short</button>
+            </div>
+            <div class="frow">
+              <label class="lbl" for="fBalance"
+                >Balance (<span id="balCur">USD</span>)
+                <input
+                  class="fin mono"
+                  id="fBalance"
+                  type="number"
+                  step="1"
+                  min="1"
+                />
+              </label>
+              <label class="lbl" for="fRisk"
+                >Risk %
+                <input
+                  class="fin mono"
+                  id="fRisk"
+                  type="number"
+                  step="0.1"
+                  min="0.05"
+                />
+              </label>
+            </div>
+            <div class="frow">
+              <label class="lbl" for="fEntry"
+                >Entry<input
+                  class="fin mono"
+                  id="fEntry"
+                  type="number"
+                  step="0.00001"
+              /></label>
+              <label class="lbl" for="fStop"
+                >Stop<input
+                  class="fin mono"
+                  id="fStop"
+                  type="number"
+                  step="0.00001"
+              /></label>
+            </div>
+            <div class="frow">
+              <label class="lbl" for="fTarget"
+                >Target<input
+                  class="fin mono"
+                  id="fTarget"
+                  type="number"
+                  step="0.00001"
+              /></label>
+            </div>
+            <p class="src-note">
+              Balance and risk % are your account settings — editing them here
+              changes them everywhere. Levels stay in step with the position
+              tool on the chart.
+            </p>
+          </div>
+
+          <div id="readouts" class="readouts"></div>
+
+          <div class="warn" id="warn" hidden>
+            <div class="warn-h" id="warnH"></div>
+            <div class="warn-b" id="warnB"></div>
+            <div class="warn-a">
+              <button class="btn sm primary" id="sizeToRule">
+                Size to the rule
+              </button>
+              <button class="btn sm" id="override">Take it anyway</button>
+            </div>
+          </div>
+
+          <div class="card soft" id="coach">
+            <div class="mh">Before you enter</div>
+            <div id="coachBody" class="coach-b"></div>
+          </div>
+        </div>
+
+        <div class="tabpane" data-pane="watchlist">
+          <!-- Three things used to be stacked in this one pane: a symbol card,
+               the watchlist, and the compare chips. On a 768px-tall screen that
+               left the list itself about five rows of room, so the watchlist —
+               the thing the tab is named after — was the smallest part of it.
+               They are separate views now and the list gets the whole pane. -->
+          <div class="wsub" role="tablist" aria-label="Watchlist views">
+            <button
+              class="wsub-b active"
+              data-wsub="list"
+              role="tab"
+              aria-selected="true"
+              aria-controls="wsub-list"
+              id="wsubtab-list"
+            >
+              Watchlist
+            </button>
+            <button
+              class="wsub-b"
+              data-wsub="details"
+              role="tab"
+              aria-selected="false"
+              aria-controls="wsub-details"
+              id="wsubtab-details"
+            >
+              Details
+            </button>
+            <button
+              class="wsub-b"
+              data-wsub="compare"
+              role="tab"
+              aria-selected="false"
+              aria-controls="wsub-compare"
+              id="wsubtab-compare"
+            >
+              Compare
+            </button>
+          </div>
+
+          <div
+            class="wsub-p active"
+            data-wsubpane="list"
+            id="wsub-list"
+            role="tabpanel"
+            aria-labelledby="wsubtab-list"
+          >
+            <div class="wl-top">
+              <label class="sr-only" for="wlSort">Sort the watchlist</label>
+              <select id="wlSort" class="fin">
+                <option value="none">Custom order</option>
+                <option value="gain">Top gainers</option>
+                <option value="loss">Top losers</option>
+                <option value="name">A–Z</option>
+              </select>
+              <button class="btn sm" id="wlAdd">Add symbol</button>
+            </div>
+            <div id="wl" class="wl"></div>
+          </div>
+
+          <div
+            class="wsub-p"
+            data-wsubpane="details"
+            id="wsub-details"
+            role="tabpanel"
+            aria-labelledby="wsubtab-details"
+          >
+            <div class="symcard" id="symCard"></div>
+          </div>
+
+          <div
+            class="wsub-p"
+            data-wsubpane="compare"
+            id="wsub-compare"
+            role="tabpanel"
+            aria-labelledby="wsubtab-compare"
+          >
+            <p class="wsub-note">
+              Plot another instrument over this one, rebased to the same start,
+              to see which moved further.
+            </p>
+            <div id="cmp" class="cmp"></div>
+          </div>
+        </div>
+
+        <div class="tabpane" data-pane="objects">
+          <div class="ob-top">
+            <div class="mh" id="objTitle">Objects</div>
+            <span class="hint" id="objCount">0</span>
+          </div>
+          <div id="objs"></div>
+        </div>
+
+        <div class="tabpane" data-pane="journal">
+          <div
+            class="chips small"
+            id="jlScope"
+            role="group"
+            aria-label="Which entries to show"
+          ></div>
+          <div id="jl" class="jl"></div>
+        </div>
+
+        <div class="tabpane" data-pane="alerts">
+          <div class="ob-top">
+            <div class="mh">Alerts</div>
+            <button class="btn sm" id="newAlert">New</button>
+          </div>
+          <div id="al" class="al"></div>
+        </div>
+      </aside>
+    </main>
+
+    <div class="replaybar" id="replaybar" hidden>
+      <button class="btn sm" id="rbPlay">▶ Play</button>
+      <button class="btn sm" id="rbBack">◀ Step</button>
+      <button class="btn sm" id="rbFwd">Step ▶</button>
+      <button class="btn sm" id="rbJump">Jump to…</button>
+      <div class="chips small" id="rbSpeeds"></div>
+      <label class="sr-only" for="rbScrub">Replay position</label>
+      <input type="range" id="rbScrub" min="0" max="100" value="100" />
+      <span class="mono" id="rbClock"></span>
+      <span class="mono hint" id="rbBar"></span>
+      <label class="lbl inline"
+        ><input type="checkbox" id="rbBlind" /> Blind bars</label
+      >
+      <button class="btn sm" id="rbClose">Exit</button>
+    </div>
+
+    <!-- Indicators -->
+    <div class="modal" id="indModal" hidden>
+      <div class="sheet wide">
+        <div class="sheet-h">
+          <div>
+            <b>Indicators and studies</b>
+            <div class="sh-sub">
+              Click a study to add it. Select its chip on the chart to edit the
+              inputs.
+            </div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="search">
+          <label class="sr-only" for="indSearch">Search studies</label
+          ><input id="indSearch" placeholder="Search studies…" />
+        </div>
+        <div class="sheet-b threecol">
+          <div id="indFams" class="col"></div>
+          <div id="indList" class="col"></div>
+          <div id="indSettings" class="col settings"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="modal" id="alertModal" hidden>
+      <div class="sheet">
+        <div class="sheet-h">
+          <div>
+            <b>New alert</b>
+            <div class="sh-sub" id="alSub"></div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-b">
+          <div id="condRows" class="cond"></div>
+          <div class="cond-actions">
+            <button class="btn sm" id="addCond">+ Add condition</button>
+          </div>
+          <div class="mh">Fires</div>
+          <div class="chips small" id="alWindow"></div>
+          <div class="mh">All or any</div>
+          <div class="andor">
+            <button class="ao on" data-ao="all">All conditions</button>
+            <button class="ao" data-ao="any">Any condition</button>
+          </div>
+          <div class="deliv">
+            <div class="mh">Notify</div>
+            <div class="chips small" id="alDeliv"></div>
+          </div>
+        </div>
+        <div class="sheet-f">
+          <button class="btn primary" id="alCreate">Create alert</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Command palette -->
+    <div class="modal top" id="palette" hidden>
+      <div class="sheet">
+        <div class="search">
+          <label class="sr-only" for="palIn">Command or symbol</label
+          ><input
+            id="palIn"
+            class="pal-in"
+            placeholder="Type a command or symbol…"
+          />
+        </div>
+        <div class="sheet-b"><div id="palList" class="pal-list"></div></div>
+      </div>
+    </div>
+
+    <!-- Symbol search -->
+    <div class="modal" id="symModal" hidden>
+      <div class="sheet">
+        <div class="sheet-h">
+          <div>
+            <b>Symbol search</b>
+            <div class="sh-sub">
+              Forex including the shilling pairs, metals, indices, futures and
+              crypto.
+            </div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="search">
+          <label class="sr-only" for="symSearch">Search symbols</label
+          ><input
+            id="symSearch"
+            placeholder="EURUSD, XAUUSD, USDUGX…"
+            autocomplete="off"
+            aria-describedby="symCount"
+          />
+        </div>
+        <!-- Browsing by asset class matters as much as searching: nobody
+             types DE40 from memory. Recent and Watchlist only appear once
+             there is something in them. -->
+        <div
+          class="stabs"
+          id="symTabs"
+          role="tablist"
+          aria-label="Asset class"
+        ></div>
+        <div class="sheet-b"><div id="symList"></div></div>
+        <div class="sheet-f"><span id="symCount" class="hint"></span></div>
+      </div>
+    </div>
+
+    <!-- Chart settings -->
+    <div class="modal" id="setModal" hidden>
+      <div class="sheet">
+        <div class="sheet-h">
+          <div>
+            <b>Chart settings</b>
+            <div class="sh-sub">Appearance, scales and session behaviour.</div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-b"><div id="setBody"></div></div>
+      </div>
+    </div>
+
+    <!-- Workspaces -->
+    <div class="modal" id="wsModal" hidden>
+      <div class="sheet">
+        <div class="sheet-h">
+          <div>
+            <b>Saved workspaces</b>
+            <div class="sh-sub">
+              Symbols, layout, studies and drawings, stored on this device.
+            </div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-b"><div id="wsList"></div></div>
+        <div class="sheet-f">
+          <button class="btn primary" id="wsSave">Save current</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playbook -->
+    <div class="modal" id="wavesModal" hidden>
+      <div class="sheet">
+        <div class="sheet-h">
+          <div>
+            <b>What this screen does, and what it will not</b>
+            <div class="sh-sub">
+              Stated up front so nothing here is implied.
+            </div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-b"><div id="wavesList" class="waves"></div></div>
+      </div>
+    </div>
+
+    <!-- Shortcuts -->
+    <div class="modal" id="keysModal" hidden>
+      <div class="sheet">
+        <div class="sheet-h">
+          <div>
+            <b>Keyboard shortcuts</b>
+            <div class="sh-sub">Press ? any time.</div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-b"><div id="keysList" class="keys"></div></div>
+      </div>
+    </div>
+
+    <!-- Drawing settings -->
+    <div class="modal" id="drawModal" hidden>
+      <div class="sheet">
+        <div class="sheet-h">
+          <div>
+            <b>Drawing settings</b>
+            <div class="sh-sub" id="drawSub"></div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-b"><div id="drawBody"></div></div>
+        <div class="sheet-f">
+          <button class="btn sm" id="drawApplyType">
+            Apply to all of this type
+          </button>
+          <button class="btn sm" id="drawDefault">Set as default</button>
+          <button class="btn sm" id="drawClone">Clone</button>
+          <button class="btn sm" id="drawRemove">Remove</button>
+          <button class="btn primary" data-close>Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Small text prompt -->
+    <div class="modal top" id="askModal" hidden>
+      <div class="sheet slim">
+        <div class="sheet-h">
+          <div>
+            <b id="askTitle">Enter a value</b>
+            <div class="sh-sub" id="askLabel"></div>
+          </div>
+          <button class="x" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-b">
+          <label class="sr-only" for="askIn">Value</label
+          ><input class="search" id="askIn" />
+        </div>
+        <div class="sheet-f">
+          <button class="btn sm" id="askCancel">Cancel</button>
+          <button class="btn primary" id="askOk">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ctx" hidden></div>
+    <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+    <div
+      id="tour"
+      class="tourtip"
+      hidden
+      role="dialog"
+      aria-label="How this screen works"
+    >
+      <b>Two things to know</b>
+      <p>
+        Pick a tool on the left rail, then drag on the chart. The Position tab
+        turns any two levels into a size your risk rule allows — and Save to
+        journal carries it across with the chart attached.
+      </p>
+      <button class="btn sm primary" id="tourClose">Got it</button>
+    </div>
+
+    <script src="{{ url_for('static', filename='assets/store.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/instruments.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/feed.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/shell.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/lightweight-charts.standalone.production.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/charts-engine.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/charts-shapes.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/charts-rail.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/charts.js') }}"></script>
+  <script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>

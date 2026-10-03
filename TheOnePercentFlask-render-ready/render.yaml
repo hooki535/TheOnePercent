@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: theonepercent-flask
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 8 --timeout 0 --bind 0.0.0.0:$PORT wsgi:app
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: HOST
+        value: "0.0.0.0"
+      - key: POLL_INTERVAL_SECONDS
+        value: "15"
+      - key: POLL_LOOKBACK_MINUTES
+        value: "3"
+      - key: CANDLE_HISTORY_BARS
+        value: "620"
+      - key: HISTORY_RETENTION_HOURS
+        value: "72"
+      - key: DB_PATH
+        value: "/tmp/data.db"
+      - key: LOG_LEVEL
+        value: "INFO"

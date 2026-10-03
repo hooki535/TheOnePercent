@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — TheOnePercent</title>
+<meta name="description" content="Your account, your risk rules, your guardrails and your data — every number the rest of TheOnePercent reads, in one place.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233654ff'/%3E%3Ctext x='16' y='21' font-family='monospace' font-size='13' font-weight='600' fill='white' text-anchor='middle'%3E1%25%3C/text%3E%3C/svg%3E">
+<script src="{{ url_for('static', filename='assets/theme.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/shell.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/settings.css') }}">
+</head>
+<!-- one folder deep; the shell infers the logged-in state from the profile -->
+<body data-page="settings" data-depth="1">
+
+<main id="main">
+  <div class="wrap">
+
+    <header class="page-head">
+      <h1>Settings</h1>
+      <p>Everything the calculators, the journal and the dashboard read. Change a number here and every screen follows it.</p>
+    </header>
+
+    <!-- jump list, because this page is long by nature -->
+    <nav class="set-jump" aria-label="Sections">
+      <a href="#account">Account</a>
+      <a href="#rules">Risk rules</a>
+      <a href="#guardrails">Guardrails</a>
+      <a href="#trading">Trading profile</a>
+      <a href="#appearance">Appearance</a>
+      <a href="#data">Your data</a>
+    </nav>
+
+    <div class="notice" id="storage-notice" hidden>
+      <b>Storage is blocked in this browser</b>
+      <small id="storage-note"></small>
+    </div>
+
+    <!-- ============================================================ account -->
+    <section class="panel" id="account">
+      <div class="panel-head"><h2>Account</h2><span>the basis of every calculation</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld">
+            <span>Account name</span>
+            <input id="st-name" type="text" autocomplete="off" placeholder="Demo account">
+          </label>
+          <label class="fld">
+            <span>Currency</span>
+            <select id="st-currency"></select>
+          </label>
+          <label class="fld">
+            <span>Starting balance</span>
+            <input id="st-balance" type="number" step="any" min="0" inputmode="decimal">
+          </label>
+        </div>
+        <p class="hint" id="st-balance-note"></p>
+      </div>
+    </section>
+
+    <!-- ============================================================ rules -->
+    <section class="panel" id="rules">
+      <div class="panel-head"><h2>Risk rules</h2><span>what the discipline score grades you against</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld">
+            <span>Risk per trade <small>% of balance</small></span>
+            <input id="st-risk" type="number" step="any" min="0" max="100" inputmode="decimal">
+          </label>
+          <label class="fld">
+            <span>Minimum planned R:R</span>
+            <input id="st-minrr" type="number" step="any" min="0" inputmode="decimal">
+          </label>
+          <label class="fld">
+            <span>Time zone</span>
+            <select id="st-tz"></select>
+          </label>
+        </div>
+        <p class="hint" id="st-risk-note"></p>
+      </div>
+    </section>
+
+    <!-- ============================================================ guardrails -->
+    <section class="panel" id="guardrails">
+      <div class="panel-head">
+        <h2>Guardrails</h2>
+        <span>the rules that stop the next trade, not grade the last one</span>
+      </div>
+      <div class="panel-body">
+
+        <label class="toggle">
+          <input id="st-guard-on" type="checkbox">
+          <span class="toggle-box" aria-hidden="true"></span>
+          <span class="toggle-text">
+            <b>Warn me when I break a rule</b>
+            <small>The journal and the dashboard show a banner the moment a limit below is reached. Nothing is ever blocked — you can always log the trade. The point is that you log it knowing.</small>
+          </span>
+        </label>
+
+        <div class="grid-3 guard-fields">
+          <label class="fld">
+            <span>Daily loss stop <small>% of balance</small></span>
+            <input id="st-maxloss" type="number" step="any" min="0" inputmode="decimal">
+          </label>
+          <label class="fld">
+            <span>Max trades a day</span>
+            <input id="st-maxtrades" type="number" step="1" min="0" inputmode="numeric">
+          </label>
+          <label class="fld">
+            <span>Cool off after <small>losses in a row</small></span>
+            <input id="st-cooloff" type="number" step="1" min="0" inputmode="numeric">
+          </label>
+        </div>
+        <p class="hint">Set any of them to 0 to switch that one rail off.</p>
+
+        <div class="guard-live" id="guard-live" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ trading profile -->
+    <section class="panel" id="trading">
+      <div class="panel-head"><h2>Trading profile</h2><span>from onboarding, editable here</span></div>
+      <div class="panel-body">
+        <fieldset class="chips">
+          <legend>Markets you trade</legend>
+          <div class="chip-picks" id="st-markets"></div>
+        </fieldset>
+
+        <fieldset class="chips">
+          <legend>Experience</legend>
+          <div class="chip-picks" id="st-exp"></div>
+        </fieldset>
+
+        <p class="hint">Markets drive your watchlist and which instrument the calculators open on.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ appearance -->
+    <section class="panel" id="appearance">
+      <div class="panel-head"><h2>Appearance</h2><span>dark by default, light is first class</span></div>
+      <div class="panel-body">
+        <div class="chip-picks" id="st-theme" role="group" aria-label="Theme"></div>
+        <p class="hint">Dark is the default on purpose — the system preference is deliberately not consulted, because most desktops report light and that would quietly undo the decision.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ data -->
+    <section class="panel" id="data">
+      <div class="panel-head"><h2>Your data</h2><span id="st-driver">stored on this device</span></div>
+      <div class="panel-body">
+
+        <div class="stat-grid" id="st-stats"></div>
+
+        <div class="row-actions">
+          <button class="btn btn-quiet" id="st-export-json">Export everything (JSON)</button>
+          <button class="btn btn-quiet" id="st-export-csv">Export trades (CSV)</button>
+          <button class="btn btn-quiet" id="st-import">Import a backup</button>
+          <input id="st-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="hint">A JSON export is a complete backup: trades, settings and preferences. Import replaces what is here, so export first.</p>
+
+        <div class="danger-zone">
+          <b>Irreversible</b>
+          <div class="row-actions">
+            <button class="btn btn-quiet danger" id="st-clear-trades">Delete all trades</button>
+            <button class="btn btn-quiet danger" id="st-clear-all">Reset the whole account</button>
+          </div>
+          <p class="hint">There is no undo and no copy on a server. Export first.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <p class="fine">Settings live on this device until the backend lands (step 11 of the plan). Exporting is how you move them to another machine.</p>
+
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="{{ url_for('static', filename='assets/store.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/instruments.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/settings.js') }}"></script>
+<!-- the curriculum is loaded here only so the shell search box can find
+     lessons, glossary terms and library files from any screen -->
+<script src="{{ url_for('static', filename='assets/lessons.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/shell.js') }}"></script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>

@@ -1,0 +1,619 @@
+/* Shared components — TheOnePercent
+   -------------------------------------------------------------------
+   Primitives that more than one screen needs: page headers, stat
+   cards, panels, trade-table cells, the small select control and the
+   empty/notice blocks. Loaded after shell.css (which owns the colour
+   tokens and both themes) and before any page stylesheet.
+
+   The rule that keeps this file useful: the moment a second screen
+   needs a piece of styling, it moves here instead of being copied.
+   Nothing in this file hard-codes a colour.
+   ------------------------------------------------------------------- */
+
+.page-head {
+  padding: 30px 0 6px;
+}
+
+.page-head h1 {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.page-head p {
+  margin: 6px 0 0;
+  max-width: 58ch;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.sel {
+  display: block;
+}
+
+.sel > span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.sel select {
+  height: 34px;
+  padding: 0 26px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 15px) 15px, calc(100% - 10px) 15px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.sel select:focus-visible,
+.fld input:focus-visible,
+.fld select:focus-visible,
+.fld textarea:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.btn.sm {
+  height: 30px;
+  padding: 0 11px;
+  font-size: 12.5px;
+}
+
+.btn kbd {
+  margin-left: 7px;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--tint);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.btn-primary kbd {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--on-brand);
+}
+
+.danger {
+  color: var(--down);
+}
+
+.dd-panel button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  color: var(--ink-700);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dd-panel button:hover {
+  background: var(--tint);
+  color: var(--ink);
+}
+
+.dd-panel button.danger:hover {
+  background: var(--down-soft);
+  color: var(--down);
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 15px;
+  margin: 16px 0 0;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--r-m);
+  background: var(--surface);
+}
+
+.notice.warn {
+  border-left-color: var(--warn-line);
+  background: var(--warn-soft);
+}
+
+.notice b {
+  display: block;
+  font-size: 13.5px;
+}
+
+.notice small {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.stat {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface);
+}
+
+.stat .k {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.stat .v {
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.stat .n {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat .v.up {
+  color: var(--up);
+}
+
+.stat .v.down {
+  color: var(--down);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 0 var(--r-m) var(--r-m) var(--r-m);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.panel-head span {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.panel-body {
+  padding: 18px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  /* paint containment, not decoration: without it the wide table leaks
+     into the document's scroll width on phones and the whole page slides
+     sideways. overflow alone does not stop that here. */
+  contain: paint;
+}
+
+.table-scroll table {
+  min-width: 560px;
+}
+
+.t-date b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.t-date small {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.side {
+  display: inline-block;
+  min-width: 40px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.side.long {
+  color: var(--up);
+  background: var(--up-soft);
+}
+
+.side.short {
+  color: var(--down);
+  background: var(--down-soft);
+}
+
+.t-sym {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.t-sym b {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.t-sym small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+td.num {
+  white-space: nowrap;
+}
+
+td.num.up {
+  color: var(--up);
+}
+
+td.num.down {
+  color: var(--down);
+}
+
+.t-open {
+  color: var(--warn-ink);
+  background: var(--warn-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.disc {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.disc-bar {
+  width: 42px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.disc-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--up);
+}
+
+.disc-bar.mid i {
+  background: var(--warn-ink);
+}
+
+.disc-bar.low i {
+  background: var(--down);
+}
+
+.shot-col {
+  width: 46px;
+}
+
+.thumb {
+  display: block;
+  width: 38px;
+  height: 26px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+th .xs {
+  display: none;
+}
+
+th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+}
+
+th[data-sort]:hover {
+  color: var(--ink-700);
+}
+
+th[data-sort].on::after {
+  content: " ↓";
+}
+
+th[data-sort].on.asc::after {
+  content: " ↑";
+}
+
+.empty {
+  padding: 52px 24px 56px;
+  text-align: center;
+}
+
+.empty h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.empty p {
+  margin: 0 auto 18px;
+  max-width: 46ch;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.empty .row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.fine {
+  max-width: 72ch;
+  margin: 18px 0 60px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--faint);
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------- forms
+   Field, fieldset and live-result primitives. These started life in
+   journal.css, and moved here the moment a second screen (the
+   calculators) needed the same inputs — a form on one screen must not
+   look different from the same form on another. */
+
+/* ---------------------------------------------------------- form */
+
+.fs {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.fs h3 {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fld {
+  display: block;
+  min-width: 0;
+}
+
+.fld > span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.fld > span small {
+  font-weight: 400;
+  color: var(--faint);
+}
+
+.fld input,
+.fld select,
+.fld textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.fld input[type="number"],
+.fld input[type="datetime-local"] {
+  font-family: var(--mono);
+}
+
+.fld textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.fld input[aria-invalid="true"] {
+  border-color: var(--down);
+}
+
+.fld.chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: end;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface);
+}
+
+.fld.chk input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.fld.chk span {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.hint {
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* live arithmetic block */
+.calc {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--line);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.calc div {
+  padding: 9px 11px;
+  background: var(--surface-2);
+}
+
+.calc .k {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.calc .v {
+  margin-top: 3px;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.calc .v.up {
+  color: var(--up);
+}
+
+.calc .v.down {
+  color: var(--down);
+}
+
+.calc .v.warn {
+  color: var(--warn-ink);
+}
+
+/* ---------------------------------------------------------- toast
+   Shared: any screen that saves something needs to say so once, briefly. */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  z-index: 80;
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--invert-bg);
+  color: var(--invert-ink, var(--on-brand));
+  font-size: 13px;
+  box-shadow: var(--shadow-m);
+}
+
+/* ------------------------------------------------------------ guardrails
+   The forward-looking warning, shown on the journal and the dashboard by
+   Store.guardrails(). It is a notice, not a modal: it never blocks the
+   next trade, it just refuses to let the user take it unknowingly. */
+
+.notice.guard {
+  border-color: var(--warn-line);
+  background: var(--warn-soft);
+  align-items: flex-start;
+}
+
+.notice.guard b {
+  color: var(--warn-ink);
+}
+
+.notice.guard ul {
+  margin: 6px 0 0;
+  padding-left: 17px;
+  color: var(--warn-ink);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.notice.guard ul li + li {
+  margin-top: 3px;
+}
+
+.notice.guard .btn {
+  flex: 0 0 auto;
+}

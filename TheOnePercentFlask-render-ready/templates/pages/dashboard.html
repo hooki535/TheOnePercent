@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard — TheOnePercent</title>
+    <meta
+      name="description"
+      content="Your TheOnePercent dashboard: a guided start until your first trade is logged."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233654ff'/%3E%3Ctext x='16' y='21' font-family='monospace' font-size='13' font-weight='600' fill='white' text-anchor='middle'%3E1%25%3C/text%3E%3C/svg%3E"
+    />
+    <script src="{{ url_for('static', filename='assets/theme.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/shell.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/components.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/dashboard.css') }}" />
+  </head>
+  <!-- one folder deep, logged-in state inferred from the onboarding profile -->
+  <body data-page="dashboard" data-depth="1">
+    <main id="main">
+      <header class="page-head">
+        <div class="wrap dh-row">
+          <div>
+            <h1 id="greeting">Welcome back</h1>
+            <p id="sub">Loading your preferences…</p>
+            <div class="chip-row" id="chips"></div>
+          </div>
+          <!-- one filter for the whole screen: every widget below obeys it -->
+          <div class="dh-filter">
+            <label class="sel">
+              <span>Account</span>
+              <select id="f-account"></select>
+            </label>
+            <label class="sel">
+              <span>Period</span>
+              <select id="f-range">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="all">All time</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </header>
+
+      <section class="dash">
+        <div class="wrap">
+          <!-- shown only when onboarding saved nothing -->
+          <div class="notice" id="notice" hidden>
+            <span>
+              <b>Nothing saved yet</b>
+              <small
+                >You skipped onboarding, so there are no markets or experience
+                level on file.</small
+              >
+            </span>
+            <a class="btn btn-primary" href="{{ url_for('pages.onboarding') }}"
+              >Pick my markets</a
+            >
+          </div>
+
+          <!-- guardrails: filled by dashboard.js from Store.guardrails() -->
+          <div class="notice guard" id="guard-warn" hidden></div>
+
+          <!-- every figure here is computed from the journal, never stored -->
+          <div class="stat-grid" id="stats"></div>
+
+          <div class="dash-grid" id="live-grid" hidden>
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Equity</h2>
+                <span id="eq-note">account currency</span>
+              </div>
+              <div class="panel-body">
+                <div class="eq-wrap">
+                  <canvas
+                    id="equity"
+                    height="180"
+                    aria-label="Equity curve built from your logged trades"
+                  ></canvas>
+                  <!-- hover readout: filled by dashboard.js, follows the cursor -->
+                  <div class="eq-tip" id="eq-tip" hidden></div>
+                </div>
+                <div class="eq-legend">
+                  <span
+                    ><i class="dot brand"></i> balance after each closed
+                    trade</span
+                  >
+                  <span id="eq-dd"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Where the R goes</h2>
+                <span>by setup</span>
+              </div>
+              <div class="panel-body" id="by-setup"></div>
+            </div>
+
+            <!-- the only forward-looking panel on the screen -->
+            <div class="panel span-2" id="panel-open" hidden>
+              <div class="panel-head">
+                <h2>On the table now</h2>
+                <span id="or-note">open positions</span>
+              </div>
+              <div class="panel-body" id="open-risk"></div>
+            </div>
+
+            <!-- diagnosis, not description: what to change tomorrow -->
+            <div class="panel span-2" id="panel-leaks">
+              <div class="panel-head">
+                <h2>What is costing you money</h2>
+                <span id="lk-note"></span>
+              </div>
+              <div class="panel-body" id="leaks"></div>
+            </div>
+
+            <div class="panel span-2">
+              <div class="panel-head">
+                <h2>Recent trades</h2>
+                <a class="panel-link" href="{{ url_for('pages.journal') }}">Open the journal →</a>
+              </div>
+              <div class="rt-scroll">
+                <table id="recent">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Symbol</th>
+                      <th>Setup</th>
+                      <th class="num">R</th>
+                      <th class="num">Net P/L</th>
+                      <th class="num">Discipline</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-grid" id="empty-grid">
+            <!-- guided empty state, per the roadmap: point at the journal,
+             never a wall of zeroes -->
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Start here</h2>
+                <span>3 steps</span>
+              </div>
+              <div class="panel-body empty">
+                <h3>Your dashboard fills itself in</h3>
+                <p>
+                  Nothing here is real yet — every widget on this screen is
+                  built from your own journal entries, so the first trade you
+                  log is what switches it on.
+                </p>
+                <ol class="steps">
+                  <li>
+                    <span class="num">1</span>
+                    <span
+                      ><b>Size the position first</b
+                      ><small
+                        >Risk one percent, let the calculator turn that into
+                        lots or contracts.</small
+                      ></span
+                    >
+                  </li>
+                  <li>
+                    <span class="num">2</span>
+                    <span
+                      ><b>Log the trade as you take it</b
+                      ><small
+                        >Entry, stop, target, screenshot and how you felt —
+                        while it is still honest.</small
+                      ></span
+                    >
+                  </li>
+                  <li>
+                    <span class="num">3</span>
+                    <span
+                      ><b>Review it at the end of the week</b
+                      ><small
+                        >The journal groups by setup, so patterns show up long
+                        before your balance does.</small
+                      ></span
+                    >
+                  </li>
+                </ol>
+                <div class="empty-cta">
+                  <a class="btn btn-primary" href="{{ url_for('pages.journal') }}"
+                    >Log your first trade</a
+                  >
+                  <a class="btn btn-quiet" href="{{ url_for('pages.calculators') }}"
+                    >Open the calculator</a
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- proves the onboarding choices carried through -->
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Your markets</h2>
+                <span id="wl-source">from onboarding</span>
+              </div>
+              <div id="watchlist"></div>
+              <div class="panel-foot" id="wl-foot">
+                Indicative prices. Add or remove symbols from the rail.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-foot">
+      <div class="wrap">
+        <div class="foot-base">
+          <span>TheOnePercent · Discipline compounds.</span>
+          <span
+            >Educational and journaling tools only. No broker execution, no
+            investment advice.</span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='assets/store.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/instruments.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/lessons.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/shell.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/dashboard.js') }}"></script>
+  <script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>

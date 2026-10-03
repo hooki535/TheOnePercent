@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set up your account — TheOnePercent</title>
+<meta name="description" content="Three questions that configure your dashboard, your calculators and where your lesson path starts.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="{{ url_for('static', filename='assets/theme.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/shell.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/onboarding.css') }}">
+</head>
+
+<!-- Focused flow: no top nav, no right rail (roadmap Foundation 03 mockup).
+     data-auth="in" because the user has just created an account. -->
+<body data-page="none" data-depth="1" data-auth="in" data-shell="none">
+
+<!-- ===================================================== progress -->
+<header class="ob-top">
+  <div class="ob-top-row">
+    <a href="{{ url_for('pages.index') }}" class="ob-brand">
+      <span class="mono" aria-hidden="true">1%</span>
+      THEONEPERCENT
+    </a>
+
+    <div class="ob-steps" role="group" aria-label="Sign-up progress">
+      <div class="ob-step" data-state="done">
+        <div class="ob-dot" aria-hidden="true"></div>
+        <small>Account</small>
+      </div>
+      <div class="ob-bar" data-filled="true" aria-hidden="true"></div>
+      <div class="ob-step" data-state="active" id="step-markets">
+        <div class="ob-dot" aria-hidden="true"></div>
+        <small>Markets</small>
+      </div>
+      <div class="ob-bar" data-filled="false" id="bar-level" aria-hidden="true"></div>
+      <div class="ob-step" data-state="todo" id="step-level">
+        <div class="ob-dot" aria-hidden="true"></div>
+        <small>Level</small>
+      </div>
+      <div class="ob-bar" data-filled="false" id="bar-account" aria-hidden="true"></div>
+      <div class="ob-step" data-state="todo" id="step-account">
+        <div class="ob-dot" aria-hidden="true"></div>
+        <small>Account</small>
+      </div>
+    </div>
+
+    <span class="ob-count" id="step-count">Step 2 of 4</span>
+  </div>
+</header>
+
+<main id="main" class="ob-wrap">
+  <form id="ob-form" novalidate>
+
+    <!-- ================================================= markets -->
+    <section class="ob-section">
+      <h1 class="ob-q">Which markets do you trade?</h1>
+      <p class="ob-q-sub">Pick as many as you like — this shapes your watchlist, your calculators and your lessons.</p>
+
+      <div class="ob-markets" role="group" aria-label="Markets you trade">
+
+        <button type="button" class="ob-card" data-market="Forex" aria-pressed="false">
+          <span class="ob-check" aria-hidden="true">
+            <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 4.6 8.3 9.5 3.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="ob-card-mark" aria-hidden="true">F</span>
+          <span>
+            <b>Forex</b>
+            <p>EURUSD · GBPJPY · majors &amp; crosses</p>
+          </span>
+        </button>
+
+        <button type="button" class="ob-card" data-market="Crypto" aria-pressed="false">
+          <span class="ob-check" aria-hidden="true">
+            <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 4.6 8.3 9.5 3.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="ob-card-mark" aria-hidden="true">C</span>
+          <span>
+            <b>Crypto</b>
+            <p>BTC · ETH · altcoins, 24/7 sessions</p>
+          </span>
+        </button>
+
+        <button type="button" class="ob-card" data-market="Futures" aria-pressed="false">
+          <span class="ob-check" aria-hidden="true">
+            <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 4.6 8.3 9.5 3.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="ob-card-mark" aria-hidden="true">F</span>
+          <span>
+            <b>Futures</b>
+            <p>NQ · ES · CL · tick-value aware</p>
+          </span>
+        </button>
+
+        <button type="button" class="ob-card" data-market="Stocks &amp; indices" aria-pressed="false">
+          <span class="ob-check" aria-hidden="true">
+            <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 4.6 8.3 9.5 3.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="ob-card-mark" aria-hidden="true">S</span>
+          <span>
+            <b>Stocks &amp; indices</b>
+            <p>US500 · NAS100 · single names</p>
+          </span>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- ================================================= experience -->
+    <section class="ob-section">
+      <h2 class="ob-q" style="font-size:22px">How much screen time do you have behind you?</h2>
+      <p class="ob-q-sub">This sets your starting lesson, your default risk cap and which widgets lead the dashboard.</p>
+
+      <div class="ob-levels">
+
+        <label class="ob-level">
+          <input type="radio" name="experience" value="New to trading" checked>
+          <span class="ob-radio" aria-hidden="true"></span>
+          <span>
+            <b>New to trading</b>
+            <p>Start at lesson 1. Guided journal prompts, smaller default risk, quiz gates on.</p>
+          </span>
+        </label>
+
+        <label class="ob-level">
+          <input type="radio" name="experience" value="Experienced">
+          <span class="ob-radio" aria-hidden="true"></span>
+          <span>
+            <b>Experienced</b>
+            <p>Skip the basics. Full calculator suite, advanced metrics, quiz gates optional.</p>
+          </span>
+        </label>
+
+      </div>
+    </section>
+
+    <!-- ================================================= account
+         The third question. Every calculator reads balance, currency and
+         default risk, so asking here is the difference between a sizing
+         tool that works on day one and one that quietly uses defaults. -->
+    <section class="ob-section">
+      <h2 class="ob-q" style="font-size:22px">What are you trading with?</h2>
+      <p class="ob-q-sub">Every calculator and every journal entry reads these three. Change them any time in settings.</p>
+
+      <div class="ob-account">
+        <label class="fld">
+          <span>Account currency</span>
+          <select id="ob-currency"></select>
+        </label>
+        <label class="fld">
+          <span>Starting balance</span>
+          <input id="ob-balance" type="number" step="any" min="0" inputmode="decimal" placeholder="1000">
+        </label>
+        <label class="fld">
+          <span>Risk per trade <small>% of balance</small></span>
+          <input id="ob-risk" type="number" step="any" min="0" max="100" inputmode="decimal" value="1">
+        </label>
+      </div>
+      <p class="ob-account-note" id="ob-risk-note"></p>
+    </section>
+
+    <!-- ================================================= actions -->
+    <div class="ob-actions">
+      <button type="submit" class="btn btn-primary btn-lg" id="ob-continue" disabled>Continue →</button>
+      <button type="button" class="ob-skip" id="ob-skip">Skip for now</button>
+      <span class="ob-hint" id="ob-hint">Pick at least one market to continue.</span>
+    </div>
+
+  </form>
+</main>
+
+<script src="{{ url_for('static', filename='assets/store.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/instruments.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/shell.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/onboarding.js') }}"></script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>

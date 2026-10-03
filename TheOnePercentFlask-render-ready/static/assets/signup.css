@@ -1,0 +1,139 @@
+/* Sign-up page — styling for the parts unique to this form (the two-column
+   field grid, phone row, password strength meter, terms row). Shared auth
+   chrome (brand panel, form panel shell, buttons, generic errors/hints)
+   lives in assets/auth.css, which must be loaded first. */
+
+.signup-panel {
+  max-width: 660px;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.field label .opt {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.field input,
+.field select {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink-700);
+  background: var(--surface);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+.field input.field-invalid {
+  border-color: var(--down);
+}
+
+.phone-row {
+  display: flex;
+  gap: 8px;
+}
+
+.phone-row select {
+  width: 92px;
+  flex-shrink: 0;
+}
+
+.strength-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--down);
+  transition: width 0.2s, background 0.2s;
+}
+
+.terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 20px 0 4px;
+}
+
+.terms-row input {
+  margin-top: 3px;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand);
+}
+
+.terms-row label {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.terms-row a {
+  color: var(--brand);
+  font-weight: 500;
+}
+
+.terms-row a:hover {
+  text-decoration: underline;
+}
+
+.signup-submit-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.signup-submit-row .btn[disabled] {
+  background: var(--disabled);
+  cursor: not-allowed;
+}
+
+.verify-note {
+  margin-top: 20px;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  color: var(--warn-ink);
+  border-radius: var(--r-s);
+  padding: 11px 14px;
+  font-size: 12.8px;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .field-grid { grid-template-columns: 1fr; }
+}

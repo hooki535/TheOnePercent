@@ -1,0 +1,3481 @@
+/* ══════════════════════════════════════════════════════════════════
+   charts.css — the Charts and Market Watch screen
+
+   Two things to know before editing:
+
+   1. Every rule is scoped to body[data-page="charts"]. The screen shares
+      class names with components.css (.card, .btn, .chip, .tab, .panel),
+      and scoping is what stops the two from fighting. Keep the scope.
+   2. The canvas cannot read a stylesheet, so charts-engine.js asks the
+      document for colours by name. The alias block below is that
+      contract: it maps the chart code's short names onto the app's real
+      tokens from shell.css, so the candles, grid and studies are drawn
+      in the same palette as the buttons around them. Change a colour in
+      shell.css and the chart follows.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* aliases the canvas reads by name */
+  /* The chart's "brighter accent" — used for hover fills and the second
+     compare line. shell.css already carries exactly this: --brand-dark
+     is darker on the light theme and lighter on the dark one, which is
+     what a hover state wants in each case. A literal matters here
+     because canvas colour parsing is stricter than CSS is. */
+  --accent-hi: var(--brand-dark);
+  --chart-grid: color-mix(in srgb, var(--line) 62%, transparent);
+  /* The canvas asks for colours by these short names. This is the whole
+     bridge between charts-engine.js and shell.css: the chart cannot read
+     a stylesheet, so it reads custom properties instead. Keep this list
+     in step with the css('--x') calls in charts-engine.js. */
+  --grid: var(--chart-grid);
+  --bg: var(--paper);
+  --bg2: var(--surface);
+  --surf: var(--surface);
+  --surf2: var(--surface-2);
+  --txt: var(--ink);
+  --txt2: var(--muted);
+  --txt3: var(--faint);
+  --line2: var(--line-strong);
+  --acc: var(--brand);
+  --acc2: var(--accent-hi);
+  --accsoft: var(--brand-soft);
+  --dn: var(--down);
+  --warn: var(--warn-ink);
+
+  /* study colours. Distinguishable at 1px on both themes, and none of
+     them is the up/down green or red — a moving average that looks like
+     a candle body is a misread waiting to happen. */
+  --i1: #6b8afd;
+  --i2: #c9821a;
+  --i3: #2f9e7a;
+  --i4: #9a6cd8;
+  --i5: #2b8fb5;
+}
+
+[data-theme="dark"] {
+  --i1: #8ba4ff;
+  --i2: #f0b350;
+  --i3: #46c69d;
+  --i4: #b78ef0;
+  --i5: #5fbfe0;
+  --chart-grid: rgba(255, 255, 255, 0.05);
+  --grid: rgba(255, 255, 255, 0.05);
+}
+
+/* ── page frame ────────────────────────────────────────────────────
+   Charts is the one screen that does not scroll: the chart fills the
+   space left over after the app nav and the toolbar, and each pane
+   scrolls on its own. */
+body[data-page="charts"] {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.45;
+}
+body[data-page="charts"] .topnav {
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .mono,
+body[data-page="charts"] input[type="number"],
+body[data-page="charts"] kbd {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+body[data-page="charts"] button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+body[data-page="charts"] input {
+  font: inherit;
+  color: inherit;
+}
+body[data-page="charts"] :focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+body[data-page="charts"] .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* ── tokens ───────────────────────────────────────────────────── */
+body[data-page="charts"] .mono,
+body[data-page="charts"] input[type="number"],
+body[data-page="charts"] kbd {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+body[data-page="charts"] button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+body[data-page="charts"] input {
+  font: inherit;
+  color: inherit;
+}
+body[data-page="charts"] ::selection {
+  background: var(--brand-soft);
+}
+
+/* ── top bar ──────────────────────────────────────────────────── */
+body[data-page="charts"] .ctoolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 46px;
+  height: 46px;
+  padding: 0 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 40;
+}
+body[data-page="charts"] .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-hi);
+  text-decoration: none;
+}
+body[data-page="charts"] .logo {
+  width: 20px;
+  height: 20px;
+}
+body[data-page="charts"] .brandname {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  color: var(--muted);
+}
+body[data-page="charts"] .sep {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+}
+body[data-page="charts"] .spacer {
+  flex: 1;
+}
+
+body[data-page="charts"] .sym {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+body[data-page="charts"] .sym:hover {
+  background: var(--surface);
+}
+body[data-page="charts"] #symName {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+body[data-page="charts"] .sym-meta {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+body[data-page="charts"] .caret {
+  width: 9px;
+  height: 6px;
+  color: var(--faint);
+  flex: 0 0 auto;
+}
+
+body[data-page="charts"] .chips {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 2px;
+}
+body[data-page="charts"] .chips.small {
+  background: none;
+  padding: 0;
+  flex-wrap: wrap;
+}
+body[data-page="charts"] .chip {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 500;
+}
+body[data-page="charts"] .chip:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+body[data-page="charts"] .chip.on {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+body[data-page="charts"] .chips.small .chip {
+  border: 1px solid var(--line);
+}
+body[data-page="charts"] .chips.small .chip.on {
+  border-color: var(--brand);
+}
+
+body[data-page="charts"] .tb-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+body[data-page="charts"] .tb-btn:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+body[data-page="charts"] .tb-btn.on {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+  border-color: var(--brand);
+}
+body[data-page="charts"] .tb-btn.primary {
+  background: var(--brand);
+  color: var(--on-brand);
+  font-weight: 500;
+}
+body[data-page="charts"] .tb-btn.primary:hover {
+  background: var(--accent-hi);
+}
+body[data-page="charts"] .tb-btn.ghost {
+  border: 1px solid var(--line);
+  font-size: 11px;
+}
+body[data-page="charts"] .tb-btn b {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 11px;
+  background: var(--surface-2);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+body[data-page="charts"] .dotc {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-hi);
+}
+body[data-page="charts"] kbd {
+  font-size: 9.5px;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 3px;
+  opacity: 0.85;
+}
+
+body[data-page="charts"] .risk-pill {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+body[data-page="charts"] .rp-label {
+  white-space: nowrap;
+  font-size: 10.5px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+body[data-page="charts"] .rp-bar {
+  width: 54px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+body[data-page="charts"] .rp-bar i {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  width: 40%;
+}
+body[data-page="charts"] .rp-val {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+body[data-page="charts"] .menu-wrap {
+  position: relative;
+}
+/* Fixed, not absolute, and positioned by `placeMenu()` in charts.js.
+
+   These dropdowns were invisible. `.ct-l` and `.ctoolbar` both carry
+   `overflow: hidden` — they have to, or a long symbol name pushes the
+   toolbar wider than the chart — and an absolutely positioned panel
+   hanging 34px below a 34px toolbar is entirely outside that box, so it
+   was clipped away to nothing. The panel was in the DOM, it had layout,
+   `getComputedStyle` reported it visible: it simply never painted. The
+   interval, chart-type and More menus were all affected.
+
+   Taking them out of flow with `position: fixed` escapes both clipping
+   ancestors. The cost is that CSS can no longer place them under their
+   button, which is what `placeMenu()` is for. */
+body[data-page="charts"] .menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-l);
+  padding: 5px;
+  display: none;
+  z-index: 60;
+}
+body[data-page="charts"] .menu.open {
+  display: block;
+}
+body[data-page="charts"] .menu button {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+}
+body[data-page="charts"] .menu button:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+body[data-page="charts"] .menu button.on {
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .menu button span {
+  color: var(--faint);
+  font-size: 10.5px;
+}
+body[data-page="charts"] .menu .mh {
+  padding: 6px 8px 3px;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* ── shell ────────────────────────────────────────────────────── */
+body[data-page="charts"] .cshell {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+body[data-page="charts"] .crail {
+  flex: 0 0 42px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+}
+body[data-page="charts"] .rtool {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  position: relative;
+}
+body[data-page="charts"] .rtool svg {
+  width: 17px;
+  height: 17px;
+}
+body[data-page="charts"] .rtool:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+body[data-page="charts"] .rtool.on {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+body[data-page="charts"] .rtool .tip {
+  position: absolute;
+  left: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+  box-shadow: var(--shadow-l);
+  z-index: 70;
+}
+body[data-page="charts"] .rtool .tip kbd {
+  margin-left: 5px;
+}
+body[data-page="charts"] .rtool:hover .tip {
+  opacity: 1;
+}
+/* ── rail groups and flyouts ──────────────────────────────────
+   The rail is a column of group buttons; each has a caret that opens a
+   flyout to its right. The flyout is absolutely positioned against the
+   rail (which is position:relative) and offset to sit level with the
+   button that opened it, via the --fly-top custom property set inline. */
+body[data-page="charts"] .crail {
+  position: relative;
+}
+body[data-page="charts"] .rgrp {
+  position: relative;
+  width: 30px;
+  height: 30px;
+}
+body[data-page="charts"] .rgrp .rtool {
+  width: 30px;
+  height: 30px;
+}
+body[data-page="charts"] .rcaret {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+  border-radius: 0 0 5px 0;
+  z-index: 2;
+}
+body[data-page="charts"] .rcaret svg {
+  width: 4px;
+  height: 4px;
+}
+body[data-page="charts"] .rgrp:hover .rcaret,
+body[data-page="charts"] .rcaret[aria-expanded="true"] {
+  color: var(--ink);
+}
+body[data-page="charts"] .rcaret:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+body[data-page="charts"] .rfly {
+  position: absolute;
+  left: 41px;
+  top: max(4px, min(var(--fly-top, 0px), calc(100% - 220px)));
+  min-width: 232px;
+  max-height: calc(100vh - var(--nav-h) - 90px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-m);
+  box-shadow: var(--shadow-l);
+  padding: 5px;
+  z-index: 90;
+}
+body[data-page="charts"] .fly-h {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 4px 8px 6px;
+}
+body[data-page="charts"] .fly-s {
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 8px 8px 3px;
+  border-top: 1px solid var(--line-soft);
+  margin-top: 3px;
+}
+body[data-page="charts"] .fly-h + .fly-s {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 2px;
+}
+/* A flyout row plus its favourite star. The row stays a full-width button and
+   the star sits beside it, revealed on hover or when it is already set — an
+   always-visible column of forty grey stars would be louder than the tools. */
+body[data-page="charts"] .fly-w {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+body[data-page="charts"] .fly-star {
+  flex: 0 0 20px;
+  display: grid;
+  place-items: center;
+  height: 24px;
+  border-radius: 5px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--faint);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
+}
+body[data-page="charts"] .fly-w:hover .fly-star,
+body[data-page="charts"] .fly-star:focus-visible,
+body[data-page="charts"] .fly-star.on {
+  opacity: 1;
+}
+body[data-page="charts"] .fly-star.on {
+  color: var(--warn);
+}
+body[data-page="charts"] .fly-star:hover {
+  background: var(--tint);
+  color: var(--ink);
+}
+body[data-page="charts"] .fly-star:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+/* A favourite in the rail is the group button without the caret, so it needs
+   the same footprint or the column looks ragged where favourites end. */
+body[data-page="charts"] .rtool.rfav::after {
+  content: "";
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+body[data-page="charts"] .fly-r {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--ink-700);
+  text-align: left;
+}
+body[data-page="charts"] .fly-i {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  color: var(--muted);
+}
+body[data-page="charts"] .fly-i svg {
+  width: 16px;
+  height: 16px;
+}
+body[data-page="charts"] .fly-n {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body[data-page="charts"] .fly-r kbd {
+  flex: 0 0 auto;
+  color: var(--faint);
+}
+body[data-page="charts"] .fly-r:hover {
+  background: var(--tint);
+  color: var(--ink);
+}
+body[data-page="charts"] .fly-r:hover .fly-i {
+  color: var(--ink);
+}
+body[data-page="charts"] .fly-r.on {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .fly-r.on .fly-i {
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .fly-f {
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--faint);
+  padding: 7px 8px 3px;
+  margin-top: 4px;
+  border-top: 1px solid var(--line-soft);
+}
+/* On a phone the rail is a horizontal strip, so the flyout has to come
+   from the top rather than the side or it opens off-screen. */
+@media (max-width: 720px) {
+  body[data-page="charts"] .rfly {
+    left: 4px;
+    right: 4px;
+    top: 40px;
+    min-width: 0;
+    max-height: 52vh;
+  }
+}
+
+body[data-page="charts"] .rdiv {
+  width: 20px;
+  height: 1px;
+  background: var(--line);
+  margin: 4px 0;
+}
+
+body[data-page="charts"] .grid {
+  flex: 1;
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  min-width: 0;
+}
+body[data-page="charts"] .grid[data-layout="1"] {
+  grid-template-columns: 1fr;
+}
+body[data-page="charts"] .grid[data-layout="2"] {
+  grid-template-columns: 1fr 1fr;
+}
+body[data-page="charts"] .grid[data-layout="4"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+body[data-page="charts"] .grid[data-layout="6"] {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+body[data-page="charts"] .cw {
+  position: relative;
+  background: var(--paper);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+body[data-page="charts"] .cw.sel {
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+body[data-page="charts"] .cw canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+body[data-page="charts"] .cw .lwc-host {
+  position: absolute;
+  pointer-events: none;
+}
+body[data-page="charts"] .leg {
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 5;
+}
+body[data-page="charts"] .leg-1 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+}
+body[data-page="charts"] .leg-sym {
+  font-weight: 600;
+  font-size: 12.5px;
+}
+body[data-page="charts"] .leg-int {
+  color: var(--faint);
+  font-size: 10.5px;
+}
+body[data-page="charts"] .leg-o {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  gap: 7px;
+}
+body[data-page="charts"] .leg-o b {
+  font-weight: 500;
+}
+body[data-page="charts"] .leg-i {
+  font-size: 10.5px;
+  color: var(--faint);
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  max-width: 420px;
+}
+body[data-page="charts"] .leg-i span i {
+  font-style: normal;
+  font-family: var(--mono);
+}
+body[data-page="charts"] .badge {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  gap: 5px;
+  z-index: 5;
+}
+body[data-page="charts"] .bdg {
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+}
+body[data-page="charts"] .bdg.live {
+  color: var(--up);
+  border-color: color-mix(in srgb, var(--up) 40%, transparent);
+}
+body[data-page="charts"] .bdg.rep {
+  color: var(--warn-ink);
+  border-color: color-mix(in srgb, var(--warn-ink) 45%, transparent);
+}
+
+/* ── right panel ──────────────────────────────────────────────── */
+body[data-page="charts"] .panel {
+  flex: 0 0 288px;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+body[data-page="charts"] .tabs {
+  display: flex;
+  flex: 0 0 34px;
+  border-bottom: 1px solid var(--line);
+}
+body[data-page="charts"] .tab {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--faint);
+  border-bottom: 2px solid transparent;
+}
+body[data-page="charts"] .tab:hover {
+  color: var(--muted);
+}
+body[data-page="charts"] .tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--brand);
+}
+body[data-page="charts"] .tabpane {
+  display: none;
+  overflow-y: auto;
+  padding: 9px;
+  gap: 9px;
+  flex-direction: column;
+  flex: 1;
+}
+body[data-page="charts"] .tabpane.active {
+  display: flex;
+}
+body[data-page="charts"] .tabpane::-webkit-scrollbar,
+body[data-page="charts"] .pal-list::-webkit-scrollbar,
+body[data-page="charts"] .col::-webkit-scrollbar {
+  width: 8px;
+}
+body[data-page="charts"] .tabpane::-webkit-scrollbar-thumb,
+body[data-page="charts"] .pal-list::-webkit-scrollbar-thumb,
+body[data-page="charts"] .col::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 4px;
+}
+
+body[data-page="charts"] .card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+}
+body[data-page="charts"] .card.soft {
+  background: transparent;
+  border-style: dashed;
+}
+body[data-page="charts"] .card-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+body[data-page="charts"] .lbl {
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+body[data-page="charts"] .hint {
+  font-size: 11px;
+  color: var(--faint);
+  margin: 4px 0 9px;
+  line-height: 1.4;
+}
+body[data-page="charts"] .side-toggle {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: 5px;
+  padding: 2px;
+}
+body[data-page="charts"] .st {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--faint);
+}
+body[data-page="charts"] .st.on {
+  background: var(--up);
+  color: var(--on-up);
+  font-weight: 600;
+}
+body[data-page="charts"] .st.on[data-side="short"] {
+  background: var(--down);
+  color: var(--on-down);
+}
+
+body[data-page="charts"] .frow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+body[data-page="charts"] .frow label {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+body[data-page="charts"] .fin {
+  display: flex;
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 0 6px;
+  width: 118px;
+}
+body[data-page="charts"] .fin:focus-within {
+  border-color: var(--brand);
+}
+body[data-page="charts"] .fin input {
+  width: 100%;
+  border: 0;
+  background: none;
+  outline: none;
+  text-align: right;
+  font-size: 12px;
+  padding: 4px 0;
+}
+body[data-page="charts"] .fin input::-webkit-outer-spin-button,
+body[data-page="charts"] .fin input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+body[data-page="charts"] .pre,
+body[data-page="charts"] .post {
+  font-size: 11px;
+  color: var(--faint);
+}
+
+body[data-page="charts"] .readouts {
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+body[data-page="charts"] .ro {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  /* The sub-values ("5.2% of risk") wrap under their row in a narrow panel
+     instead of pushing the whole layout sideways. */
+  flex-wrap: wrap;
+  font-size: 11.5px;
+}
+body[data-page="charts"] .ro > * {
+  min-width: 0;
+}
+body[data-page="charts"] .ro span {
+  color: var(--muted);
+}
+body[data-page="charts"] .ro b {
+  font-family: var(--mono);
+  font-weight: 500;
+}
+body[data-page="charts"] .ro.big b {
+  font-size: 14px;
+}
+body[data-page="charts"] .ro.big span {
+  align-self: center;
+}
+body[data-page="charts"] .ro em {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--faint);
+  margin-left: 5px;
+}
+
+body[data-page="charts"] .warn {
+  margin-top: 9px;
+  border: 1px solid color-mix(in srgb, var(--warn-ink) 55%, transparent);
+  background: color-mix(in srgb, var(--warn-ink) 12%, transparent);
+  border-radius: 7px;
+  padding: 8px;
+}
+body[data-page="charts"] .warn-h {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--warn-ink);
+  margin-bottom: 3px;
+}
+body[data-page="charts"] .warn p {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+body[data-page="charts"] .warn-a {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+body[data-page="charts"] .src-note {
+  color: var(--muted);
+  font-size: 10px;
+  color: var(--faint);
+  border-top: 1px solid var(--line);
+  margin-top: 9px;
+  padding-top: 7px;
+  line-height: 1.4;
+}
+
+/* Scoped to the chart's own chrome on purpose. `.btn` is the shell's global
+   button class, so an unscoped `body[data-page="charts"] .btn` also repainted
+   the shared nav — it was what greyed out "Sign up" to a 1.09:1 contrast
+   ratio against its own brand fill. */
+body[data-page="charts"]
+  :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
+  .btn {
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+body[data-page="charts"]
+  :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
+  .btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+body[data-page="charts"]
+  :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
+  .btn.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+  font-weight: 500;
+}
+body[data-page="charts"]
+  :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
+  .btn.primary:hover {
+  background: var(--accent-hi);
+}
+body[data-page="charts"]
+  :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
+  .btn.sm {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+body[data-page="charts"]
+  :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
+  .btn.block {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+body[data-page="charts"] .coach-b {
+  font-size: 11.5px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+body[data-page="charts"] .coach-b div {
+  display: flex;
+  gap: 6px;
+  line-height: 1.4;
+}
+body[data-page="charts"] .coach-b i {
+  color: var(--accent-hi);
+  font-style: normal;
+}
+
+/* ── the watch tab's view switcher ─────────────────────────────
+   A segmented control, not a second row of tabs: the panel already has a tab
+   strip above it and two identical strips stacked would read as one confused
+   one. Sticky, so scrolling a long watchlist never scrolls away the way back
+   to Details. */
+body[data-page="charts"] .wsub {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-2, var(--surface));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .wsub-b {
+  flex: 1;
+  padding: 5px 4px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  white-space: nowrap;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+body[data-page="charts"] .wsub-b:hover {
+  color: var(--ink);
+}
+body[data-page="charts"] .wsub-b.active {
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: var(--shadow-s, 0 1px 2px rgb(0 0 0 / 0.18));
+}
+body[data-page="charts"] .wsub-b:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -1px;
+}
+body[data-page="charts"] .wsub-p {
+  display: none;
+  flex-direction: column;
+  gap: 9px;
+  /* The list view is the tall one: it takes whatever the pane has left, which
+     is the whole point of splitting these apart. */
+  flex: 1 1 auto;
+  min-height: 0;
+}
+body[data-page="charts"] .wsub-p.active {
+  display: flex;
+}
+/* The contract block under the symbol card in the Details view. */
+body[data-page="charts"] .sc-spec {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+body[data-page="charts"] .sc-sh {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 6px;
+}
+body[data-page="charts"] .sc-sr {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 3.5px 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line-soft, var(--line));
+}
+body[data-page="charts"] .sc-sr:last-of-type {
+  border-bottom: 0;
+}
+body[data-page="charts"] .sc-sr b {
+  color: var(--ink);
+  font-weight: 600;
+  text-align: right;
+}
+body[data-page="charts"] .sc-sn {
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+body[data-page="charts"] .cmp-n {
+  width: 100%;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+body[data-page="charts"] .cmp-n b {
+  color: var(--ink);
+}
+body[data-page="charts"] .wsub-note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+body[data-page="charts"] .wl {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+body[data-page="charts"] .wr {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 9px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+body[data-page="charts"] .wr:last-child {
+  border-bottom: 0;
+}
+body[data-page="charts"] .wr:hover {
+  background: var(--surface-2);
+}
+body[data-page="charts"] .wr.on {
+  box-shadow: inset 2px 0 0 var(--brand);
+}
+body[data-page="charts"] .wr-s {
+  font-size: 12px;
+  font-weight: 500;
+}
+body[data-page="charts"] .wr-n {
+  font-size: 9.5px;
+  color: var(--faint);
+  display: block;
+  font-weight: 400;
+}
+body[data-page="charts"] .wr-p {
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+body[data-page="charts"] .wr-c {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-align: right;
+  min-width: 48px;
+}
+body[data-page="charts"] .up {
+  color: var(--up);
+}
+.dn {
+  color: var(--down);
+}
+body[data-page="charts"] .cmp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+body[data-page="charts"] .jl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+body[data-page="charts"] .je {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px;
+  cursor: pointer;
+}
+body[data-page="charts"] .je:hover {
+  border-color: var(--line-strong);
+}
+body[data-page="charts"] .je-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+body[data-page="charts"] .je-s {
+  font-size: 12px;
+  font-weight: 600;
+}
+body[data-page="charts"] .je-r {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+body[data-page="charts"] .je-t {
+  font-size: 10px;
+  color: var(--faint);
+  margin-top: 1px;
+}
+body[data-page="charts"] .je-tags {
+  display: flex;
+  gap: 4px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+body[data-page="charts"] .tag {
+  font-size: 9.5px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+body[data-page="charts"] .tag.rule {
+  color: var(--accent-hi);
+  border-color: var(--brand);
+}
+body[data-page="charts"] .je-n {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+body[data-page="charts"] .al {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 9px;
+}
+body[data-page="charts"] .ai {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 8px 9px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+body[data-page="charts"] .ai-d {
+  flex: 1;
+}
+body[data-page="charts"] .ai-t {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+body[data-page="charts"] .ai-c {
+  font-size: 10.5px;
+  color: var(--faint);
+  font-family: var(--mono);
+  margin-top: 2px;
+}
+body[data-page="charts"] .sw {
+  width: 26px;
+  height: 15px;
+  border-radius: 8px;
+  background: var(--line-strong);
+  position: relative;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+body[data-page="charts"] .sw i {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: 0.15s;
+}
+body[data-page="charts"] .sw.on {
+  background: var(--brand);
+}
+.sw.on i {
+  left: 13px;
+  background: #fff;
+}
+
+/* ── replay bar ───────────────────────────────────────────────── */
+body[data-page="charts"] .replaybar {
+  flex: 0 0 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+body[data-page="charts"] .rb-btn {
+  width: 26px;
+  height: 24px;
+  border-radius: 5px;
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+  font-size: 11px;
+}
+body[data-page="charts"] .rb-btn:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+body[data-page="charts"] .rb-btn.close {
+  width: auto;
+  padding: 0 9px;
+  font-size: 11px;
+  margin-left: auto;
+}
+body[data-page="charts"] .rb-speeds {
+  display: flex;
+  gap: 2px;
+}
+body[data-page="charts"] .rb-speeds .chip {
+  font-size: 10.5px;
+  padding: 3px 6px;
+}
+body[data-page="charts"] #rbScrub {
+  width: 220px;
+  accent-color: var(--brand);
+}
+body[data-page="charts"] .rb-clock {
+  font-size: 11px;
+  color: var(--muted);
+}
+body[data-page="charts"] .rb-check {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+body[data-page="charts"] .rb-check input {
+  accent-color: var(--brand);
+}
+body[data-page="charts"] .rb-note {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+/* ── modals ───────────────────────────────────────────────────── */
+body[data-page="charts"] .modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 10, 22, 0.6);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  z-index: 200;
+}
+body[data-page="charts"] .modal.top {
+  place-items: start center;
+  padding-top: 12vh;
+}
+/* `.sheet` is also the class shell.css uses for the mobile navigation
+   drawer, and that rule parks it at `position: fixed; inset: 0; z-index: 60;
+   visibility: hidden` until `.sheet.open` is added. Nothing here adds that
+   class, so every dialog on this page — indicators, chart settings, keyboard
+   shortcuts, saved workspaces, the symbol search, the command palette — was
+   invisible and stretched to the full viewport. They had layout and their
+   text was in the DOM, which is why nothing threw and `hidden` looked
+   correctly toggled; `getComputedStyle` was the only thing that said so.
+
+   Undoing the drawer's geometry and visibility is the whole fix. The real
+   cure is not to share a class name between a full-screen drawer and a
+   centred dialog, but renaming one of them touches every page, and this
+   override is scoped tightly enough to say what it is doing. */
+body[data-page="charts"] .modal .sheet {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  visibility: visible;
+}
+body[data-page="charts"] .sheet {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow-l);
+  width: 560px;
+  max-width: 94vw;
+  overflow: hidden;
+}
+body[data-page="charts"] .sheet.wide {
+  width: 880px;
+}
+body[data-page="charts"] .sheet.slim {
+  width: 520px;
+}
+body[data-page="charts"] .sheet-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--line);
+}
+body[data-page="charts"] .sheet-h b {
+  font-size: 13.5px;
+}
+body[data-page="charts"] .sh-sub {
+  display: block;
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 2px;
+}
+body[data-page="charts"] .search,
+body[data-page="charts"] .pal-in {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 12px;
+  outline: none;
+}
+body[data-page="charts"] .search:focus,
+body[data-page="charts"] .pal-in:focus {
+  border-color: var(--brand);
+}
+body[data-page="charts"] .pal-in {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 13px 15px;
+  font-size: 14px;
+}
+body[data-page="charts"] .x {
+  font-size: 10px;
+  color: var(--faint);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+body[data-page="charts"] .sheet-b {
+  padding: 12px 13px;
+  max-height: 66vh;
+  overflow-y: auto;
+}
+body[data-page="charts"] .sheet-b.threecol {
+  display: grid;
+  grid-template-columns: 186px 1fr 244px;
+  gap: 0;
+  padding: 0;
+  height: 430px;
+}
+body[data-page="charts"] .col {
+  overflow-y: auto;
+  padding: 9px;
+  border-right: 1px solid var(--line);
+}
+body[data-page="charts"] .col:last-child {
+  border-right: 0;
+}
+body[data-page="charts"] .fam {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 7px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  color: var(--muted);
+  cursor: pointer;
+}
+body[data-page="charts"] .fam:hover {
+  background: var(--surface-2);
+}
+body[data-page="charts"] .fam.on {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .fam b {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--faint);
+}
+body[data-page="charts"] .fam.jd {
+  color: var(--accent-hi);
+}
+
+/* indicator templates — a saved set of studies, applied to any chart */
+body[data-page="charts"] .tpl-g {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+}
+body[data-page="charts"] .tpl {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+}
+body[data-page="charts"] .tpl-n {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-page="charts"] .tpl-n span {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--faint);
+}
+body[data-page="charts"] .tpl-n:hover {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .tpl-b {
+  flex: none;
+  width: 22px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+body[data-page="charts"] .tpl-b:hover {
+  background: var(--surface-3, var(--surface-2));
+  color: var(--text);
+}
+body[data-page="charts"] .tpl-n:focus-visible,
+body[data-page="charts"] .tpl-b:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+body[data-page="charts"] .ir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+body[data-page="charts"] .ir:hover {
+  background: var(--surface-2);
+}
+body[data-page="charts"] .ir-n {
+  font-size: 12px;
+}
+body[data-page="charts"] .ir-d {
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 1px;
+  line-height: 1.35;
+}
+body[data-page="charts"] .ir-a {
+  font-size: 10.5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 2px 7px;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .ir.added .ir-a {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .settings .sp {
+  margin-bottom: 11px;
+}
+body[data-page="charts"] .sp-h {
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+body[data-page="charts"] .sp-h button {
+  font-size: 10px;
+  color: var(--faint);
+}
+body[data-page="charts"] .sp-r {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+body[data-page="charts"] .sp-r input[type="number"] {
+  width: 56px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  text-align: right;
+  padding: 2px 5px;
+  outline: none;
+}
+body[data-page="charts"] .sp-r input[type="color"] {
+  width: 26px;
+  height: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: none;
+  padding: 0;
+}
+body[data-page="charts"] .empty {
+  font-size: 11px;
+  color: var(--faint);
+  text-align: center;
+  padding: 26px 10px;
+  line-height: 1.5;
+}
+
+body[data-page="charts"] .cond {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+body[data-page="charts"] .cr {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+body[data-page="charts"] .cr select,
+body[data-page="charts"] .cr input {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 5px 7px;
+  font-size: 11.5px;
+  outline: none;
+  width: 100%;
+}
+body[data-page="charts"] .cr .rm {
+  color: var(--faint);
+  font-size: 12px;
+  padding: 0 4px;
+}
+body[data-page="charts"] .cond-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 12px;
+  flex-wrap: wrap;
+}
+body[data-page="charts"] .andor {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: 5px;
+  padding: 2px;
+}
+body[data-page="charts"] .ao {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--faint);
+}
+body[data-page="charts"] .ao.on {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+body[data-page="charts"] .deliv {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+body[data-page="charts"] .sheet-f {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 11px;
+}
+
+body[data-page="charts"] .pal-list {
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 6px;
+}
+body[data-page="charts"] .pi {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+body[data-page="charts"] .pi.sel,
+body[data-page="charts"] .pi:hover {
+  background: var(--surface-2);
+}
+body[data-page="charts"] .pi-k {
+  font-size: 9.5px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  width: 74px;
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .pi-t {
+  font-size: 12px;
+  flex: 1;
+}
+body[data-page="charts"] .pi-s {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+body[data-page="charts"] .keys {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 16px;
+}
+body[data-page="charts"] .kr {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
+
+/* ── toasts + tour ────────────────────────────────────────────── */
+body[data-page="charts"] .toasts {
+  position: fixed;
+  right: 302px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  z-index: 300;
+  align-items: flex-end;
+}
+body[data-page="charts"] .toast {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--brand);
+  border-radius: 7px;
+  padding: 8px 11px;
+  box-shadow: var(--shadow-l);
+  max-width: 330px;
+  animation: tin 0.22s ease-out;
+}
+body[data-page="charts"] .toast.warn {
+  border-left-color: var(--warn-ink);
+}
+body[data-page="charts"] .toast.up {
+  border-left-color: var(--up);
+}
+body[data-page="charts"] .toast b {
+  font-size: 11.5px;
+  display: block;
+}
+body[data-page="charts"] .toast p {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+@keyframes tin {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+body[data-page="charts"] .tourtip {
+  position: fixed;
+  left: 52px;
+  bottom: 16px;
+  width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--brand);
+  border-radius: 9px;
+  padding: 11px;
+  box-shadow: var(--shadow-l);
+  z-index: 300;
+}
+body[data-page="charts"] .tourtip b {
+  font-size: 12px;
+}
+body[data-page="charts"] .tourtip p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 5px 0 9px;
+  line-height: 1.45;
+}
+
+@media (max-width: 1180px) {
+  body[data-page="charts"] .panel {
+    flex-basis: 250px;
+  }
+  body[data-page="charts"] .rb-note,
+  body[data-page="charts"] .risk-pill {
+    display: none;
+  }
+  body[data-page="charts"] .toasts {
+    right: 262px;
+  }
+}
+@media (max-width: 900px) {
+  body[data-page="charts"] .brandname,
+  body[data-page="charts"] .sym-meta {
+    display: none;
+  }
+  body[data-page="charts"] .panel {
+    display: none;
+  }
+  body[data-page="charts"] .toasts {
+    right: 12px;
+  }
+}
+
+/* hidden wins over display rules */
+[hidden] {
+  display: none !important;
+}
+
+body[data-page="charts"] .waves {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+body[data-page="charts"] .wv {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 10px;
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 7px;
+}
+body[data-page="charts"] .wv:last-child {
+  border-bottom: 0;
+}
+body[data-page="charts"] .wv-t {
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+}
+body[data-page="charts"] .wv-t.w1 {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .wv-t.w2 {
+  background: color-mix(in srgb, var(--warn-ink) 18%, transparent);
+  color: var(--warn-ink);
+}
+body[data-page="charts"] .wv-t.w3 {
+  background: color-mix(in srgb, var(--i4) 18%, transparent);
+  color: var(--i4);
+}
+body[data-page="charts"] .wv-b {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+body[data-page="charts"] .wv-b b {
+  color: var(--ink);
+  font-weight: 600;
+}
+body[data-page="charts"] .wv-t.w0 {
+  background: color-mix(in srgb, var(--faint) 16%, transparent);
+  color: var(--muted);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   v2 additions — data window, scale buttons, legend chips, watchlist
+   sparklines, objects tree, alert log, settings rows, symbol search,
+   workspaces, context menu, 3-up layout, mobile sheet.
+   ══════════════════════════════════════════════════════════════════ */
+
+body[data-page="charts"] .mh {
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+  margin: 2px 0 7px;
+}
+body[data-page="charts"] .warn-b {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+body[data-page="charts"] .tb-btn.icon {
+  padding: 5px 8px;
+  font-size: 13px;
+  line-height: 1;
+}
+body[data-page="charts"] .lbl.inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+body[data-page="charts"] .mobonly {
+  display: none;
+}
+
+/* data window (top-right of a chart) */
+body[data-page="charts"] .dwin {
+  position: absolute;
+  top: 30px;
+  right: 66px;
+  z-index: 6;
+  min-width: 132px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+body[data-page="charts"] .dw-h {
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+body[data-page="charts"] .dw-r {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10.5px;
+  font-family: var(--mono);
+  color: var(--muted);
+  line-height: 1.6;
+}
+body[data-page="charts"] .dw-r b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* price-scale mode buttons + "go to last bar" */
+body[data-page="charts"] .sbtns {
+  position: absolute;
+  right: 6px;
+  bottom: 24px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+body[data-page="charts"] .sbtns button {
+  width: 22px;
+  height: 19px;
+  border-radius: 4px;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+body[data-page="charts"] .sbtns button:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+body[data-page="charts"] .sbtns button.on {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+  border-color: var(--brand);
+}
+body[data-page="charts"] .gort {
+  position: absolute;
+  right: 58px;
+  bottom: 22px;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+}
+body[data-page="charts"] .gort.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+body[data-page="charts"] .gort:hover {
+  color: var(--ink);
+  border-color: var(--brand);
+}
+
+/* legend chips */
+body[data-page="charts"] .lchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 4px 1px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  /* `.leg` is pointer-events:none so the chart underneath stays draggable
+     through it. That also killed every button on these chips — hiding,
+     configuring and removing a study from its legend row, which is the way
+     you normally do it, did nothing at all. The chips take their clicks
+     back here; the empty space around them still passes through. */
+  pointer-events: auto;
+}
+/* The colour swatch. Only the swatch is a square — the value next to it is
+   text and was previously rendered inside one of these, 7px wide. */
+body[data-page="charts"] .lchip .lsw {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  background: currentColor;
+}
+body[data-page="charts"] .lchip .lnm {
+  color: currentColor;
+  white-space: nowrap;
+}
+body[data-page="charts"] .lchip .lval {
+  font-family: var(--mono);
+  color: var(--ink);
+  white-space: nowrap;
+}
+body[data-page="charts"] .lchip b {
+  font-weight: 500;
+  color: var(--ink);
+}
+body[data-page="charts"] .lchip.off {
+  opacity: 0.45;
+}
+/* The collapse toggle is a chip rather than a button inside one, so it is not
+   caught by the hover-to-reveal rule below and reads as a control at rest. */
+body[data-page="charts"] .lchip.lmore {
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  padding: 1px 7px;
+  opacity: 1;
+  width: auto;
+  cursor: pointer;
+}
+body[data-page="charts"] .lchip.lmore:hover {
+  color: var(--ink);
+  border-color: var(--brand);
+}
+/* Dim at rest, full strength on hover: three glyphs per study, times six
+   studies, competes with the price action, and the reading is what you came
+   for. They keep their box at rest rather than collapsing to zero width, and
+   that is deliberate — the legend is rebuilt on every live tick, so a button
+   that animates open from nothing restarts that animation a few times a second
+   and can never be hit while data is streaming. A fixed box means the click
+   lands whether or not any transition has finished. */
+body[data-page="charts"] .lchip button {
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.25;
+  transition: opacity 0.12s;
+}
+/* focus-within so the three controls are reachable by keyboard, not just by
+   a pointer that happens to be resting on the chip. */
+body[data-page="charts"] .lchip:hover button,
+body[data-page="charts"] .lchip:focus-within button {
+  opacity: 1;
+}
+body[data-page="charts"] .lchip button:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+/* watchlist rows */
+body[data-page="charts"] .wl-top {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+body[data-page="charts"] .wl-top .fin {
+  flex: 1;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+body[data-page="charts"] .wr-l {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+body[data-page="charts"] .wr-r {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+body[data-page="charts"] .wr-x {
+  color: var(--faint);
+  font-size: 11px;
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+body[data-page="charts"] .wr:hover .wr-x {
+  opacity: 1;
+}
+body[data-page="charts"] .wr-x:hover {
+  color: var(--down);
+}
+body[data-page="charts"] .spark {
+  width: 52px;
+  height: 18px;
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+
+/* objects tree */
+body[data-page="charts"] .ob-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+body[data-page="charts"] .ob-top .mh {
+  margin: 0;
+}
+body[data-page="charts"] .ob {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+body[data-page="charts"] .ob:hover {
+  background: var(--surface-2);
+}
+body[data-page="charts"] .ob.sel {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+body[data-page="charts"] .ob-n {
+  font-size: 11.5px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-page="charts"] .ob-v {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+body[data-page="charts"] .ob-v button {
+  color: var(--faint);
+  font-size: 11px;
+  padding: 0 3px;
+  border-radius: 3px;
+}
+body[data-page="charts"] .ob-v button:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+/* alerts */
+body[data-page="charts"] .ai-x {
+  color: var(--faint);
+  font-size: 11px;
+  padding: 0 3px;
+  margin-left: auto;
+}
+body[data-page="charts"] .ai-x:hover {
+  color: var(--down);
+}
+body[data-page="charts"] .sw2 {
+  position: relative;
+  width: 26px;
+  height: 14px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .sw2 i {
+  position: absolute;
+  top: 1.5px;
+  left: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: 0.15s;
+}
+body[data-page="charts"] .sw2.on {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+body[data-page="charts"] .sw2.on i {
+  left: 13px;
+  background: var(--brand);
+}
+body[data-page="charts"] .alog {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+body[data-page="charts"] .lg {
+  display: flex;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+body[data-page="charts"] .lg b {
+  color: var(--ink);
+  font-weight: 500;
+}
+body[data-page="charts"] .lg span {
+  color: var(--faint);
+  font-family: var(--mono);
+  flex: 0 0 auto;
+}
+
+/* settings dialog */
+body[data-page="charts"] .set-g {
+  margin-bottom: 13px;
+}
+body[data-page="charts"] .set-r {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+body[data-page="charts"] .set-r:last-child {
+  border-bottom: 0;
+}
+body[data-page="charts"] .set-r input[type="color"] {
+  width: 26px;
+  height: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: none;
+  padding: 0;
+}
+body[data-page="charts"] .set-r select,
+body[data-page="charts"] .set-r input[type="number"] {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+/* symbol search rows
+
+   `.sr` collides with the site-wide visually-hidden utility in
+   components.css, which sets position:absolute and clips to 1px. That rule
+   has lower specificity than this one but declares properties this one did
+   not, so those leaked through and the symbol list collapsed to zero height
+   with all 27 rows stacked invisibly on top of each other. Every clipping
+   property is therefore reset here explicitly. */
+body[data-page="charts"] .sr {
+  position: relative;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+/* The keyboard cursor in the symbol list. It has to read as a stronger state
+   than hover, because it is the row Enter will open. */
+body[data-page="charts"] .sr.cur {
+  background: var(--brand-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+/* A fixed height rather than max-height: the dialog must not change size as
+   you type or switch class, or the row under the cursor moves out from under
+   the pointer between keystrokes. */
+body[data-page="charts"] #symModal .sheet-b {
+  height: 420px;
+  padding: 8px 9px;
+}
+body[data-page="charts"] #symModal .sheet-f {
+  margin-top: 0;
+  padding: 9px 14px 11px;
+  font-size: 10.5px;
+}
+body[data-page="charts"] .stabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 14px 10px;
+  border-bottom: 1px solid var(--line);
+}
+body[data-page="charts"] .stab {
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+body[data-page="charts"] .stab:hover {
+  color: var(--text);
+  border-color: var(--line-2, var(--line));
+}
+body[data-page="charts"] .stab.on {
+  background: var(--brand-soft);
+  border-color: var(--accent);
+  color: var(--accent-hi);
+}
+body[data-page="charts"] .stab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+body[data-page="charts"] .sr:hover {
+  background: var(--surface-2);
+}
+/* The row is ticker-and-description on the left, price-change-star on the
+   right, the way every instrument picker worth using lays it out. The left
+   block takes the slack and truncates; the right block is fixed so the
+   prices form a straight column down the list instead of a ragged edge. */
+body[data-page="charts"] .sr > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+body[data-page="charts"] .sr-n {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+body[data-page="charts"] .sr-d {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-page="charts"] .sr-cls {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+body[data-page="charts"] .sr-r {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 0 0 auto;
+  font-size: 11.5px;
+}
+body[data-page="charts"] .sr-r > span:first-child {
+  min-width: 74px;
+  text-align: right;
+  color: var(--text);
+}
+body[data-page="charts"] .sr-r > span:nth-child(2) {
+  min-width: 58px;
+  text-align: right;
+}
+/* The star is the only thing in the row that does something other than open
+   the symbol, so it gets a hit area of its own and only colours on hover. */
+body[data-page="charts"] .sr-r button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 4px;
+  cursor: pointer;
+}
+body[data-page="charts"] .sr-r button:hover {
+  color: var(--accent);
+  background: var(--surface-3, var(--surface-2));
+}
+
+/* workspaces */
+body[data-page="charts"] .ws {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11.5px;
+}
+body[data-page="charts"] .ws:last-child {
+  border-bottom: 0;
+}
+body[data-page="charts"] .ws b {
+  font-weight: 500;
+}
+body[data-page="charts"] .ws span {
+  color: var(--faint);
+  font-size: 10.5px;
+}
+body[data-page="charts"] .ws .btn {
+  margin-left: auto;
+}
+
+/* indicator row with a warning/info line */
+body[data-page="charts"] .ir-w {
+  font-size: 10px;
+  color: var(--warn-ink);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* context menu */
+body[data-page="charts"] #ctx {
+  position: fixed;
+  z-index: 400;
+  min-width: 176px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-l);
+}
+body[data-page="charts"] #ctx button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 9px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+body[data-page="charts"] #ctx button:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+body[data-page="charts"] #ctx .rdiv {
+  height: 1px;
+  background: var(--line);
+  margin: 3px 6px;
+}
+
+/* 3-up layout */
+body[data-page="charts"] .grid[data-layout="3"] {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
+}
+
+/* mobile: the panel becomes a bottom sheet instead of disappearing */
+@media (max-width: 900px) {
+  body[data-page="charts"] .mobonly {
+    display: inline-flex;
+  }
+  body[data-page="charts"] .panel {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    height: 62vh;
+    z-index: 120;
+    border-top: 1px solid var(--line-strong);
+    border-left: 0;
+    border-radius: 12px 12px 0 0;
+    box-shadow: var(--shadow-l);
+    transform: translateY(102%);
+    transition: transform 0.22s ease-out;
+    flex-basis: auto;
+  }
+  body[data-page="charts"].sheet-open .panel {
+    transform: none;
+  }
+  /* Deliberately not resizing the chart column when the sheet opens: the
+     canvas re-measured to a strip too short to draw into and came back
+     blank. The sheet overlays instead, and the strip left showing is the
+     legend row — which is where the live price is printed anyway. */
+  body[data-page="charts"] .tabpane {
+    padding-bottom: 84px;
+  }
+  body[data-page="charts"] .dwin {
+    display: none;
+  }
+  body[data-page="charts"] .replaybar {
+    overflow-x: auto;
+  }
+}
+/* The intervals used to be capped at 44vw because they shared a row with
+   the symbol and the save button. They now get a row of their own. */
+
+/* topbar groups */
+body[data-page="charts"] .ct-l,
+body[data-page="charts"] .ct-r {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+body[data-page="charts"] .ct-l {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+body[data-page="charts"] .ct-r {
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .ctoolbar {
+  overflow: hidden;
+}
+body[data-page="charts"] .sym {
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .sym-meta {
+  white-space: nowrap;
+}
+body[data-page="charts"] .chips#intervals {
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+body[data-page="charts"] #indBtn {
+  flex: 0 0 auto;
+}
+@media (max-width: 1460px) {
+  .sym-meta {
+    display: none;
+  }
+}
+@media (max-width: 1320px) {
+  .ct-r #wavesBtn,
+  .ct-r #wsBtn {
+    display: none;
+  }
+}
+body[data-page="charts"] .chips#intervals {
+  gap: 2px;
+}
+@media (max-width: 700px) {
+  body[data-page="charts"] .brand,
+  body[data-page="charts"] .sep {
+    display: none;
+  }
+  body[data-page="charts"] #undoBtn,
+  body[data-page="charts"] #redoBtn,
+  body[data-page="charts"] #snapBtn,
+  body[data-page="charts"] #paletteBtn {
+    display: none;
+  }
+  body[data-page="charts"] .ct-l {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  body[data-page="charts"] .ct-l::-webkit-scrollbar {
+    display: none;
+  }
+  body[data-page="charts"] .chips#intervals {
+    max-width: none;
+    overflow: visible;
+  }
+}
+
+/* drawing settings dialog */
+body[data-page="charts"] .sw-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+body[data-page="charts"] .sw-row input[type="range"] {
+  width: 104px;
+  accent-color: var(--brand);
+}
+body[data-page="charts"] .sw2c {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  border: 1px solid var(--line-strong);
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .sw2c.on {
+  box-shadow: 0 0 0 2px var(--brand);
+}
+body[data-page="charts"] #drawBody .set-r input[type="text"] {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--ink);
+}
+body[data-page="charts"] .sheet-f {
+  flex-wrap: wrap;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   repo integration and the fixes the prototype needed
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── toolbar ───────────────────────────────────────────────────────
+   Sits under the app nav, not in place of it. The prototype carried its
+   own brand and theme switch here; both now live in the nav, which is
+   what freed the room for the one button this screen is for. */
+body[data-page="charts"] .ctoolbar {
+  flex: 0 0 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 40;
+  overflow: visible; /* the menus hang below it */
+}
+body[data-page="charts"] .ct-l,
+body[data-page="charts"] .ct-r {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+body[data-page="charts"] .ct-l {
+  flex: 1 1 auto;
+}
+body[data-page="charts"] .ct-r {
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Every control in the More menu is a labelled row, so no glyph has to
+   carry its own meaning. */
+body[data-page="charts"] .menu.right {
+  left: auto;
+  right: 0;
+  min-width: 232px;
+}
+body[data-page="charts"] .menu .mi {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+}
+body[data-page="charts"] .menu .mi:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+body[data-page="charts"] .menu .mi span {
+  color: var(--faint);
+  font-size: 10.5px;
+  font-family: var(--mono);
+}
+body[data-page="charts"] .menu-chips {
+  padding: 2px 8px 8px;
+  gap: 4px;
+}
+body[data-page="charts"] .menu-chips .chip {
+  min-width: 26px;
+  text-align: center;
+}
+
+body[data-page="charts"] .feed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn-ink);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  border-radius: 20px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+body[data-page="charts"] .feed-badge i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── shell ─────────────────────────────────────────────────────────
+   rail · (chart + note) · panel. The note sits under the chart rather
+   than inside the panel, because it is written while looking at the
+   chart, not while reading numbers. */
+body[data-page="charts"] .cshell {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+}
+body[data-page="charts"] .cmid {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+body[data-page="charts"] .grid {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+body[data-page="charts"] .notebar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+body[data-page="charts"] .nb-l {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+body[data-page="charts"] .nb-l > span {
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+body[data-page="charts"] #notes {
+  width: 100%;
+  min-height: 40px;
+  resize: none;
+  overflow-y: auto;
+  max-height: 120px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink);
+  outline: none;
+}
+body[data-page="charts"] #notes:focus {
+  border-color: var(--brand);
+}
+body[data-page="charts"] #attachSave {
+  flex: 0 0 auto;
+}
+
+/* ── defect fixes ──────────────────────────────────────────────────
+   The Data Window sat 66px from the right edge, which put it under the
+   price axis on a narrow chart and over the last candles on a wide one.
+   Clear the axis properly and cap its width. */
+body[data-page="charts"] .dwin {
+  right: 74px;
+  max-width: 170px;
+}
+
+/* The tour tip cleared the 42px rail on desktop and covered the chart on
+   a phone. On a phone it belongs above the note, full width. */
+body[data-page="charts"] .tourtip {
+  left: 52px;
+  bottom: 16px;
+  max-width: calc(100vw - 72px);
+}
+
+/* Legend text wrapped into the candles once three studies were on. */
+body[data-page="charts"] .leg-i {
+  max-width: min(420px, 55%);
+}
+
+/* ── responsive ────────────────────────────────────────────────────*/
+@media (max-width: 1180px) {
+  body[data-page="charts"] .rp-label {
+    display: none;
+  }
+  body[data-page="charts"] .risk-pill {
+    display: flex;
+  }
+}
+
+@media (max-width: 1040px) {
+  body[data-page="charts"] .risk-pill,
+  body[data-page="charts"] .feed-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  /* A 42px tool rail on a 375px screen is 11% of the width spent on
+     icons. Lay it along the bottom of the chart instead, where it
+     scrolls sideways and costs 34px of height. */
+  body[data-page="charts"] .cshell {
+    flex-direction: column-reverse;
+  }
+  body[data-page="charts"] .crail {
+    flex: 0 0 38px;
+    flex-direction: row;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    padding: 0 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  body[data-page="charts"] .crail::-webkit-scrollbar {
+    display: none;
+  }
+  body[data-page="charts"] .rdiv {
+    width: 1px;
+    height: 20px;
+    margin: 0 4px;
+    flex: 0 0 auto;
+  }
+  body[data-page="charts"] .rtool {
+    flex: 0 0 auto;
+  }
+  /* tooltips would open off the bottom of the screen */
+  body[data-page="charts"] .rtool .tip {
+    display: none;
+  }
+  body[data-page="charts"] .tourtip {
+    left: 10px;
+    right: 10px;
+    bottom: 54px;
+    width: auto;
+    max-width: none;
+  }
+  body[data-page="charts"] .toasts {
+    right: 10px;
+    left: 10px;
+    bottom: 54px;
+    align-items: stretch;
+  }
+  body[data-page="charts"] .toast {
+    max-width: none;
+  }
+  body[data-page="charts"] .notebar {
+    padding: 6px 8px;
+  }
+  /* more than two charts on a phone is two charts too many */
+  body[data-page="charts"] .grid[data-layout="3"],
+  body[data-page="charts"] .grid[data-layout="4"],
+  body[data-page="charts"] .grid[data-layout="6"] {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(2, 1fr);
+  }
+  body[data-page="charts"] .grid > .cw:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  /* One row cannot hold the symbol, seven intervals and the save button
+     at this width — squeezing them left the selected interval scrolled
+     out of sight, which is the one chip that has to be visible. Two rows
+     costs 32px of chart and keeps everything reachable without a swipe. */
+  body[data-page="charts"] .ctoolbar {
+    flex: 0 0 auto;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  body[data-page="charts"] .ct-l {
+    order: 2;
+    flex: 1 0 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  body[data-page="charts"] .ct-l::-webkit-scrollbar {
+    display: none;
+  }
+  body[data-page="charts"] .ct-r {
+    order: 1;
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+  body[data-page="charts"] .spacer {
+    display: none;
+  }
+  body[data-page="charts"] .ct-l .sym {
+    order: -1;
+  }
+  body[data-page="charts"] #typeBtn,
+  body[data-page="charts"] #alertBtn {
+    display: none;
+  }
+  /* Four stacked study chips covered a third of the candles. The same
+     values are printed on each pane's own title line. */
+  body[data-page="charts"] .leg-i {
+    display: none;
+  }
+  body[data-page="charts"] .leg-o {
+    font-size: 10px;
+    gap: 5px;
+  }
+  /* The prompt wraps to two lines at this width, and a box sized for one
+     showed the second line spilling past its own border. */
+  body[data-page="charts"] #notes {
+    min-height: 48px;
+  }
+  body[data-page="charts"] #indBtn {
+    font-size: 0;
+    gap: 0;
+  }
+  body[data-page="charts"] #indBtn::before {
+    content: "Studies";
+    font-size: 12px;
+  }
+  body[data-page="charts"] #indBtn b {
+    font-size: 11px;
+    margin-left: 6px;
+  }
+  body[data-page="charts"] .sheet-b.threecol {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  body[data-page="charts"] .sheet-b.threecol .col {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    max-height: 30vh;
+  }
+  body[data-page="charts"] .keys {
+    grid-template-columns: 1fr;
+  }
+  body[data-page="charts"] .replaybar {
+    gap: 6px;
+  }
+  body[data-page="charts"] #rbScrub {
+    width: 140px;
+  }
+}
+
+/* Coarse pointers need real hit areas — 30px icons are a miss on a phone. */
+@media (pointer: coarse) {
+  body[data-page="charts"] .rtool {
+    width: 34px;
+    height: 34px;
+  }
+  body[data-page="charts"] .chip {
+    padding: 7px 10px;
+  }
+  body[data-page="charts"] .tab {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="charts"] * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* A study that could not be given room says so, rather than silently
+   not appearing. */
+body[data-page="charts"] .lchip.warn {
+  color: var(--warn-ink);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+}
+
+/* ── collisions with components.css ────────────────────────────────
+   These class names already mean something in the shared component
+   sheet. Scoping wins the cascade on properties we set, but not on
+   properties we never mention — so the ones that would leak in are
+   reset here explicitly rather than left to chance. */
+body[data-page="charts"] .toast {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  border-radius: 7px;
+  color: var(--ink);
+  font-size: inherit;
+}
+body[data-page="charts"] .panel {
+  border-radius: 0;
+  overflow: visible;
+}
+body[data-page="charts"] .card {
+  box-shadow: none;
+}
+body[data-page="charts"] .empty {
+  display: block;
+  background: none;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------- short windows
+   An embedded frame or a laptop in a browser with tabs and a bookmarks bar
+   leaves under 640px of height. The chart is the point, so the trimmings give
+   up their space first: the study chips in the legend already have a home in
+   the Data Window and the panel, and the note bar's caption is redundant next
+   to its own placeholder. */
+@media (max-height: 640px) {
+  body[data-page="charts"] .leg-i {
+    display: none;
+  }
+  body[data-page="charts"] .notebar {
+    padding: 6px 10px;
+    align-items: center;
+  }
+  body[data-page="charts"] .nb-l > span {
+    display: none;
+  }
+  body[data-page="charts"] #notes {
+    min-height: 34px;
+    height: 34px;
+  }
+  body[data-page="charts"] .crail {
+    padding: 3px 0;
+    gap: 0;
+  }
+}
+
+/* ── interval menu ────────────────────────────────────────────
+   The chips are favourites; this is the whole ladder. Each row is a pick
+   plus a star, so starring does not select and selecting does not star. */
+body[data-page="charts"] .ivmenu {
+  min-width: 246px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 2px;
+}
+body[data-page="charts"] .iv-add {
+  display: block;
+  width: calc(100% - 8px);
+  margin: 2px 4px 4px;
+  padding: 6px 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 5px;
+  font-size: 11.5px;
+  color: var(--ink-700);
+  text-align: left;
+}
+body[data-page="charts"] .iv-add:hover {
+  border-color: var(--brand);
+  color: var(--accent-hi);
+  background: var(--brand-soft);
+}
+body[data-page="charts"] .iv-r {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: 5px;
+}
+body[data-page="charts"] .iv-r:hover {
+  background: var(--tint);
+}
+body[data-page="charts"] .iv-r.on {
+  background: var(--brand-soft);
+}
+body[data-page="charts"] .iv-p {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--ink-700);
+  text-align: left;
+}
+body[data-page="charts"] .iv-r.on .iv-p {
+  color: var(--accent-hi);
+  font-weight: 600;
+}
+body[data-page="charts"] .iv-p span {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body[data-page="charts"] .iv-star {
+  flex: 0 0 26px;
+  display: grid;
+  place-items: center;
+  color: var(--line-strong);
+  border-radius: 5px;
+}
+body[data-page="charts"] .iv-star svg {
+  width: 13px;
+  height: 13px;
+}
+body[data-page="charts"] .iv-star:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+body[data-page="charts"] .iv-star.on {
+  color: var(--warn-ink);
+}
+/* A chip showing only because it is selected, not because it is starred. */
+body[data-page="charts"] #intervals .chip.ghost {
+  border-style: dashed;
+}
+
+/* ── bottom bar: date ranges and the clock ────────────────────
+   Ranges left, clock right, on one short row under the chart. */
+body[data-page="charts"] .cbot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  min-height: 27px;
+}
+body[data-page="charts"] .cbot-r {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+body[data-page="charts"] .cbot-r::-webkit-scrollbar {
+  display: none;
+}
+body[data-page="charts"] .cbot-s {
+  flex: 0 0 auto;
+}
+body[data-page="charts"] .cb-btn {
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-700);
+  white-space: nowrap;
+}
+body[data-page="charts"] .cb-btn:hover {
+  background: var(--tint);
+  color: var(--ink);
+}
+body[data-page="charts"] .cb-btn.on {
+  background: var(--brand-soft);
+  color: var(--accent-hi);
+}
+body[data-page="charts"] #tzBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+body[data-page="charts"] #tzName {
+  color: var(--faint);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+/* ── bid / ask badge ──────────────────────────────────────────
+   Sits under the legend, left of the chart. Sell on the left, buy on the
+   right, spread between them — the order a broker's quote uses, so the
+   number nearer each word is the one that word costs you. */
+body[data-page="charts"] .leg-q {
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  margin: 2px 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+body[data-page="charts"] .leg-q > span {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  pointer-events: auto;
+}
+body[data-page="charts"] .leg-q i {
+  font-style: normal;
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+/* --up-soft / --down-soft are the fills designed to carry --up / --down as
+   text; shell.css defines both pairs for each theme, so this reads in light
+   and dark without a second set of colours here. */
+body[data-page="charts"] .qb-s {
+  background: var(--down-soft);
+  color: var(--down);
+}
+body[data-page="charts"] .qb-b {
+  background: var(--up-soft);
+  color: var(--up);
+}
+body[data-page="charts"] .qb-m {
+  background: var(--surface-2);
+  color: var(--faint);
+  font-size: 10.5px;
+}
+@media (max-width: 720px) {
+  body[data-page="charts"] .leg-q {
+    font-size: 10.5px;
+  }
+}
+
+/* ─────────────────────────────────────────────── the symbol card
+
+   Sits above the watchlist and says what the chart is showing, in a price
+   large enough to read without leaning in. Reads Feed at paint time, so it
+   cannot disagree with the legend or with a watchlist row below it. */
+body[data-page="charts"] .symcard {
+  padding: 11px 12px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--surface-2);
+  margin-bottom: 10px;
+}
+body[data-page="charts"] .sc-h b {
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+body[data-page="charts"] .sc-m {
+  margin-left: 7px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  vertical-align: 1px;
+}
+body[data-page="charts"] .sc-n {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+body[data-page="charts"] .sc-p {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  margin: 8px 0 1px;
+  font-family: var(--mono);
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+}
+/* The last quoted digit, set apart the way a dealing terminal does it: it is
+   the digit you are paid in and it should not read like the ones you are not. */
+body[data-page="charts"] .sc-p i {
+  font-style: normal;
+  font-size: 16px;
+  opacity: 0.65;
+  vertical-align: super;
+}
+body[data-page="charts"] .sc-p em {
+  font-style: normal;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+body[data-page="charts"] .sc-p.up {
+  color: var(--up);
+}
+body[data-page="charts"] .sc-p.dn {
+  color: var(--down);
+}
+body[data-page="charts"] .sc-c {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+body[data-page="charts"] .sc-c.up {
+  color: var(--up);
+}
+body[data-page="charts"] .sc-c.dn {
+  color: var(--down);
+}
+body[data-page="charts"] .sc-c b {
+  font-family: var(--sans);
+  font-weight: 500;
+  color: var(--ink-3);
+}
+body[data-page="charts"] .sc-rg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 11px 0 9px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+}
+body[data-page="charts"] .sc-rt {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  /* The track needs its own contrast against the card, not just against the
+     page — at 3px with soft stops it read as empty space and the marker
+     looked like it was floating on nothing. */
+  background: linear-gradient(
+    90deg,
+    var(--down),
+    var(--line-strong) 50%,
+    var(--up)
+  );
+  opacity: 0.55;
+}
+body[data-page="charts"] .sc-rt i {
+  position: absolute;
+  top: -3.5px;
+  width: 2px;
+  height: 9px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--ink);
+}
+body[data-page="charts"] .sc-f {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+body[data-page="charts"] .sc-f b {
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+/* Asset-class headings in the watchlist. Present only in custom order —
+   a FOREX heading above rows sorted by gain would misdescribe the order. */
+body[data-page="charts"] .wl-g {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 2px 5px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+body[data-page="charts"] .wl-g span {
+  font-family: var(--mono);
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+
+/* ───────────────────────────────────────────────────── focus mode
+
+   The chart takes the window; the page's furniture steps back. The site nav,
+   the right panel and the journal note bar go, and the chart column reclaims
+   their space. The drawing rail stays — it is a tool, not decoration.
+
+   This is a class rather than the Fullscreen API because the app is delivered
+   inside an iframe, where that API is unavailable. Whoever wants the operating
+   system's chrome gone as well can press F11 on top of this.
+
+   Hiding is the whole mechanism: `.cshell` is a flex row and `.cmid` is
+   `flex: 1 1 auto`, so the chart column claims the panel's width the moment
+   the panel leaves, and the note bar's height the moment it does. No
+   reflow rules are needed and none are written. */
+body[data-page="charts"].focus-mode .topbar,
+body[data-page="charts"].focus-mode .panel,
+body[data-page="charts"].focus-mode .notebar {
+  display: none;
+}
+body[data-page="charts"].focus-mode #fsBtn {
+  color: var(--accent);
+}

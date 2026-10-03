@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learn · The1% Academy</title>
+<meta name="description" content="The1% Academy: 65 trading masterclasses across 10 schools, from market structure, supply and demand and liquidity to trading psychology, with chart-based lessons, final quizzes and certificates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233654ff'/%3E%3Ctext x='16' y='21' font-family='monospace' font-size='13' font-weight='600' fill='white' text-anchor='middle'%3E1%25%3C/text%3E%3C/svg%3E">
+<script src="{{ url_for('static', filename='assets/theme.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/shell.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/learn.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/academy/academy.css') }}">
+</head>
+<!-- one folder deep; the shell injects nav and the right rail itself -->
+<body data-page="learn" data-depth="1">
+
+<main id="main">
+
+  <header class="page-head">
+    <div class="wrap lh-row">
+      <div>
+        <h1>Learn</h1>
+        <p id="lh-sub">Twenty-four lessons, beginner to advanced. Each block ends in a ten-question quiz and the next block opens at eighty percent — the same bar the rest of the app holds you to.</p>
+      </div>
+
+      <!-- progress, visible on every visit, because a path with no visible
+           end is just a list of articles -->
+      <div class="prog" id="prog" aria-live="polite">
+        <div class="prog-top">
+          <b id="prog-pct">0%</b>
+          <small id="prog-note">nothing started yet</small>
+        </div>
+        <div class="bar" role="img" aria-label="Course progress"><span id="prog-fill" style="width:0%"></span></div>
+        <div class="prog-foot">
+          <span id="prog-read">0 of 24 lessons</span>
+          <span id="prog-gates">0 of 4 gates passed</span>
+        </div>
+        <a class="btn btn-primary" id="resume" href="#path">Start the first lesson</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <!-- two sub-tabs plus the glossary, mirroring the fragment deep links
+         the calculators already use: #path, #library, #glossary -->
+    <nav class="subtabs" aria-label="Learn sections">
+      <a href="#masterclasses" data-tab="academy" aria-current="page">Masterclasses</a>
+      <a href="#path" data-tab="path">Core path</a>
+      <a href="#library" data-tab="library">Resource library</a>
+      <a href="#glossary" data-tab="glossary">Glossary</a>
+    </nav>
+
+    <!-- ---------------------------------------------------- masterclasses
+         The1% Academy: catalog, course pages, lessons, quiz, certificate.
+         Rendered by assets/academy/academy.js -->
+    <section id="view-academy" class="view"></section>
+
+    <!-- ------------------------------------------------------------ path -->
+    <section id="view-path" class="view" hidden>
+
+      <div class="notice" id="skip-notice" hidden></div>
+
+      <!-- what the journal says you should study next; this is the one thing
+           a static course cannot do -->
+      <section class="panel" id="panel-next" hidden>
+        <div class="panel-head">
+          <h2>Recommended from your own trades</h2>
+          <span id="next-note"></span>
+        </div>
+        <div class="panel-body" id="next-body"></div>
+      </section>
+
+      <!-- questions you got wrong, resurfaced on a schedule -->
+      <section class="panel" id="panel-review" hidden>
+        <div class="panel-head">
+          <h2>Review deck</h2>
+          <span id="review-note"></span>
+        </div>
+        <div class="panel-body" id="review-body"></div>
+      </section>
+
+      <div id="blocks"></div>
+
+      <p class="hint" id="path-foot"></p>
+    </section>
+
+    <!-- ---------------------------------------------------------- reader -->
+    <section id="view-lesson" class="view" hidden>
+      <div class="reader" id="reader"></div>
+    </section>
+
+    <!-- ------------------------------------------------------------ quiz -->
+    <section id="view-quiz" class="view" hidden>
+      <div class="quiz" id="quiz"></div>
+    </section>
+
+    <!-- --------------------------------------------------------- library -->
+    <section id="view-library" class="view" hidden>
+      <div class="lib-intro">
+        <h2>Resource library</h2>
+        <p>Every file here is generated on your device from the lesson content — nothing is uploaded, and there are no dead download links. Templates and checklists come as Markdown so they open anywhere; the journal template is a CSV that imports straight back into your journal.</p>
+      </div>
+      <div class="lib-grid" id="lib-grid"></div>
+    </section>
+
+    <!-- -------------------------------------------------------- glossary -->
+    <section id="view-glossary" class="view" hidden>
+      <div class="lib-intro">
+        <h2>Glossary</h2>
+        <p>Every term the lessons use, defined once. Terms underlined inside a lesson show their definition on hover or focus, so you never have to leave the page to look one up.</p>
+      </div>
+      <label class="fld gl-find">
+        <span>Find a term</span>
+        <input id="gl-q" type="search" autocomplete="off" placeholder="expectancy, drawdown, swap…">
+      </label>
+      <dl class="gloss" id="gloss"></dl>
+    </section>
+
+  </div>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="{{ url_for('static', filename='assets/store.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/lessons.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/catalog.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/figures.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/courses/market-structure.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/courses/supply-demand.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/courses/liquidity.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/courses/psychology.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/courses/candlesticks.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/courses/order-blocks.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/courses/risk-management.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/academy/academy.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/learn.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/shell.js') }}"></script>
+</body>
+</html>

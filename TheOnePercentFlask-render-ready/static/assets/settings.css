@@ -1,0 +1,330 @@
+/* Settings (pages/settings.html)
+   -------------------------------------------------------------------
+   Load order: shell.css → components.css → this file.
+
+   Panels, fields, notices, stats, hints and .fine all come from the
+   shared files. What is here is the handful of controls this screen
+   invented: the jump list, the toggle, the chip pickers, the live
+   guardrail strip and the danger zone.
+   ------------------------------------------------------------------- */
+
+.wrap > .panel {
+  margin-bottom: 18px;
+  scroll-margin-top: 90px; /* the jump links must not land under the nav */
+}
+
+/* ------------------------------------------------------------ jump list */
+
+.set-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.set-jump a {
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+
+.set-jump a:hover {
+  border-color: var(--brand);
+  color: var(--ink);
+}
+
+.set-jump a:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------ toggle */
+
+.toggle {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  cursor: pointer;
+  margin-bottom: 18px;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-box {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.toggle-box::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.toggle input:checked + .toggle-box {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.toggle input:checked + .toggle-box::after {
+  transform: translateX(16px);
+  background: #fff;
+}
+
+.toggle input:focus-visible + .toggle-box {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.toggle-text b {
+  display: block;
+  font-size: 13.5px;
+}
+
+.toggle-text small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------ guardrails */
+
+.guard-fields {
+  margin-top: 4px;
+}
+
+.guard-live {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.gl {
+  padding: 11px 13px;
+  background: var(--surface-2);
+}
+
+.gl span {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.gl b {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gl small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.gl.hot b {
+  color: var(--down);
+}
+
+.gl-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 13px;
+  background: var(--surface);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.gl-note.hot {
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+}
+
+/* ------------------------------------------------------------ chip pickers */
+
+.chips {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+
+.chips:last-of-type {
+  margin-bottom: 8px;
+}
+
+.chips legend {
+  padding: 0;
+  margin-bottom: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.chip-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-pick {
+  padding: 7px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.chip-pick:hover {
+  border-color: var(--brand);
+  color: var(--ink);
+}
+
+.chip-pick[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--tint);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.chip-pick:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------ data */
+
+#st-stats {
+  margin-bottom: 18px;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.danger-zone {
+  margin-top: 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--warn-line);
+  border-radius: var(--r-s);
+  background: var(--warn-soft);
+}
+
+.danger-zone > b {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--warn-ink);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.danger-zone .hint {
+  margin-bottom: 0;
+  color: var(--warn-ink);
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 720px) {
+  .guard-live {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .row-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 620px) {
+  .grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The two irreversible buttons. They keep the quiet button shape so they
+   never look like the primary action, but they read in the loss colour so
+   nobody clicks one on autopilot. */
+
+.danger-zone .btn.danger {
+  border-color: var(--down);
+  background: var(--surface);
+  color: var(--down);
+}
+
+.danger-zone .btn.danger:hover {
+  background: var(--down);
+  border-color: var(--down);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------ small screens
+
+   Two things the shared components get wrong on this screen specifically:
+
+   - the panel head puts its caption beside the title, which at 375px leaves
+     "Risk rules" wrapping into two lines next to its own explanation;
+   - the data stats are short labels with long values ("This device"), so the
+     four-across grid the dashboard wants is four cramped columns here. */
+
+@media (max-width: 560px) {
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  #st-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #st-stats .v {
+    font-size: 16px;
+  }
+}

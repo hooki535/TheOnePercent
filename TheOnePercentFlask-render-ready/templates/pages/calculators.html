@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculators — TheOnePercent</title>
+<meta name="description" content="Position size, risk to reward, pip value, margin, break-even and compounding — pre-filled from your account balance, currency and risk rule.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233654ff'/%3E%3Ctext x='16' y='21' font-family='monospace' font-size='13' font-weight='600' fill='white' text-anchor='middle'%3E1%25%3C/text%3E%3C/svg%3E">
+<script src="{{ url_for('static', filename='assets/theme.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/shell.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/calculators.css') }}">
+</head>
+<!-- one folder deep; the shell infers the logged-in state from the profile -->
+<body data-page="calculators" data-depth="1">
+
+<main id="main">
+
+  <header class="page-head">
+    <div class="wrap ch-row">
+      <div>
+        <h1>Calculators</h1>
+        <p>Answer the only question that matters before entry: how much. Every field below starts from your own account, so sizing is one number, not five.</p>
+      </div>
+      <!-- the three values every calculator on this page reads -->
+      <div class="acct" id="acct">
+        <div class="acct-head">
+          <b>Your account</b>
+          <small>read by every calculator here</small>
+        </div>
+        <div class="acct-fields">
+          <label class="fld"><span>Balance</span><input id="s-balance" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Currency</span><select id="s-currency"></select></label>
+          <label class="fld"><span>Risk rule <small>%</small></span><input id="s-risk" type="number" step="any" inputmode="decimal"></label>
+        </div>
+        <p class="acct-note" id="acct-note">Saved to your settings as you type.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <!-- ------------------------------------------------ the picker
+         Eight calculators on one scrolling page meant the answer you wanted
+         was always somewhere below the fold. One at a time, chosen here. -->
+    <div class="calc-pick" id="calc-pick">
+      <label class="fld">
+        <span>Calculator</span>
+        <select id="calc-which" aria-describedby="calc-what">
+          <optgroup label="Before you enter">
+            <option value="ps">Position size</option>
+            <option value="rr">Risk to reward</option>
+            <option value="mg">Margin</option>
+            <option value="pv">Pip value</option>
+          </optgroup>
+          <optgroup label="What it would mean">
+            <option value="sim">Profit and loss</option>
+            <option value="be">Break-even</option>
+            <option value="cp">Compounding</option>
+          </optgroup>
+          <optgroup label="Quick conversions">
+            <option value="conv">Converters</option>
+          </optgroup>
+        </select>
+      </label>
+      <p class="calc-what" id="calc-what"></p>
+      <div class="calc-step">
+        <button class="icon-btn" id="calc-prev" aria-label="Previous calculator" title="Previous">‹</button>
+        <button class="icon-btn" id="calc-next" aria-label="Next calculator" title="Next">›</button>
+      </div>
+    </div>
+
+    <div class="notice warn" id="storage-warn" hidden>
+      <span>
+        <b>This browser is blocking storage</b>
+        <small>Changes to your balance and risk rule will work for this visit but will not survive a reload.</small>
+      </span>
+    </div>
+
+    <!-- honesty badge: the formulas are exact, the rates behind them are not -->
+    <div class="notice demo">
+      <span>
+        <b>Demo rates <i class="badge">DEMO</i></b>
+        <small id="demo-note"></small>
+      </span>
+    </div>
+
+    <div class="calc-views" id="calc-views">
+
+    <!-- ------------------------------------------------ position size -->
+    <section class="panel primary" id="ps" data-calc="ps">
+      <div class="panel-head">
+        <h2>Position size</h2>
+        <span>the one that stops you oversizing</span>
+      </div>
+      <div class="panel-body">
+        <form id="ps-form" novalidate>
+          <div class="grid-3">
+            <label class="fld">
+              <span>Instrument</span>
+              <select id="ps-symbol"></select>
+            </label>
+            <label class="fld"><span>Direction</span>
+              <select id="ps-side"><option>Long</option><option>Short</option></select>
+            </label>
+            <label class="fld">
+              <span>Risk <small id="ps-risk-unit">% of balance</small></span>
+              <div class="split">
+                <input id="ps-risk" type="number" step="any" inputmode="decimal">
+                <select id="ps-risk-mode" aria-label="Risk expressed as">
+                  <option value="pct">%</option>
+                  <option value="money">money</option>
+                </select>
+              </div>
+            </label>
+            <label class="fld"><span>Entry</span><input id="ps-entry" type="number" step="any" inputmode="decimal"></label>
+            <label class="fld"><span>Stop</span><input id="ps-stop" type="number" step="any" inputmode="decimal"></label>
+            <label class="fld"><span>Target <small>optional</small></span><input id="ps-target" type="number" step="any" inputmode="decimal"></label>
+          </div>
+
+          <details class="adv">
+            <summary>Leverage and conversion rate</summary>
+            <div class="grid-3">
+              <label class="fld"><span>Leverage</span><select id="ps-lev"></select></label>
+              <label class="fld">
+                <span>Conversion rate <small id="ps-fx-label">quote → account</small></span>
+                <input id="ps-fx" type="number" step="any" inputmode="decimal">
+              </label>
+              <label class="fld"><span>Fees and commission</span><input id="ps-fees" type="number" step="any" inputmode="decimal" value="0"></label>
+            </div>
+            <p class="hint">The rate is pre-filled from the demo table. Type your broker's own rate over it and every figure below follows.</p>
+          </details>
+        </form>
+
+        <div class="calc" id="ps-out" aria-live="polite"></div>
+        <p class="hint" id="ps-verdict"></p>
+
+        <div class="row-actions">
+          <button class="btn btn-primary" id="ps-journal">Log this trade →</button>
+          <button class="btn btn-quiet" id="ps-copy">Copy the numbers</button>
+          <button class="btn btn-quiet" id="ps-reset">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="rr" data-calc="rr">
+      <div class="panel-head"><h2>Risk to reward</h2><span>before you take it</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Entry</span><input id="rr-entry" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Stop</span><input id="rr-stop" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Target</span><input id="rr-target" type="number" step="any" inputmode="decimal"></label>
+        </div>
+        <label class="fld mt"><span>Your win rate <small>%, from your own journal if you have one</small></span><input id="rr-wr" type="number" step="any" inputmode="decimal"></label>
+        <div class="calc two" id="rr-out" aria-live="polite"></div>
+        <p class="hint" id="rr-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="pv" data-calc="pv">
+      <div class="panel-head"><h2>Pip value</h2><span>in your account currency</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="pv-symbol"></select></label>
+          <label class="fld"><span>Size</span><input id="pv-size" type="number" step="any" inputmode="decimal" value="1"></label>
+          <label class="fld"><span>Size unit</span>
+            <select id="pv-unit"><option value="lots">lots</option><option value="units">units</option></select>
+          </label>
+        </div>
+        <div class="calc two" id="pv-out" aria-live="polite"></div>
+        <p class="hint" id="pv-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="mg" data-calc="mg">
+      <div class="panel-head"><h2>Margin</h2><span>before the broker tells you</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="mg-symbol"></select></label>
+          <label class="fld"><span>Lots</span><input id="mg-lots" type="number" step="any" inputmode="decimal" value="0.1"></label>
+          <label class="fld"><span>Leverage</span><select id="mg-lev"></select></label>
+        </div>
+        <div class="calc two" id="mg-out" aria-live="polite"></div>
+        <p class="hint" id="mg-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="sim" data-calc="sim">
+      <div class="panel-head"><h2>Profit and loss</h2><span>what a win and a loss actually mean</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="sim-symbol"></select></label>
+          <label class="fld"><span>Direction</span><select id="sim-side"><option>Long</option><option>Short</option></select></label>
+          <label class="fld"><span>Lots</span><input id="sim-lots" type="number" step="any" inputmode="decimal" value="0.1"></label>
+          <label class="fld"><span>Entry</span><input id="sim-entry" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Stop</span><input id="sim-stop" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Target</span><input id="sim-target" type="number" step="any" inputmode="decimal"></label>
+        </div>
+        <div class="calc three" id="sim-out" aria-live="polite"></div>
+        <p class="hint" id="sim-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="be" data-calc="be">
+      <div class="panel-head"><h2>Break-even</h2><span>spread and fees included</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="be-symbol"></select></label>
+          <label class="fld"><span>Direction</span><select id="be-side"><option>Long</option><option>Short</option></select></label>
+          <label class="fld"><span>Lots</span><input id="be-lots" type="number" step="any" inputmode="decimal" value="0.1"></label>
+          <label class="fld"><span>Entry</span><input id="be-entry" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Spread <small>pips</small></span><input id="be-spread" type="number" step="any" inputmode="decimal" value="1"></label>
+          <label class="fld"><span>Fees <small>round trip</small></span><input id="be-fees" type="number" step="any" inputmode="decimal" value="0"></label>
+        </div>
+        <div class="calc two" id="be-out" aria-live="polite"></div>
+        <p class="hint" id="be-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="cp" data-calc="cp">
+      <div class="panel-head"><h2>Compounding</h2><span>what one percent really does</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Starting balance</span><input id="cp-start" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Gain per period <small>%</small></span><input id="cp-rate" type="number" step="any" inputmode="decimal" value="1"></label>
+          <label class="fld"><span>Period</span>
+            <select id="cp-period">
+              <option value="252">trading day</option>
+              <option value="52" selected>week</option>
+              <option value="12">month</option>
+            </select>
+          </label>
+        </div>
+        <label class="fld mt"><span>For how long <small id="cp-span-unit">periods</small></span><input id="cp-n" type="number" step="1" inputmode="numeric" value="52"></label>
+        <div class="calc two" id="cp-out" aria-live="polite"></div>
+        <div class="milestones" id="cp-table"></div>
+        <p class="hint" id="cp-note"></p>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------ converters -->
+    <section class="panel" id="conv" data-calc="conv">
+      <div class="panel-head">
+        <h2>Converters</h2>
+        <span>the three that come up while trading</span>
+      </div>
+      <div class="panel-body conv-grid">
+
+        <div class="conv-unit">
+          <h3>Currency</h3>
+          <div class="conv-row">
+            <label class="fld"><span>Amount</span><input id="cv-amt" type="number" step="any" inputmode="decimal" value="100"></label>
+            <label class="fld"><span>From</span><select id="cv-from"></select></label>
+            <label class="fld"><span>To</span><select id="cv-to"></select></label>
+            <button class="icon-btn" id="cv-swap" aria-label="Swap the two currencies" title="Swap">⇄</button>
+          </div>
+          <p class="conv-out" id="cv-out" aria-live="polite"></p>
+        </div>
+
+        <div class="conv-unit">
+          <h3>Pips and points</h3>
+          <div class="conv-row">
+            <label class="fld"><span>Instrument</span><select id="pp-symbol"></select></label>
+            <label class="fld"><span>Amount</span><input id="pp-amt" type="number" step="any" inputmode="decimal" value="10"></label>
+            <label class="fld"><span>Unit</span>
+              <select id="pp-unit"><option value="pips">pips</option><option value="points">points</option><option value="price">price move</option></select>
+            </label>
+          </div>
+          <p class="conv-out" id="pp-out" aria-live="polite"></p>
+        </div>
+
+        <div class="conv-unit">
+          <h3>Lots and units</h3>
+          <div class="conv-row">
+            <label class="fld"><span>Instrument</span><select id="lu-symbol"></select></label>
+            <label class="fld"><span>Amount</span><input id="lu-amt" type="number" step="any" inputmode="decimal" value="1"></label>
+            <label class="fld"><span>Unit</span>
+              <select id="lu-unit"><option value="lots">lots</option><option value="units">units</option></select>
+            </label>
+          </div>
+          <p class="conv-out" id="lu-out" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    </div>
+
+    <p class="fine">
+      Nothing on this screen is advice, and none of it is a broker quote. The arithmetic is exact;
+      the prices and conversion rates behind it are indicative demo values you can type over.
+      Check the size against your broker's own calculator before you place the trade — that check
+      is part of the definition of done for this page, not an apology for it.
+    </p>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="{{ url_for('static', filename='assets/store.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/instruments.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/calculators.js') }}"></script>
+<!-- the curriculum is loaded here only so the shell search box can find
+     lessons, glossary terms and library files from any screen -->
+<script src="{{ url_for('static', filename='assets/lessons.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/shell.js') }}"></script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>
