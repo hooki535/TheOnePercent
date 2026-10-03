@@ -104,6 +104,16 @@
     const user = data.session && data.session.user;
     if (user) {
       userId = user.id;
+      // Already signed in (e.g. just back from Google) — leave the login/sign-up pages.
+      if (page === "login" || page === "sign-up") {
+        let next = "dashboard.html";
+        try {
+          const { data: prof } = await sb.from("profiles").select("username").eq("id", user.id).maybeSingle();
+          if (!prof || !prof.username) next = "onboarding.html";
+        } catch (e) {}
+        location.replace(root + "pages/" + next);
+        return user;
+      }
       await pull();
     } else {
       if (ls.getItem(OWNER)) wipeLocal();

@@ -117,7 +117,7 @@
       const provider = b.dataset.provider === "microsoft" ? "azure" : b.dataset.provider;
       Cloud.client.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: new URL("login.html", window.location.href).href },
+        options: { redirectTo: new URL("login.html", window.location.href).href.split("#")[0].split("?")[0] },
       }).then(({ error }) => {
         if (error) showFormError("That sign-in option isn't available right now. Use your email and password instead.");
       });
