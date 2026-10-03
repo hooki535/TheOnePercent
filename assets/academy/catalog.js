@@ -33,6 +33,8 @@ window.Academy = (() => {
 
   const raw = [
     /* ---------------------------------------------------- Foundations */
+    ["starter-setup", "foundations", "Start Here: Broker, MT5 & First Trade Setup", "Beginner", 3,
+      "Everything you need before your first trade: choosing a broker like Exness, opening and verifying an account, MT5 on PC and phone, and placing a trade with a stop.", null],
     ["trading-foundations", "foundations", "Trading Foundations Masterclass", "Beginner", 5,
       "Markets, brokers, instruments, sessions, pips, lots, leverage and margin, from zero.",
       ["How trading works: what a trade is | who is on the other side | why most accounts lose",
@@ -493,7 +495,7 @@ window.Academy = (() => {
   const lessonCount = (c) => (c.content ? c.content.lessons.length : c.syllabus.reduce((a, m) => a + m.lessons.length, 0));
 
   /* flagship order for the "Start here" row */
-  const featured = ["trading-foundations", "candlesticks", "support-resistance", "market-structure", "risk-management", "psychology", "day-trading", "supply-demand"];
+  const featured = ["starter-setup", "trading-foundations", "candlesticks", "support-resistance", "market-structure", "risk-management", "psychology", "day-trading", "supply-demand"];
   const deeper = ["liquidity", "order-blocks", "fvg"];
 
   return { BRAND, PASS_MARK, schools, courses, course, school, register, isLive, lessonCount, featured, deeper, pdfs, PDFS, reading };

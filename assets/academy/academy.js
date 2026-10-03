@@ -302,6 +302,7 @@ window.AcademyUI = (() => {
       '<section class="panel"><div class="panel-head"><h2>What you will learn</h2></div><div class="panel-body"><ul class="ac-outcomes">' +
       outcomes.map((o) => "<li>" + esc(o) + "</li>").join("") +
       "</ul></div></section>" +
+      courseVideos(c) +
       (!live ? '<div class="notice ac-soon"><b>Lessons in production.</b> <small>The syllabus below is final. Enroll now to keep your place. While you wait, these full masterclasses are ready: ' + A.courses.filter(A.isLive).map((x) => '<a href="#mc/' + x.id + '">' + esc(x.title.replace(/ Masterclass$/, "")) + "</a>").join(", ") + ".</small></div>" : "") +
       '<section class="ac-syllabus"><h2>Syllabus</h2>' + syllabus + quizRow + "</section>" +
       pdfPanel(c, enrolled) +
@@ -471,6 +472,34 @@ window.AcademyUI = (() => {
       '<button class="btn btn-primary btn-lg" data-enroll="' + c.id + '" data-then="stay">Enroll for the course</button> <a class="btn btn-quiet btn-lg" href="#mc/' + c.id + '">See the syllabus</a></div></div>';
   }
 
+  /* ------------------------------------------------------------- videos
+     Click-to-play YouTube: a thumbnail until clicked, so pages stay fast. */
+  const V = window.AcademyVideos || { course: {}, lesson: {} };
+  function videoTile(v) {
+    return '<div class="ac-video"><button type="button" class="ac-vthumb" data-yt="' + esc(v.id) + '" aria-label="Play video: ' + esc(v.title) + '">' +
+      '<img src="https://i.ytimg.com/vi/' + esc(v.id) + '/hqdefault.jpg" alt="" loading="lazy"><span class="ac-vplay" aria-hidden="true">▶</span></button>' +
+      '<div class="ac-vcap"><b>' + esc(v.title) + '</b><a href="https://www.youtube.com/watch?v=' + esc(v.id) + '" target="_blank" rel="noopener">Watch on YouTube ↗</a></div></div>';
+  }
+  function courseVideos(c) {
+    const list = V.course[c.id] || [];
+    if (!list.length) return "";
+    return '<section class="ac-videos"><h2>Video lessons</h2><p class="hint">Hand-picked YouTube tutorials on this topic. Watch alongside the written lessons.</p><div class="ac-vgrid">' + list.map(videoTile).join("") + "</div></section>";
+  }
+  function lessonVideo(c, l) {
+    const v = V.lesson[l.id] || (V.course[c.id] || [])[0];
+    return v ? '<section class="ac-videos one"><h2>Watch: this lesson on video</h2>' + videoTile(v) + "</section>" : "";
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest(".ac-vthumb");
+    if (!b) return;
+    const f = document.createElement("iframe");
+    f.src = "https://www.youtube-nocookie.com/embed/" + b.dataset.yt + "?autoplay=1&rel=0";
+    f.title = "YouTube video";
+    f.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    f.allowFullscreen = true;
+    b.replaceWith(f);
+  });
+
   function renderLesson(c, lid) {
     const s = st();
     if (!s.enrolled[c.id]) return gate(c, "Enroll to open this lesson");
@@ -512,6 +541,7 @@ window.AcademyUI = (() => {
       "<h1>" + esc(l.title) + "</h1>" +
       '<p class="lead">' + esc(l.summary) + "</p>" +
       '<div class="quiz-meta"><span>' + l.minutes + " min read</span><span>" + esc(c.level) + "</span><span>" + esc(A.BRAND) + " Academy</span></div>" +
+      lessonVideo(c, l) +
       sections +
       '<div class="ac-boxes">' +
       '<div class="ac-box good"><h3>Key takeaways</h3><ul>' + l.takeaways.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
