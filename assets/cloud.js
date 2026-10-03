@@ -1,4 +1,4 @@
-/* TheOnePercent — cloud accounts + sync (Lovable Cloud)
+/* TheOnePercent — cloud accounts + sync (Supabase)
    -------------------------------------------------------------------
    Loaded in <head> on every page, right after theme.js and the
    supabase-js UMD bundle. Pages keep using web storage synchronously
@@ -8,8 +8,8 @@
    ------------------------------------------------------------------- */
 (() => {
   "use strict";
-  const URL_ = "https://lyhbjcwqnaublolnabys.supabase.co";
-  const KEY = "sb_publishable_-gvgZlB15d5pZf4BABYXew_RWL5ePRL";
+  const URL_ = "https://ecnxstqfnjaiibwiwwto.supabase.co";
+  const KEY = "sb_publishable_vqHYZ_AasII7F611BTDWdg_Nftd7dCb";
   const OWNER = "onepercent:__owner";
   const isSynced = (k) => typeof k === "string" && k.indexOf("onepercent") === 0 && k !== OWNER;
 
