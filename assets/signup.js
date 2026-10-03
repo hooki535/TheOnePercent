@@ -46,23 +46,36 @@
     /* Intl not available — keep the country-derived default. */
   }
 
-  /* ------------------------------------------------------------ username availability (simulated) */
+  /* ------------------------------------------------------------ username availability (checked against accounts) */
 
-  const taken = ["admin", "trader", "kampala_kev", "test"];
+  const USERNAME_RE = /^[a-z0-9_]{3,24}$/;
+  let usernameOk = true;
+  let usernameTimer = null;
   usernameInput.addEventListener("input", () => {
     const v = usernameInput.value.trim().toLowerCase();
     usernameHint.classList.remove("is-ok", "is-err");
+    clearTimeout(usernameTimer);
     if (!v) {
+      usernameOk = true;
       usernameHint.textContent = "Only this name appears on the leaderboard.";
       return;
     }
-    if (taken.includes(v)) {
-      usernameHint.textContent = "Already taken — try another.";
+    if (!USERNAME_RE.test(v)) {
+      usernameOk = false;
+      usernameHint.textContent = "3–24 characters: letters, numbers and _ only.";
       usernameHint.classList.add("is-err");
-    } else {
-      usernameHint.textContent = "Available.";
-      usernameHint.classList.add("is-ok");
+      return;
     }
+    usernameOk = false;
+    usernameHint.textContent = "Checking…";
+    usernameTimer = setTimeout(async () => {
+      const { data, error } = await Cloud.client.rpc("username_available", { name: v });
+      if (usernameInput.value.trim().toLowerCase() !== v) return;
+      if (error) { usernameOk = true; usernameHint.textContent = "Couldn't check right now — we'll confirm when you sign up."; return; }
+      usernameOk = !!data;
+      usernameHint.textContent = data ? "Available." : "Already taken — try another.";
+      usernameHint.classList.add(data ? "is-ok" : "is-err");
+    }, 400);
   });
 
   /* ------------------------------------------------------------ password strength */
@@ -85,7 +98,7 @@
     const labels = ["Too short", "Weak", "Fair", "Strong", "Strong"];
     strengthHint.textContent = v
       ? labels[score] + " · 12+ characters, mixed case, a number"
-      : "Use 12+ characters, mixed case and a number.";
+      : "At least 8 characters. 12+ with mixed case and a number is stronger.";
     checkMatch();
   });
 
@@ -133,15 +146,17 @@
     };
 
     const password = pw.value;
-    if (password.length < 8 || password !== confirmInput.value) {
-      matchHint.textContent = password.length < 8 ? "Password must be at least 8 characters." : "Passwords don't match.";
-      matchHint.classList.add("is-err");
-      return;
-    }
-
-    if (window.Shell && Shell.saveProfile) {
-      Shell.saveProfile(profile);
-    }
+    matchHint.classList.remove("is-ok", "is-err");
+    const fail = (msg) => { matchHint.textContent = msg; matchHint.classList.add("is-err"); };
+    if (!profile.firstName || !profile.lastName) return fail("Enter your first and last name.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) return fail("Enter a valid email address.");
+    if (!profile.dob) return fail("Enter your date of birth.");
+    const dob = new Date(profile.dob + "T00:00:00");
+    const adult = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate());
+    if (isNaN(dob) || adult > new Date()) return fail("You must be 18 or older to create an account.");
+    if (!usernameOk) return fail("Pick a different username.");
+    if (password.length < 8) return fail("Password must be at least 8 characters.");
+    if (password !== confirmInput.value) return fail("Passwords don't match.");
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Creating account…";
@@ -151,18 +166,29 @@
         email: profile.email,
         password,
         options: {
-          data: { first_name: profile.firstName, last_name: profile.lastName, username: profile.username },
-          emailRedirectTo: window.location.origin + "/TheOnePercent/pages/onboarding.html",
+          data: {
+            first_name: profile.firstName,
+            middle_name: profile.middleName,
+            last_name: profile.lastName,
+            username: profile.username.toLowerCase() || null,
+            phone: profile.phone.trim(),
+            country: profile.country,
+            currency: profile.currency,
+            timezone: profile.timezone,
+            dob: profile.dob,
+          },
+          emailRedirectTo: new URL("onboarding.html", window.location.href).href,
         },
       })
       .then(({ data, error }) => {
         if (error) {
           submitBtn.disabled = false;
           submitBtn.textContent = "Create account";
-          matchHint.textContent = error.message;
-          matchHint.classList.add("is-err");
+          fail(/already registered/i.test(error.message) ? "An account with this email already exists. Try logging in." : /username/i.test(error.message) ? "That username was just taken — pick another." : error.message);
           return;
         }
+        // Save locally only once the account really exists.
+        if (window.Shell && Shell.saveProfile) Shell.saveProfile(profile);
         if (data.session) {
           window.location.href = "onboarding.html";
           return;
@@ -180,7 +206,9 @@
       const provider = b.dataset.provider === "microsoft" ? "azure" : b.dataset.provider;
       Cloud.client.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: window.location.origin + window.location.pathname },
+        options: { redirectTo: new URL("login.html", window.location.href).href },
+      }).then(({ error }) => {
+        if (error) { matchHint.textContent = "That sign-in option isn't available right now. Use the form below."; matchHint.classList.add("is-err"); }
       });
     }, true);
   });

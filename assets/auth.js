@@ -117,7 +117,9 @@
       const provider = b.dataset.provider === "microsoft" ? "azure" : b.dataset.provider;
       Cloud.client.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: window.location.origin + window.location.pathname },
+        options: { redirectTo: new URL("login.html", window.location.href).href },
+      }).then(({ error }) => {
+        if (error) showFormError("That sign-in option isn't available right now. Use your email and password instead.");
       });
     }, true);
   });
@@ -130,7 +132,7 @@
       return;
     }
     await Cloud.client.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + "/TheOnePercent/pages/reset-password.html",
+      redirectTo: new URL("reset-password.html", window.location.href).href,
     });
     showFormError("If that email has an account, a reset link is on its way.");
   });
