@@ -132,6 +132,13 @@
       dob: $("#dob").value,
     };
 
+    const password = pw.value;
+    if (password.length < 8 || password !== confirmInput.value) {
+      matchHint.textContent = password.length < 8 ? "Password must be at least 8 characters." : "Passwords don't match.";
+      matchHint.classList.add("is-err");
+      return;
+    }
+
     if (window.Shell && Shell.saveProfile) {
       Shell.saveProfile(profile);
     }
@@ -139,19 +146,42 @@
     submitBtn.disabled = true;
     submitBtn.textContent = "Creating account…";
 
-    setTimeout(() => {
-      window.location.href = "onboarding.html";
-    }, 450);
+    Cloud.client.auth
+      .signUp({
+        email: profile.email,
+        password,
+        options: {
+          data: { first_name: profile.firstName, last_name: profile.lastName, username: profile.username },
+          emailRedirectTo: window.location.origin + "/TheOnePercent/pages/onboarding.html",
+        },
+      })
+      .then(({ data, error }) => {
+        if (error) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create account";
+          matchHint.textContent = error.message;
+          matchHint.classList.add("is-err");
+          return;
+        }
+        if (data.session) {
+          window.location.href = "onboarding.html";
+          return;
+        }
+        form.innerHTML =
+          '<h2>Check your email</h2><p>We sent a confirmation link to <b></b>. Click it to finish creating your account.</p><p><a class="auth-link" href="login.html">Back to log in</a></p>';
+        form.querySelector("b").textContent = profile.email;
+      });
   });
 
-  googleBtn.addEventListener("click", () => {
-    googleBtn.disabled = true;
-    googleBtn.textContent = "Connecting to Google…";
-    setTimeout(() => {
-      if (window.Shell && Shell.saveProfile) {
-        Shell.saveProfile({ name: "Trader", email: "trader@gmail.com" });
-      }
-      window.location.href = "onboarding.html";
-    }, 500);
+  document.querySelectorAll("[data-provider]").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const provider = b.dataset.provider === "microsoft" ? "azure" : b.dataset.provider;
+      Cloud.client.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin + window.location.pathname },
+      });
+    }, true);
   });
 })();
