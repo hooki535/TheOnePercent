@@ -67,12 +67,6 @@
 
   /* ------------------------------------------------------------ session (Lovable Cloud) */
 
-  async function redirectAfterLogin() {
-    await Cloud.ready;
-    const me = window.Shell && Shell.profile ? Shell.profile() : null;
-    window.location.href = me && me.markets && me.markets.length ? "dashboard.html" : "onboarding.html";
-  }
-
   /* ------------------------------------------------------------ events */
 
   emailInput.addEventListener("blur", () => {
@@ -96,14 +90,25 @@
     if (!validate()) return;
     submitBtn.disabled = true;
     submitBtn.textContent = "Logging in…";
-    const { error } = await Cloud.client.auth.signInWithPassword({
-      email: emailInput.value.trim(),
-      password: passwordInput.value,
-    });
+    let error = null;
+    try {
+      ({ error } = await Cloud.client.auth.signInWithPassword({
+        email: emailInput.value.trim(),
+        password: passwordInput.value,
+      }));
+    } catch (e) {
+      error = { message: "network", status: 0 };
+    }
     if (error) {
       submitBtn.disabled = false;
       submitBtn.textContent = "Log in";
-      showFormError(/confirm/i.test(error.message) ? "Please confirm your email first — check your inbox." : "Wrong email or password.");
+      const m = String(error.message || "");
+      showFormError(
+        /confirm/i.test(m) ? "Please confirm your email first — check your inbox."
+        : error.status === 429 || /rate|too many/i.test(m) ? "Too many attempts. Wait a minute and try again."
+        : error.status === 0 || /network|fetch|failed/i.test(m) ? "Can't reach the server. Check your connection and try again."
+        : "Wrong email or password."
+      );
       return;
     }
     sessionStorage.removeItem("op-synced");
@@ -117,7 +122,7 @@
       const provider = b.dataset.provider === "microsoft" ? "azure" : b.dataset.provider;
       Cloud.client.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: new URL("login.html", window.location.href).href.split("#")[0].split("?")[0] },
+        options: { redirectTo: new URL(window.OP_FLASK ? "/login" : "login.html", window.location.href).href.split("#")[0].split("?")[0] },
       }).then(({ error }) => {
         if (error) showFormError("That sign-in option isn't available right now. Use your email and password instead.");
       });
@@ -132,11 +137,11 @@
       return;
     }
     await Cloud.client.auth.resetPasswordForEmail(email, {
-      redirectTo: new URL("reset-password.html", window.location.href).href,
+      redirectTo: new URL(window.OP_FLASK ? "/reset-password" : "reset-password.html", window.location.href).href,
     });
     showFormError("If that email has an account, a reset link is on its way.");
   });
 
-  // Already signed in? Skip the form.
-  Cloud.ready.then((u) => { if (u) redirectAfterLogin(); });
+  // Already signed in? cloud.js sends the visitor on (to the course they were
+  // after, the dashboard, or onboarding), so there is nothing to do here.
 })();

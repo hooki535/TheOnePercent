@@ -23,8 +23,11 @@ window.AcademyUI = (() => {
   const esc = (s) =>
     String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const IMG = (school) => "../assets/academy/img/" + ((A.school(school) || {}).img || "foundations") + ".webp";
-  const COVER = (c) => (c.img ? "../assets/academy/img/" + c.img + ".webp" : IMG(c.school));
+  // "../" on the static site; the Flask templates set window.ACADEMY_ROOT = "/static/"
+  const ROOT = window.ACADEMY_ROOT || "../";
+  const FLASK = window.OP_FLASK === true;
+  const IMG = (school) => ROOT + "assets/academy/img/" + ((A.school(school) || {}).img || "foundations") + ".webp";
+  const COVER = (c) => (c.img ? ROOT + "assets/academy/img/" + c.img + ".webp" : IMG(c.school));
 
   /* A unique cover for every course without its own art: a candlestick
      motif seeded from the course id, tinted with the school accent and
@@ -75,9 +78,42 @@ window.AcademyUI = (() => {
     return $("#view-academy");
   }
 
+  /* ------------------------------------------------------------ sign-in
+     Enrolling, lessons, quizzes, certificates and workbooks all need an
+     account. Until the session check finishes we don't know, so we wait
+     rather than flash the wrong screen. Without a session the academy
+     state reads as empty, so nothing that was saved before sign-up (or by
+     someone else on a shared browser) can unlock a course. */
+  const LOGIN = FLASK ? "/login" : "login.html";
+  const SIGNUP = FLASK ? "/sign-up" : "sign-up.html";
+  let authed = false;
+  let authKnown = false;
+
   function st() {
-    return window.Store.academy.get();
+    return authed
+      ? window.Store.academy.get()
+      : { enrolled: {}, done: {}, quiz: {}, last: {} };
   }
+
+  function signInGate(c, why) {
+    // remember where they were headed so login/sign-up bring them back here
+    if (window.Cloud && Cloud.setReturn) Cloud.setReturn("learn", "#" + (c ? "mc/" + c.id : "masterclasses"));
+    root().innerHTML =
+      (c
+        ? '<div class="crumb"><a href="#masterclasses">Masterclasses</a><span>/</span><a href="#mc/' + c.id + '">' + esc(c.title) + "</a></div>"
+        : "") +
+      '<div class="ac-gate">' +
+      (c ? '<div class="ac-course-cover">' + coverHTML(c) + "</div>" : "") +
+      "<div><h2>" + esc(why || "Sign in to enroll") + "</h2>" +
+      "<p>Create a free account or log in to enroll" + (c ? " in <b>" + esc(c.title) + "</b>" : "") +
+      ", open lessons and take the final quiz. Your progress is saved to your account.</p>" +
+      '<a class="btn btn-primary btn-lg" href="' + LOGIN + '">Log in</a> ' +
+      '<a class="btn btn-quiet btn-lg" href="' + SIGNUP + '">Create a free account</a>' +
+      (c ? ' <a class="btn btn-quiet btn-lg" href="#mc/' + c.id + '">See the syllabus</a>' : "") +
+      "</div></div>";
+  }
+
+  const enrollLabel = (txt) => (authed ? txt : "Sign in to enroll");
 
   function toast(msg) {
     const t = $("#toast");
@@ -113,7 +149,7 @@ window.AcademyUI = (() => {
     const n = A.lessonCount(c);
     const cta = enrolled
       ? '<a class="btn btn-quiet ac-cta" href="#mc/' + c.id + '">' + (p.passed ? "View certificate" : live ? "Continue" + (p.pct ? " · " + p.pct + "%" : "") : "Enrolled · view syllabus") + "</a>"
-      : '<button class="btn btn-primary ac-cta" data-enroll="' + c.id + '">Enroll for the course</button>';
+      : '<button class="btn btn-primary ac-cta" data-enroll="' + c.id + '">' + enrollLabel("Enroll for the course") + "</button>";
     return (
       '<article class="ac-card' + (big ? " big" : "") + '">' +
       '<a class="ac-cover" href="#mc/' + c.id + '" tabindex="-1" aria-hidden="true">' +
@@ -150,7 +186,7 @@ window.AcademyUI = (() => {
 
     root().innerHTML =
       '<section class="ac-hero">' +
-      '<img class="ac-hero-img" src="../assets/academy/img/academy-hero.webp" alt="">' +
+      '<img class="ac-hero-img" src="' + ROOT + 'assets/academy/img/academy-hero.webp" alt="">' +
       '<div class="ac-hero-in">' +
       '<span class="ac-kicker">' + esc(A.BRAND) + " Academy</span>" +
       "<h1>Every course a trader needs, in one place.</h1>" +
@@ -237,11 +273,33 @@ window.AcademyUI = (() => {
     const outcomes = live ? c.content.outcomes : c.syllabus.map((m) => m.title + ": " + m.lessons.slice(0, 3).join(", ").toLowerCase());
     const doneMap = s.done[c.id] || {};
     const related = A.courses.filter((x) => x.school === c.school && x.id !== c.id).slice(0, 4);
+    const nextPanel =
+      enrolled && live
+        ? '<section class="panel ac-next-panel"><div class="panel-head"><h2>Continue learning</h2><span>' +
+          p.done +
+          " of " +
+          p.total +
+          " lessons · " +
+          p.pct +
+          '% complete</span></div><div class="panel-body"><div class="ac-next"><div><b>' +
+          (nx ? esc(nx.title) : "Final quiz") +
+          "</b><small>" +
+          (nx ? "Your next lesson is ready." : "Complete the quiz to earn your certificate.") +
+          '</small></div><a class="btn btn-primary" href="#mc/' +
+          c.id +
+          "/" +
+          (nx ? nx.id : "quiz") +
+          '">' +
+          (nx ? "Continue" : "Take the quiz") +
+          '</a></div><div class="bar"><span style="width:' +
+          p.pct +
+          '%"></span></div></div></section>'
+        : "";
 
     let cta;
     if (!enrolled) {
       cta =
-        '<div class="ac-enroll"><button class="btn btn-primary btn-lg" data-enroll="' + c.id + '">Enroll for the course</button>' +
+        '<div class="ac-enroll"><button class="btn btn-primary btn-lg" data-enroll="' + c.id + '">' + enrollLabel("Enroll and start Lesson 1") + "</button>" +
         "<small>Free while " + esc(A.BRAND) + " is in beta. Your progress is saved to your account on this device.</small></div>";
     } else if (!live) {
       cta =
@@ -299,9 +357,14 @@ window.AcademyUI = (() => {
       cta +
       "</div></section>" +
       '<div class="ac-course-grid"><div>' +
+      nextPanel +
       '<section class="panel"><div class="panel-head"><h2>What you will learn</h2></div><div class="panel-body"><ul class="ac-outcomes">' +
       outcomes.map((o) => "<li>" + esc(o) + "</li>").join("") +
       "</ul></div></section>" +
+      (c.id === "starter-setup"
+        ? '<div class="notice ac-broker-note"><b>Broker example:</b> Exness is used for illustration only. The1% does not recommend or endorse any broker. Always verify regulation, fees and withdrawal terms in your country.</div>'
+        : "") +
+      courseVideos(c) +
       (!live ? '<div class="notice ac-soon"><b>Lessons in production.</b> <small>The syllabus below is final. Enroll now to keep your place. While you wait, these full masterclasses are ready: ' + A.courses.filter(A.isLive).map((x) => '<a href="#mc/' + x.id + '">' + esc(x.title.replace(/ Masterclass$/, "")) + "</a>").join(", ") + ".</small></div>" : "") +
       '<section class="ac-syllabus"><h2>Syllabus</h2>' + syllabus + quizRow + "</section>" +
       pdfPanel(c, enrolled) +
@@ -465,11 +528,40 @@ window.AcademyUI = (() => {
   /* -------------------------------------------------------------- lesson */
 
   function gate(c, why) {
+    if (!authed) return signInGate(c, "Sign in to continue");
     root().innerHTML =
       '<div class="crumb"><a href="#masterclasses">Masterclasses</a><span>/</span><a href="#mc/' + c.id + '">' + esc(c.title) + "</a></div>" +
       '<div class="ac-gate"><div class="ac-course-cover">' + coverHTML(c) + "</div><div><h2>" + esc(why) + "</h2><p>" + esc(c.tagline) + "</p>" +
       '<button class="btn btn-primary btn-lg" data-enroll="' + c.id + '" data-then="stay">Enroll for the course</button> <a class="btn btn-quiet btn-lg" href="#mc/' + c.id + '">See the syllabus</a></div></div>';
   }
+
+  /* ------------------------------------------------------------- videos
+     Click-to-play YouTube: a thumbnail until clicked, so pages stay fast. */
+  const V = window.AcademyVideos || { course: {}, lesson: {} };
+  function videoTile(v) {
+    return '<div class="ac-video"><button type="button" class="ac-vthumb" data-yt="' + esc(v.id) + '" aria-label="Play video: ' + esc(v.title) + '">' +
+      '<img src="https://i.ytimg.com/vi/' + esc(v.id) + '/hqdefault.jpg" alt="" loading="lazy"><span class="ac-vplay" aria-hidden="true">▶</span></button>' +
+      '<div class="ac-vcap"><b>' + esc(v.title) + '</b><a href="https://www.youtube.com/watch?v=' + esc(v.id) + '" target="_blank" rel="noopener">Watch on YouTube ↗</a><small>External video · opens YouTube</small></div></div>';
+  }
+  function courseVideos(c) {
+    const list = V.course[c.id] || [];
+    if (!list.length) return "";
+    return '<section class="ac-videos"><h2>Video lessons</h2><p class="hint">Hand-picked YouTube tutorials on this topic. Watch alongside the written lessons.</p><div class="ac-vgrid">' + list.map(videoTile).join("") + "</div></section>";
+  }
+  function lessonVideo(c, l) {
+    const v = V.lesson[l.id] || (V.course[c.id] || [])[0];
+    return v ? '<section class="ac-videos one"><h2>Watch: this lesson on video</h2>' + videoTile(v) + "</section>" : "";
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest(".ac-vthumb");
+    if (!b) return;
+    const f = document.createElement("iframe");
+    f.src = "https://www.youtube-nocookie.com/embed/" + b.dataset.yt + "?autoplay=1&rel=0";
+    f.title = "YouTube video";
+    f.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    f.allowFullscreen = true;
+    b.replaceWith(f);
+  });
 
   function renderLesson(c, lid) {
     const s = st();
@@ -512,6 +604,7 @@ window.AcademyUI = (() => {
       "<h1>" + esc(l.title) + "</h1>" +
       '<p class="lead">' + esc(l.summary) + "</p>" +
       '<div class="quiz-meta"><span>' + l.minutes + " min read</span><span>" + esc(c.level) + "</span><span>" + esc(A.BRAND) + " Academy</span></div>" +
+      lessonVideo(c, l) +
       sections +
       '<div class="ac-boxes">' +
       '<div class="ac-box good"><h3>Key takeaways</h3><ul>' + l.takeaways.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
@@ -661,6 +754,10 @@ window.AcademyUI = (() => {
   /* ---------------------------------------------------------------- route */
 
   function route(h) {
+    if (!authKnown) {
+      root().innerHTML = '<p class="hint" style="padding:24px 0">Loading…</p>';
+      return;
+    }
     const parts = h.split("/");
     if (parts[0] !== "mc" || !parts[1]) return renderCatalog();
     const c = A.course(parts[1]);
@@ -679,6 +776,7 @@ window.AcademyUI = (() => {
     if (!b) return;
     const c = A.course(b.dataset.enroll);
     if (!c) return;
+    if (!authed) return signInGate(c, "Sign in to enroll");
     window.Store.academy.enroll(c.id);
     toast("You are enrolled in " + c.title + ".");
     const h = location.hash.replace(/^#/, "");
@@ -687,6 +785,45 @@ window.AcademyUI = (() => {
       location.hash = "#mc/" + c.id;
     } else route(h);
   });
+
+  /* real-chart screenshots open full size; any click or Escape closes */
+  document.addEventListener("click", (e) => {
+    const s = e.target.closest && e.target.closest("[data-shot]");
+    if (!s) return;
+    const img = s.querySelector("img");
+    const box = document.createElement("div");
+    box.className = "shot-box";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-label", img ? img.alt : "Chart");
+    box.innerHTML = '<img src="' + s.dataset.shot + '" alt="">';
+    const close = () => {
+      box.remove();
+      document.removeEventListener("keydown", onKey);
+      s.focus();
+    };
+    const onKey = (k) => k.key === "Escape" && close();
+    box.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(box);
+  });
+
+  const onAuth = (user) => {
+    authed = !!user;
+    authKnown = true;
+    const h = location.hash.replace(/^#/, "");
+    if (!h || h === "masterclasses" || h.indexOf("mc/") === 0) route(h);
+  };
+  if (window.Cloud && Cloud.ready) {
+    Cloud.ready.then(onAuth, () => onAuth(null));
+    // signed out in another tab (or the session expired) → lock again straight away
+    try {
+      Cloud.client.auth.onAuthStateChange((evt, session) => {
+        if (evt === "SIGNED_OUT" && authed) onAuth(null);
+      });
+    } catch (e) {}
+  } else {
+    onAuth(null); // no auth available = locked, never open
+  }
 
   return { route };
 })();

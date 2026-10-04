@@ -65,26 +65,7 @@
     return ok;
   }
 
-  /* ------------------------------------------------------------ session
-     No backend in Phase 1: a successful login just means the form is
-     valid. We save (or refresh) a session profile so every other page's
-     shared shell renders the logged-in nav. If onboarding was already
-     completed in this browser, that data is preserved rather than
-     overwritten. */
-
-  function logIn(email) {
-    const existing = window.Shell && Shell.profile ? Shell.profile() : null;
-    const name = (existing && existing.name) || email.split("@")[0];
-    if (window.Shell && Shell.saveProfile) {
-      Shell.saveProfile({ email, name });
-    }
-    return !!(existing && existing.markets && existing.markets.length);
-  }
-
-  function redirectAfterLogin() {
-    const hasOnboarded = window.Shell && Shell.profile && Shell.profile() && Shell.profile().markets && Shell.profile().markets.length;
-    window.location.href = hasOnboarded ? "/dashboard" : "/onboarding";
-  }
+  /* ------------------------------------------------------------ session (Lovable Cloud) */
 
   /* ------------------------------------------------------------ events */
 
@@ -103,33 +84,64 @@
     toggleBtn.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
   });
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     showFormError("");
-
     if (!validate()) return;
-
     submitBtn.disabled = true;
     submitBtn.textContent = "Logging in…";
-
-    // Simulated network delay so the state change is visible.
-    setTimeout(() => {
-      logIn(emailInput.value.trim());
-      redirectAfterLogin();
-    }, 450);
+    let error = null;
+    try {
+      ({ error } = await Cloud.client.auth.signInWithPassword({
+        email: emailInput.value.trim(),
+        password: passwordInput.value,
+      }));
+    } catch (e) {
+      error = { message: "network", status: 0 };
+    }
+    if (error) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Log in";
+      const m = String(error.message || "");
+      showFormError(
+        /confirm/i.test(m) ? "Please confirm your email first — check your inbox."
+        : error.status === 429 || /rate|too many/i.test(m) ? "Too many attempts. Wait a minute and try again."
+        : error.status === 0 || /network|fetch|failed/i.test(m) ? "Can't reach the server. Check your connection and try again."
+        : "Wrong email or password."
+      );
+      return;
+    }
+    sessionStorage.removeItem("op-synced");
+    window.location.reload();
   });
 
-  googleBtn.addEventListener("click", () => {
-    googleBtn.disabled = true;
-    googleBtn.textContent = "Connecting to Google…";
-    setTimeout(() => {
-      logIn("trader@gmail.com");
-      redirectAfterLogin();
-    }, 500);
+  document.querySelectorAll("[data-provider]").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const provider = b.dataset.provider === "microsoft" ? "azure" : b.dataset.provider;
+      Cloud.client.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: new URL(window.OP_FLASK ? "/login" : "login.html", window.location.href).href.split("#")[0].split("?")[0] },
+      }).then(({ error }) => {
+        if (error) showFormError("That sign-in option isn't available right now. Use your email and password instead.");
+      });
+    }, true);
   });
 
-  forgotLink.addEventListener("click", (e) => {
+  forgotLink.addEventListener("click", async (e) => {
     e.preventDefault();
-    showFormError("Password reset isn't built yet — this link is a placeholder for Phase 1.");
+    const email = emailInput.value.trim();
+    if (!validEmail(email)) {
+      fieldError(emailInput, "Enter your email above, then click Forgot password.");
+      return;
+    }
+    await Cloud.client.auth.resetPasswordForEmail(email, {
+      redirectTo: new URL(window.OP_FLASK ? "/reset-password" : "reset-password.html", window.location.href).href,
+    });
+    showFormError("If that email has an account, a reset link is on its way.");
   });
+
+  // Already signed in? cloud.js sends the visitor on (to the course they were
+  // after, the dashboard, or onboarding), so there is nothing to do here.
 })();

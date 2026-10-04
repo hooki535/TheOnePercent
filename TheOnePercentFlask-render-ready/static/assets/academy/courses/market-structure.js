@@ -108,6 +108,20 @@ Academy.register("market-structure", {
           ],
           note: "When the environment is unclear, the correct position size is zero. Waiting is a position.",
         },
+        {
+          h: "On a real chart: a range",
+          p: [
+            "EURUSD spent July to November 2025 inside roughly 1.14 to 1.18. Highs failed near the same area, lows held near the same area, and the middle was noise. Trend tools lose money in conditions like this; range tools do not."
+          ],
+          fig: {
+            type: "shot",
+            src: "sr-range-eurusd",
+            title: "Five months of range",
+            caption: "Even the September spike above the range high failed and fell back inside.",
+            meta: "EURUSD · 1D · Jul to Nov 2025",
+            alt: "EURUSD daily chart showing a range between about 1.14 and 1.18"
+          }
+        },
       ],
       takeaways: [
         "HH + HL = uptrend. LH + LL = downtrend. Repeating highs and lows = range.",
@@ -167,6 +181,20 @@ Academy.register("market-structure", {
           ],
           note: "Count the candles: a break made by one or two decisive candles says more than a break made by ten grinding ones.",
         },
+        {
+          h: "On a real chart: a clean uptrend",
+          p: [
+            "Gold from July to October 2025. Each pullback held above the previous low (HL), and each rally took out the previous high. The close above 3,534 on 2 September was the break of structure that confirmed the trend was still intact."
+          ],
+          fig: {
+            type: "shot",
+            src: "ms-uptrend-gold",
+            title: "Higher highs, higher lows and a BOS",
+            caption: "Mark the swings first. The trend is simply what the swings are doing.",
+            meta: "XAUUSD · 1D · Jul to Oct 2025",
+            alt: "Gold daily chart with higher highs, higher lows and a break of structure"
+          }
+        },
       ],
       takeaways: [
         "BOS = a close beyond the last swing point in the trend direction.",
@@ -223,6 +251,20 @@ Academy.register("market-structure", {
           p: [
             "Sometimes price breaks the protected low, sweeps the stops below it, and then resumes the original trend. That is why confirmation from the next swing matters, and why the location of the CHoCH matters more than the CHoCH itself.",
           ],
+        },
+        {
+          h: "On a real chart: from uptrend to downtrend",
+          p: [
+            "Bitcoin in late 2025. The last higher high printed near 126,200 on 6 October. When price closed below the 1 September higher low near 107,300, the uptrend's structure broke: that was the change of character. Lower highs and fresh breaks of structure followed all the way to about 80,600."
+          ],
+          fig: {
+            type: "shot",
+            src: "ms-choch-btc",
+            title: "CHoCH, then BOS after BOS",
+            caption: "The first break against the trend is the warning. The lower high and the next break are the confirmation.",
+            meta: "BTCUSD · 1D · Aug to Dec 2025",
+            alt: "Bitcoin daily chart showing a change of character and lower highs"
+          }
         },
       ],
       takeaways: [

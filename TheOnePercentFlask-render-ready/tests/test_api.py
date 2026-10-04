@@ -93,6 +93,7 @@ def client(app):
 PAGE_ROUTES = [
     "/", "/dashboard", "/charts", "/journal", "/calculators",
     "/learn", "/login", "/onboarding", "/settings", "/sign-up",
+    "/reset-password",
 ]
 
 
@@ -101,6 +102,46 @@ def test_pages_render(client, path):
     r = client.get(path)
     assert r.status_code == 200
     assert b"<html" in r.data.lower()
+
+
+@pytest.mark.parametrize("path", PAGE_ROUTES)
+def test_pages_load_the_account_layer(client, path):
+    # Every screen must load Supabase + cloud.js (real sign-in), and flag
+    # itself as the Flask build so the scripts use /login, /dashboard, etc.
+    body = client.get(path).data
+    assert b"supabase-js" in body
+    assert b"assets/cloud.js" in body
+    assert b"window.OP_FLASK = true" in body
+    assert b"pplx" not in body  # no leftover third-party editor script
+
+
+@pytest.mark.parametrize("path", PAGE_ROUTES)
+def test_every_asset_a_page_references_exists(client, path):
+    import re
+    body = client.get(path).data.decode()
+    urls = set(re.findall(r'(?:src|href)="(/static/[^"#?]+)"', body))
+    assert urls, "expected the page to reference static files"
+    missing = [u for u in sorted(urls) if client.get(u).status_code != 200]
+    assert not missing, f"{path} references missing files: {missing}"
+
+
+def test_academy_courses_are_all_loaded_by_the_learn_page(client):
+    # catalog.js lists courses with lessons; each course file must be
+    # included by learn.html or its lessons silently never appear.
+    import re
+    from pathlib import Path
+    body = client.get("/learn").data.decode()
+    course_dir = Path(__file__).resolve().parents[1] / "static/assets/academy/courses"
+    for f in sorted(course_dir.glob("*.js")):
+        assert f"academy/courses/{f.name}" in body, f"{f.name} is not loaded by /learn"
+
+
+def test_landing_nav_follows_the_real_session(client):
+    # The cover page used to pin data-auth="out", so a signed-in visitor still
+    # saw "Log in / Sign up" there. Only the login/sign-up/reset screens may pin it.
+    assert b'data-auth="out"' not in client.get("/").data
+    for path in ("/login", "/sign-up", "/reset-password"):
+        assert b'data-auth="out"' in client.get(path).data
 
 
 def test_static_assets_serve(client):

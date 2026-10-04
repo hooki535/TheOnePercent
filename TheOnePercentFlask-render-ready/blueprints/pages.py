@@ -1,6 +1,7 @@
 """Every screen that used to be a static .html file. Templates are
-byte-identical to the originals except for path rewrites — see
-templates/index.html and templates/pages/*.html."""
+generated from the root static pages with path rewrites only (assets via
+url_for('static'), page links via url_for('pages.*')) plus one inline flag,
+window.OP_FLASK, that tells the shared scripts to use these flat routes."""
 
 from flask import Blueprint, render_template
 
@@ -40,6 +41,11 @@ def learn():
 @pages.get("/login")
 def login():
     return render_template("pages/login.html")
+
+
+@pages.get("/reset-password")
+def reset_password():
+    return render_template("pages/reset-password.html")
 
 
 @pages.get("/onboarding")

@@ -114,6 +114,35 @@ Academy.register("candlesticks", {
           ],
           note: "A pin bar in the middle of nowhere is just a candle with a long wick. Location is what turns it into a signal.",
         },
+        {
+          h: "On a real chart: a hammer that held",
+          p: [
+            "AUDUSD on 5 August 2024. A fast sell-off traded down to 0.6357, then buyers pushed price all the way back to close near the open. The long lower wick is the footprint of that rejection.",
+            "Notice where the stop belongs: below the wick, not below the body. If price trades back through 0.6357, the rejection has failed and the idea is wrong."
+          ],
+          fig: {
+            type: "shot",
+            src: "cs-hammer-audusd",
+            title: "Hammer after a sell-off, then a rally",
+            caption: "The hammer's low became the invalidation point for the whole recovery that followed.",
+            meta: "AUDUSD · 1D · Aug 2024",
+            alt: "AUDUSD daily chart with a hammer candle on 5 August 2024 followed by a rally"
+          }
+        },
+        {
+          h: "On a real chart: a shooting star at the high",
+          p: [
+            "GBPUSD on 17 September 2025. Price spiked to 1.3725, sellers slammed it back, and the day closed near its open with a long upper wick. The next day closed below the star's low, which is the trigger most traders wait for."
+          ],
+          fig: {
+            type: "shot",
+            src: "cs-star-gbpusd",
+            title: "Shooting star, then a close below its low",
+            caption: "The star alone is a warning. The close below its low is the confirmation.",
+            meta: "GBPUSD · 1D · Sep 2025",
+            alt: "GBPUSD daily chart with a shooting star on 17 September 2025"
+          }
+        },
       ],
       takeaways: [
         "Wick at least two thirds of the range, body at one end.",
@@ -167,6 +196,21 @@ Academy.register("candlesticks", {
             "Marubozu into a level, after a long trend: often the final push before exhaustion. Check the next candle.",
           ],
         },
+        {
+          h: "On a real chart: a doji after a fall",
+          p: [
+            "EURUSD in January 2025. After a steady decline, 13 January printed a doji: a large range but almost no net change. Sellers were still active, but they could no longer push price to a lower close.",
+            "The doji by itself is not a buy signal. The strong bullish candle the next day is what turned indecision into a tradable shift."
+          ],
+          fig: {
+            type: "shot",
+            src: "cs-doji-eurusd",
+            title: "Doji, then a confirmation candle",
+            caption: "Wait for the candle after the doji. Indecision needs a winner.",
+            meta: "EURUSD · 1D · Jan 2025",
+            alt: "EURUSD daily chart with a doji on 13 January 2025"
+          }
+        },
       ],
       takeaways: [
         "Doji = balance. After a trend, it warns that momentum has stopped.",
@@ -217,6 +261,20 @@ Academy.register("candlesticks", {
             "Inside bars with the trend, at a level, are the cleanest. Inside bars in the middle of a choppy range often break both ways.",
           ],
           note: "Candle names come from shape. Their meaning comes from where they appear. An engulfing bar into resistance is far weaker than the same bar off support.",
+        },
+        {
+          h: "On a real chart: bullish engulfing at support",
+          p: [
+            "EURUSD on 1 and 2 August 2024. A red day into the late-June support near 1.0778 was followed by a green day that opened at the low and closed well above the previous open. Location plus pattern: that is what made it worth trading."
+          ],
+          fig: {
+            type: "shot",
+            src: "cs-engulf-eurusd",
+            title: "Bullish engulfing at a known support",
+            caption: "The same pattern in the middle of a range would mean far less.",
+            meta: "EURUSD · 1D · Aug 2024",
+            alt: "EURUSD daily chart with a bullish engulfing pattern at support on 2 August 2024"
+          }
         },
       ],
       takeaways: [

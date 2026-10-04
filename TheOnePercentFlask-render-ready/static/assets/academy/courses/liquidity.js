@@ -96,6 +96,20 @@ Academy.register("liquidity", {
           ],
           note: "The cleaner and more obvious the level, the more liquidity rests behind it.",
         },
+        {
+          h: "On a real chart: equal highs swept",
+          p: [
+            "Gold in July and August 2021. Two highs at almost the same price, 1,835 and 1,833, built an obvious ceiling with buy stops above it. On 4 August price poked just above, filled those orders and closed back below. Within three sessions gold had fallen more than 150 dollars."
+          ],
+          fig: {
+            type: "shot",
+            src: "liq-eqh-gold",
+            title: "Equal highs, a sweep, then the real move",
+            caption: "Equal highs look like resistance to most traders. To a large seller, they look like fuel.",
+            meta: "XAUUSD · 1D · Jul to Aug 2021",
+            alt: "Gold daily chart with equal highs swept on 4 August 2021 followed by a sharp fall"
+          }
+        },
       ],
       takeaways: [
         "Liquidity sits where many traders make the same decision.",
@@ -213,6 +227,20 @@ Academy.register("liquidity", {
             "Context: a sweep at a higher-timeframe zone against the trend is the classic reversal.",
           ],
         },
+        {
+          h: "On a real chart: a sell-side sweep and reclaim",
+          p: [
+            "Bitcoin in January 2025. Lows near 91,300 on 30 December and 9 January stacked sell stops. On 13 January price broke under to 89,260, triggered them, then closed back above the lows. A week later it was at 109,000. A real breakdown would have closed below and stayed there."
+          ],
+          fig: {
+            type: "shot",
+            src: "liq-eql-btc",
+            title: "Sweep below equal lows, then a rally",
+            caption: "The close is the tell: below and back inside is a sweep, below and holding is a breakout.",
+            meta: "BTCUSD · 1D · Jan 2025",
+            alt: "Bitcoin daily chart with equal lows swept on 13 January 2025"
+          }
+        },
       ],
       takeaways: [
         "Sweep = through the level and closed back inside. Breakout = closed beyond and held.",
@@ -325,6 +353,20 @@ Academy.register("liquidity", {
             "Add a buffer of the spread plus a little volatility (for example a fraction of the ATR).",
             "If the correct stop makes the position too small, reduce size. Never tighten the stop into the obvious pool.",
           ],
+        },
+        {
+          h: "On a real chart: one day of sessions",
+          p: [
+            "EURUSD on 19 August 2026, times in UTC. Asia built a tight range. London broke above it and through the daily R1 and R2 pivots, and New York extended the move by another 70 pips. The Asian range high became the level that defined the day."
+          ],
+          fig: {
+            type: "shot",
+            src: "dt-sessions-eurusd",
+            title: "Asian range, London break, New York expansion",
+            caption: "Pivots shown are the standard floor pivots calculated from the previous day.",
+            meta: "EURUSD · 1H · 19 Aug 2026",
+            alt: "EURUSD hourly chart with Asia, London and New York sessions shaded and daily pivots"
+          }
         },
       ],
       takeaways: [

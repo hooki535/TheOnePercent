@@ -33,6 +33,8 @@ window.Academy = (() => {
 
   const raw = [
     /* ---------------------------------------------------- Foundations */
+    ["starter-setup", "foundations", "Start Here: Broker, MT5 & First Trade Setup", "Beginner", 3,
+      "Everything you need before your first trade: choosing a broker like Exness, opening and verifying an account, MT5 on PC and phone, and placing a trade with a stop.", null],
     ["trading-foundations", "foundations", "Trading Foundations Masterclass", "Beginner", 5,
       "Markets, brokers, instruments, sessions, pips, lots, leverage and margin, from zero.",
       ["How trading works: what a trade is | who is on the other side | why most accounts lose",
@@ -395,7 +397,7 @@ window.Academy = (() => {
   /* Course PDFs. Every file here is an original The1% document, generated
      from the course itself by tools/workbook.html (see docs/PHASE-1.md 3h).
      They open in the in-app reader at #mc/<course>/read/<pdf id>. */
-  const PDF_DIR = "../assets/academy/pdf/";
+  const PDF_DIR = (window.ACADEMY_ROOT || "../") + "assets/academy/pdf/";
   const workbook = (id, title, pages, desc) => ({ id: "workbook", title, desc, pages, file: PDF_DIR + id + "-workbook.pdf", kind: "Workbook" });
   const PDFS = {
     "market-structure": [workbook("market-structure", "The1% Market Structure Workbook", 18, "Every lesson on one page: swing points, trends, BOS and CHoCH, internal and external structure, with the charts, takeaways and practice tasks.")],
@@ -431,6 +433,18 @@ window.Academy = (() => {
     candlesticks: [
       ["21 Candlesticks Every Trader Should Know", "Melvin Pasternak", "A compact guide to the core patterns."],
       ["Profitable Candlestick Trading", "Stephen W. Bigalow", "Pattern reliability and how to confirm signals."],
+    ],
+    "support-resistance": [
+      ["Technical Analysis of the Financial Markets", "John J. Murphy", "The chapters on support, resistance and role reversal are the standard reference."],
+      ["Trading Price Action Trends", "Al Brooks", "Bar-by-bar reading of breakouts, failed breakouts and pullbacks."],
+    ],
+    "day-trading": [
+      ["Secrets of a Pivot Boss", "Frank O. Ochoa", "Floor pivots and the central pivot range explained in depth."],
+      ["Day Trading and Swing Trading the Currency Market", "Kathy Lien", "Session behaviour and news-driven setups in forex."],
+    ],
+    "trading-foundations": [
+      ["Currency Trading For Dummies", "Kathleen Brooks and Brian Dolan", "A plain-language introduction to quotes, pips, lots and leverage."],
+      ["The Essentials of Trading", "John Forman", "From the basic mechanics to a first trading plan."],
     ],
     "risk-management": [
       ["The Essentials of Trading", "John Forman", "Risk, money management and building a trading plan."],
@@ -481,8 +495,8 @@ window.Academy = (() => {
   const lessonCount = (c) => (c.content ? c.content.lessons.length : c.syllabus.reduce((a, m) => a + m.lessons.length, 0));
 
   /* flagship order for the "Start here" row */
-  const featured = ["candlesticks", "market-structure", "risk-management", "psychology"];
-  const deeper = ["supply-demand", "liquidity", "order-blocks"];
+  const featured = ["starter-setup", "trading-foundations", "candlesticks", "support-resistance", "market-structure", "risk-management", "psychology", "day-trading", "supply-demand"];
+  const deeper = ["liquidity", "order-blocks", "fvg"];
 
   return { BRAND, PASS_MARK, schools, courses, course, school, register, isLive, lessonCount, featured, deeper, pdfs, PDFS, reading };
 })();

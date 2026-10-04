@@ -177,7 +177,7 @@
             timezone: profile.timezone,
             dob: profile.dob,
           },
-          emailRedirectTo: new URL("onboarding.html", window.location.href).href,
+          emailRedirectTo: new URL(window.OP_FLASK ? "/onboarding" : "onboarding.html", window.location.href).href,
         },
       })
       .then(({ data, error }) => {
@@ -187,15 +187,29 @@
           fail(/already registered/i.test(error.message) ? "An account with this email already exists. Try logging in." : /username/i.test(error.message) ? "That username was just taken — pick another." : error.message);
           return;
         }
+        // With email confirmation on, Supabase answers an existing address with a
+        // user that has no identities and sends nothing. Say so instead of
+        // telling them to check an inbox that will stay empty.
+        if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create account";
+          fail("An account with this email already exists. Try logging in.");
+          return;
+        }
         // Save locally only once the account really exists.
         if (window.Shell && Shell.saveProfile) Shell.saveProfile(profile);
         if (data.session) {
-          window.location.href = "onboarding.html";
+          window.location.href = window.OP_FLASK ? "/onboarding" : "onboarding.html";
           return;
         }
         form.innerHTML =
-          '<h2>Check your email</h2><p>We sent a confirmation link to <b></b>. Click it to finish creating your account.</p><p><a class="auth-link" href="login.html">Back to log in</a></p>';
+          '<h2>Check your email</h2><p>We sent a confirmation link to <b></b>. Click it to finish creating your account.</p><p><a class="auth-link" href="' + (window.OP_FLASK ? "/login" : "login.html") + '">Back to log in</a></p>';
         form.querySelector("b").textContent = profile.email;
+      })
+      .catch(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create account";
+        fail("Can't reach the server. Check your connection and try again.");
       });
   });
 
@@ -206,7 +220,7 @@
       const provider = b.dataset.provider === "microsoft" ? "azure" : b.dataset.provider;
       Cloud.client.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: new URL("login.html", window.location.href).href.split("#")[0].split("?")[0] },
+        options: { redirectTo: new URL(window.OP_FLASK ? "/login" : "login.html", window.location.href).href.split("#")[0].split("?")[0] },
       }).then(({ error }) => {
         if (error) { matchHint.textContent = "That sign-in option isn't available right now. Use the form below."; matchHint.classList.add("is-err"); }
       });

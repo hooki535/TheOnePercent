@@ -7,6 +7,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from candle_engine import CandleService
+from live_candles import LiveCandleBook
 
 
 def test_minute_candles_are_normalised_to_chart_shape():
@@ -48,3 +49,17 @@ def test_tick_data_builds_subminute_ohlc():
     assert candles[0]["c"] == 101.0
     assert candles[-1]["o"] == 99.5
     assert candles[-1]["c"] == 99.5
+
+
+def test_live_candles_use_numeric_ohlcv_values():
+    idx = pd.to_datetime([
+        "2026-01-01T00:00:01Z",
+        "2026-01-01T00:00:04Z",
+    ])
+    df = pd.DataFrame({"bidPrice": [100.0, 101.0]}, index=idx)
+
+    book = LiveCandleBook()
+    book.update_frame("XAUUSD", df)
+    candle = book.latest("XAUUSD", "5s")
+
+    assert candle == {"t": 1767225600, "o": 100.0, "h": 101.0, "l": 100.0, "c": 101.0, "v": 2}

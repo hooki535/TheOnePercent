@@ -397,7 +397,7 @@ window.Academy = (() => {
   /* Course PDFs. Every file here is an original The1% document, generated
      from the course itself by tools/workbook.html (see docs/PHASE-1.md 3h).
      They open in the in-app reader at #mc/<course>/read/<pdf id>. */
-  const PDF_DIR = "../assets/academy/pdf/";
+  const PDF_DIR = (window.ACADEMY_ROOT || "../") + "assets/academy/pdf/";
   const workbook = (id, title, pages, desc) => ({ id: "workbook", title, desc, pages, file: PDF_DIR + id + "-workbook.pdf", kind: "Workbook" });
   const PDFS = {
     "market-structure": [workbook("market-structure", "The1% Market Structure Workbook", 18, "Every lesson on one page: swing points, trends, BOS and CHoCH, internal and external structure, with the charts, takeaways and practice tasks.")],

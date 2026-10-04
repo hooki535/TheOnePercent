@@ -194,7 +194,7 @@
       });
     }
 
-    window.location.href = "dashboard.html";
+    window.location.href = (window.Cloud && Cloud.takeReturn && Cloud.takeReturn()) || (window.OP_FLASK ? "/dashboard" : "dashboard.html");
   });
 
   /* Skipping is allowed — the dashboard has a real empty state that
@@ -203,7 +203,7 @@
     if (window.Shell && Shell.saveProfile) {
       Shell.saveProfile({ onboardingSkipped: true });
     }
-    window.location.href = "dashboard.html";
+    window.location.href = (window.Cloud && Cloud.takeReturn && Cloud.takeReturn()) || (window.OP_FLASK ? "/dashboard" : "dashboard.html");
   });
 
   /* ------------------------------------------------------------ boot */

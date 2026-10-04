@@ -25,8 +25,8 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="assets/landing.css" />
   </head>
-  <!-- data-auth="out": the cover page always shows the logged-out nav -->
-  <body data-page="none" data-depth="0" data-auth="out">
+  <!-- no data-auth: the nav follows the real session (signed-in visitors see their account, guests see Log in / Sign up) -->
+  <body data-page="none" data-depth="0">
     <!-- Top navigation, mobile sheet and the right-edge rail are injected by
      assets/shell.js so every screen shares one implementation. -->
 

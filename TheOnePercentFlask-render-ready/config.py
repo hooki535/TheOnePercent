@@ -7,6 +7,7 @@ variables, which is all that's required.
 """
 
 import os
+import secrets
 
 try:
     from dotenv import load_dotenv
@@ -32,8 +33,11 @@ def _int(name, default):
 
 class Config:
     # Flask
-    DEBUG = _bool("FLASK_DEBUG", True)
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-not-a-real-secret")
+    DEBUG = _bool("FLASK_DEBUG", False)
+    _configured_secret = os.environ.get("SECRET_KEY")
+    if os.environ.get("FLASK_ENV", "").strip().lower() == "production" and not _configured_secret:
+        raise RuntimeError("SECRET_KEY must be configured in production")
+    SECRET_KEY = _configured_secret or secrets.token_hex(32)
     HOST = os.environ.get("HOST", "127.0.0.1")
     PORT = _int("PORT", 5000)
 

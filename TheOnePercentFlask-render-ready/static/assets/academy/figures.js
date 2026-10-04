@@ -1,11 +1,13 @@
 /* ======================================================= academy/figures.js
    The1% Academy — lesson diagrams.
 
-   Every chart inside a masterclass lesson is drawn here as inline SVG from
-   a small declarative spec. Nothing is a screenshot and nothing is an AI
+   Teaching diagrams are drawn here as inline SVG from a small declarative
+   spec. Real-market examples ("shot") are images rendered from real price
+   history by tools/chart-shots, with the annotations placed on the exact
+   candles. Nothing is a third-party screenshot and nothing is an AI
    picture, for one reason: a teaching chart has to be *correct*. A zone
    that sits two candles off, or a "sweep" whose wick never crosses the
-   level, teaches the wrong thing. With specs, the diagram and the lesson
+   level, teaches the wrong thing. With specs, the chart and the lesson
    text are written together and reviewed together.
 
    Colours are CSS tokens (var(--up), var(--down), var(--brand)…) so every
@@ -21,6 +23,11 @@
                 marks:[{at:[x,y], text}], yLabel }
      bars     { type:"bars", items:[{label, value, kind}], unit, max }
      flow     { type:"flow", steps:["…"], loop:bool }
+     shot     { type:"shot", src:"id", alt, meta }
+              a real-market chart screenshot. Rendered from real price
+              history by tools/chart-shots (The1% branded, never a third-
+              party screenshot) so the annotations sit on the exact candles.
+              src is the file name in assets/academy/shots without .webp.
 
    Overlays (candles)
      { zone:[b0, b1|null, lo, hi], kind:"demand"|"supply"|"brand", label }
@@ -371,8 +378,26 @@ window.Figures = (() => {
   }
 
 
+  const SHOTS = (window.ACADEMY_ROOT || "../") + "assets/academy/shots/";
+
+  function shot(spec) {
+    const src = SHOTS + spec.src + ".webp";
+    return (
+      '<figure class="fig fig-shot">' +
+      (spec.title ? '<div class="fig-head"><b>' + esc(spec.title) + "</b><span>" + esc(spec.tag || "Real chart") + "</span></div>" : "") +
+      '<button type="button" class="shot" data-shot="' + esc(src) + '" aria-label="Enlarge chart: ' + esc(spec.alt || spec.title || "") + '">' +
+      '<img src="' + esc(src) + '" alt="' + esc(spec.alt || spec.title || "") + '" width="1440" height="810" loading="lazy" decoding="async">' +
+      "</button>" +
+      "<figcaption>" + (spec.caption ? esc(spec.caption) : "") +
+      (spec.meta ? '<span class="shot-meta">' + esc(spec.meta) + " · real market data · The1% Charts</span>" : "") +
+      "</figcaption>" +
+      "</figure>"
+    );
+  }
+
   function render(spec) {
     if (!spec) return "";
+    if (spec.type === "shot") return shot(spec);
     const svg =
       spec.type === "line" ? line(spec) : spec.type === "bars" ? barsChart(spec) : spec.type === "flow" ? flow(spec) : candles(spec);
     return (

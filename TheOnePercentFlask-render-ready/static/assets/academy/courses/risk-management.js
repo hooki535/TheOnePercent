@@ -142,6 +142,21 @@
               "Never move a stop further away once the trade is live. You can only move it closer.",
             ],
           },
+          {
+            h: "On a real chart: tight stop versus structure stop",
+            p: [
+              "EURUSD 4H in April 2025, the demand retest from the supply and demand course. A stop placed a few pips under the entry was taken by one wick on 8 April. A stop below the whole zone survived, and the trade went on to gain more than 400 pips.",
+              "The structure stop was wider, so the position had to be smaller. Same risk in money, very different outcome."
+            ],
+            fig: {
+              type: "shot",
+              src: "rm-stops-eurusd",
+              title: "Same idea, two stops",
+              caption: "Size the position from the stop, never the stop from the position.",
+              meta: "EURUSD · 4H · Apr 2025",
+              alt: "EURUSD 4 hour chart comparing a tight stop that was hit with a structure stop that held"
+            }
+          },
         ],
         takeaways: [
           "Stop where the idea is wrong, plus a buffer.",
@@ -187,6 +202,21 @@
               caption: "Break-even win rate = 1 ÷ (1 + reward). At 3:1 you can lose three trades out of four and still break even.",
             },
             note: "Costs matter. Spread and commission reduce every win and increase every loss, so the real break-even win rate is a little higher.",
+          },
+          {
+            h: "On a real chart: a 3R trade",
+            p: [
+              "Gold in late August 2025. A long from 3,372 after the higher low, stop at 3,310 below the low, target 3,558 just above the prior high. Risk 62 dollars per ounce to make 186: a 3R trade. It hit target within eight sessions.",
+              "At 3R, you can be wrong on two trades out of three and still break even. That is why R, not win rate, is the number to track."
+            ],
+            fig: {
+              type: "shot",
+              src: "rm-position-gold",
+              title: "Entry, stop and target in R",
+              caption: "Risk box drawn with The1% position tool: red is 1R of risk, green is the reward.",
+              meta: "XAUUSD · 1D · Sep 2025",
+              alt: "Gold daily chart with a long position box showing a 3R target"
+            }
           },
         ],
         takeaways: [

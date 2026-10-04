@@ -136,19 +136,60 @@ window.Shell = (() => {
     return next;
   }
 
-  const me = profile();
-  const authed = body.dataset.auth ? body.dataset.auth === "in" : !!me;
-  const displayName =
-    (me && me.name) ||
-    (me && me.email ? me.email.split("@")[0] : "") ||
-    "Trader";
-  const initials =
-    displayName
-      .split(/[\s._-]+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((w) => w[0].toUpperCase())
-      .join("") || "T";
+  /* ------------------------------------------------ who is signed in
+     The real account is the Supabase session, NOT the locally saved
+     onboarding profile. (Deciding from the profile was the bug: someone who
+     skipped onboarding, signed in with Google, or logged in on a new browser
+     had no profile yet and kept seeing "Log in / Sign up".)
+
+     First paint reads the session Supabase keeps in web storage, which is
+     synchronous, so the nav is right immediately. When cloud.js finishes
+     verifying the session, refresh() corrects anything that was stale. */
+  function storedSessionUser() {
+    try {
+      const s = window[STORE];
+      for (let i = 0; i < s.length; i++) {
+        const k = s.key(i);
+        if (!/^sb-.+-auth-token$/.test(k)) continue;
+        const v = JSON.parse(s.getItem(k));
+        const u = v && (v.user || (v.currentSession && v.currentSession.user));
+        if (u && (v.refresh_token || (v.expires_at || 0) * 1000 > Date.now())) return u;
+      }
+    } catch (e) {
+      /* storage blocked or unreadable: treat as signed out */
+    }
+    return null;
+  }
+
+  const hasCloud = !!window.Cloud;
+  let me, user, authed, displayName, initials;
+
+  function identify(verifiedUser) {
+    me = profile();
+    user = verifiedUser !== undefined ? verifiedUser : hasCloud ? storedSessionUser() : null;
+    // With the account layer present the session decides. Only a page with no
+    // Cloud at all falls back to the old local-profile behaviour.
+    authed = body.dataset.auth ? body.dataset.auth === "in" : hasCloud ? !!user : !!me;
+    const meta = (user && user.user_metadata) || {};
+    const email = (me && me.email) || (user && user.email) || "";
+    displayName =
+      (me && me.name) ||
+      meta.first_name ||
+      meta.full_name ||
+      meta.name ||
+      (email ? email.split("@")[0] : "") ||
+      "Trader";
+    initials =
+      displayName
+        .split(/[\s._-]+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w[0].toUpperCase())
+        .join("") || "T";
+    if (me && !me.email && email) me.email = email;
+    else if (!me && email) me = { markets: [], experience: "", name: "", email, key: null, raw: {} };
+  }
+  identify();
 
   /* ---------------------------------------------------------- icons */
 
@@ -548,6 +589,27 @@ window.Shell = (() => {
     );
   }
 
+  /* Redraw nav, menu sheet and rail after the identity changed (session verified,
+     signed in or out in another tab). Only our own elements are replaced. */
+  function refresh(verifiedUser) {
+    identify(verifiedUser);
+    $$("header.topbar, #shell-sheet, .rail").forEach((el) => el.remove());
+    body.style.overflow = "";
+    mount();
+    liftSignupCtas();
+  }
+
+  /* When signed in, the landing page's "Start free" buttons should open the app,
+     not the sign-up form. */
+  function liftSignupCtas() {
+    if (!authed) return;
+    $$('a[href$="sign-up.html"], a[href="/sign-up"]').forEach((a) => {
+      if (a.closest("header.topbar, .sheet, .rail")) return;
+      a.setAttribute("href", P.dashboard);
+      a.textContent = /→/.test(a.textContent) ? "Open your dashboard →" : "Open your dashboard";
+    });
+  }
+
   /* ---------------------------------------------------------- nav wiring */
 
   function closeDropdowns(except) {
@@ -867,10 +929,24 @@ window.Shell = (() => {
     }
   });
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mount);
-  } else {
+  function boot() {
     mount();
+    liftSignupCtas();
+    if (!hasCloud || body.dataset.auth) return; // pages that pin in/out don't change
+    window.Cloud.ready.then(
+      (u) => {
+        const was = authed + "|" + displayName;
+        identify(u || null);
+        if (authed + "|" + displayName !== was) refresh(u || null);
+      },
+      () => {},
+    );
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
   }
 
   return {
@@ -881,6 +957,9 @@ window.Shell = (() => {
     clearProfile,
     quotes: QUOTES,
     isAuthed: () => authed,
-    displayName,
+    refresh,
+    get displayName() {
+      return displayName;
+    },
   };
 })();

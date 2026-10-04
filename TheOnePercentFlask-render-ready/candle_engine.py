@@ -205,7 +205,7 @@ class CandleService:
         now = time.monotonic()
         with self._lock:
             cached = self._cache.get(key)
-            if not force and cached and cached["expires"] > now and len(cached["data"]) >= min(limit, 100):
+            if not force and cached and cached["expires"] > now and len(cached["data"]) >= limit:
                 return cached["data"][-limit:]
             event = self._inflight.get(key)
             if event is None:

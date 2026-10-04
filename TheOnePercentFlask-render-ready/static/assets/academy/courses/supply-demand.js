@@ -46,6 +46,20 @@ Academy.register("supply-demand", {
           ],
           note: "A zone is a hypothesis about unfilled orders, not a guarantee. That is why every zone trade has a stop.",
         },
+        {
+          h: "On a real chart: a demand zone that got retested",
+          p: [
+            "EURUSD 4H in April 2025. Price paused briefly between 1.0884 and 1.0927, then launched more than 200 pips. When it came back into that pause on 7 and 8 April, buyers were waiting, and the next leg took price above 1.14."
+          ],
+          fig: {
+            type: "shot",
+            src: "sd-demand-eurusd",
+            title: "Base, departure, return, reaction",
+            caption: "The strength of the move away is what tells you orders were left behind.",
+            meta: "EURUSD · 4H · Apr 2025",
+            alt: "EURUSD 4 hour chart with a demand zone and its retest in April 2025"
+          }
+        },
       ],
       takeaways: [
         "Zones are the footprint of order imbalances too large to fill at once.",
@@ -113,6 +127,20 @@ Academy.register("supply-demand", {
             "Reversal zones (DBR, RBD) can offer larger moves but need a higher-timeframe reason to reverse.",
             "In both cases, the quality of the departure matters more than the name.",
           ],
+        },
+        {
+          h: "On a real chart: drop-base-drop supply",
+          p: [
+            "Bitcoin in August 2024. Price fell, paused around 64,600 to 66,800, and then fell hard to 49,000. Three weeks later price rallied back into that pause and was rejected almost to the dollar, before dropping again to 52,600."
+          ],
+          fig: {
+            type: "shot",
+            src: "sd-supply-btc",
+            title: "The pause before the drop became supply",
+            caption: "DBD is a continuation zone: it agrees with the trend that created it.",
+            meta: "BTCUSD · 1D · Aug 2024",
+            alt: "Bitcoin daily chart with a supply zone and retest in August 2024"
+          }
         },
       ],
       takeaways: [

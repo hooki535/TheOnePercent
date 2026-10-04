@@ -42,6 +42,20 @@ Academy.register("order-blocks", {
           ],
           note: "The order block is a hypothesis about where orders sit. Everything in this course is about filtering which hypotheses are worth trading.",
         },
+        {
+          h: "On a real chart: a bullish order block",
+          p: [
+            "Gold 4H in November 2025. The last down candles before the rally on 7 November left an order block around 3,991 to 4,017. The displacement that followed broke above the 4,060 swing high. Ten days later price returned, wicked to 3,997 without closing below the block, and bounced."
+          ],
+          fig: {
+            type: "shot",
+            src: "ob-bull-gold",
+            title: "Last down candle, displacement, BOS, return",
+            caption: "No BOS, no order block. The break is what proves the candle mattered.",
+            meta: "XAUUSD · 4H · Nov 2025",
+            alt: "Gold 4 hour chart with a bullish order block and its retest in November 2025"
+          }
+        },
       ],
       takeaways: [
         "Bullish OB = last bearish candle before an aggressive bullish move.",

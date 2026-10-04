@@ -185,6 +185,21 @@
             ],
             note: "The market is open about 120 hours a week. There is no last trade.",
           },
+          {
+            h: "On a real chart: what FOMO looks like",
+            p: [
+              "Bitcoin in October 2025. Six green days in a row into a new all-time high near 126,200, and social media full of screenshots. Buying there felt safe because everyone agreed. Four days later price was 17% lower.",
+              "The chart did not warn anyone with a special signal. The warning was in the trader: urgency, no plan, and an entry chosen because price was moving rather than because a level was reached."
+            ],
+            fig: {
+              type: "shot",
+              src: "psy-fomo-btc",
+              title: "The FOMO zone",
+              caption: "If the only reason to enter is that price is moving fast, that is the reason not to.",
+              meta: "BTCUSD · 1D · Oct 2025",
+              alt: "Bitcoin daily chart showing six green days to an all-time high and a sharp drop"
+            }
+          },
         ],
         takeaways: [
           "Chased entries have the worst prices and the weakest stops.",
