@@ -36,7 +36,7 @@
     } catch (e) {}
     return false;
   }
-  const cameFromAuthLink = /access_token=|refresh_token=|[?&]code=|type=(signup|recovery|magiclink|invite)/.test(location.hash + location.search);
+  const cameFromAuthLink = /access_token}|refresh_token}|[?&]code=|type=(signup|recovery|magiclink|invite)/.test(location.hash + location.search);
   if (PROTECTED.includes(page) && !hasStoredSession() && !cameFromAuthLink) {
     location.replace(FLASK ? "/login" : root + "pages/login.html");
   }
@@ -175,8 +175,15 @@
      next manual refresh. The login, sign-up and reset pages manage their own
      navigation, so they are left alone. */
   const SELF_MANAGED = ["login", "sign-up", "reset-password"];
+  // The auth listener fires SIGNED_IN once on every page load, a split second
+  // BEFORE `ready` above has set userId. Treating that first event as "signed
+  // in from another tab" reloads the page, which reloads forever. Only react
+  // to auth events that arrive after the initial session check has finished.
+  let initialCheckDone = false;
+  ready.finally(() => { initialCheckDone = true; });
   sb.auth.onAuthStateChange((event, session) => {
     if (SELF_MANAGED.includes(page)) return;
+    if (!initialCheckDone) return;
     const signedInNow = !!(session && session.user);
     if (event === "SIGNED_OUT" && userId) {
       userId = null;
