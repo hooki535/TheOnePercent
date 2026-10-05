@@ -237,7 +237,7 @@
 
       <aside class="panel" id="panel">
         <div class="tabs" role="tablist">
-          <button class="tab active" data-tab="position" role="tab">
+          <button class="tab" data-tab="position" role="tab">
             Position
           </button>
           <button
@@ -248,12 +248,12 @@
           >
             Watch
           </button>
-          <button class="tab" data-tab="objects" role="tab">Objects</button>
+          <button class="tab active" data-tab="objects" role="tab">Layers</button>
           <button class="tab" data-tab="journal" role="tab">Journal</button>
           <button class="tab" data-tab="alerts" role="tab">Alerts</button>
         </div>
 
-        <div class="tabpane active" data-pane="position">
+        <div class="tabpane" data-pane="position">
           <div class="card">
             <div class="mh">Direction</div>
             <div class="side-toggle">
@@ -417,7 +417,7 @@
           </div>
         </div>
 
-        <div class="tabpane" data-pane="objects">
+        <div class="tabpane active" data-pane="objects">
           <div class="ob-top">
             <div class="mh" id="objTitle">Objects</div>
             <span class="hint" id="objCount">0</span>
@@ -444,9 +444,9 @@
         </div>
       </aside>
       <nav class="chart-dock" aria-label="Chart workspace tools">
-        <button class="dock-btn active" data-tab="position" title="Position">P</button>
+        <button class="dock-btn" data-tab="position" title="Position">P</button>
         <button class="dock-btn" data-tab="watchlist" title="Watchlist">W</button>
-        <button class="dock-btn" data-tab="objects" title="Objects and layers">O</button>
+        <button class="dock-btn active" data-tab="objects" title="Objects and layers">O</button>
         <button class="dock-btn" data-tab="journal" title="Journal">J</button>
         <button class="dock-btn" data-tab="alerts" title="Alerts">A</button>
         <span class="dock-rule"></span>

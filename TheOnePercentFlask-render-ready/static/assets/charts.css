@@ -641,6 +641,124 @@ body[data-page="charts"] .fly-f {
   }
 }
 
+/* GoCharting-style terminal presentation. */
+body[data-page="charts"] .topnav {
+  display: none;
+}
+body[data-page="charts"] {
+  --paper: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f6f8fb;
+  --line: #dfe4ec;
+  --line-soft: #edf0f4;
+  --line-strong: #c3cad6;
+  --ink: #1b2430;
+  --ink-700: #263241;
+  --muted: #687586;
+  --faint: #8c98a8;
+  --tint: #f2f5f9;
+  background: #ffffff;
+}
+body[data-page="charts"] .ctoolbar {
+  height: 48px;
+  flex-basis: 48px;
+  padding: 0 9px;
+  background: #ffffff;
+  border-bottom: 1px solid #dfe4ec;
+}
+body[data-page="charts"] .sym {
+  min-width: 150px;
+  height: 34px;
+  background: #ffffff;
+  border: 0;
+  border-right: 1px solid #dfe4ec;
+  border-radius: 0;
+}
+body[data-page="charts"] #symName {
+  color: #1b2430;
+  font-size: 15px;
+}
+body[data-page="charts"] .sym-meta {
+  color: #8c98a8;
+}
+body[data-page="charts"] .chip {
+  color: #4d5b6b;
+  border-radius: 0;
+  padding: 7px 10px;
+}
+body[data-page="charts"] .chip.on {
+  color: #1d4ed8;
+  background: #e9efff;
+  border-bottom: 2px solid #3654ff;
+}
+body[data-page="charts"] .tb-btn {
+  color: #4d5b6b;
+  border-radius: 0;
+}
+body[data-page="charts"] .tb-btn:hover {
+  color: #1d4ed8;
+  background: #f2f5f9;
+}
+body[data-page="charts"] .ct-r .risk-pill,
+body[data-page="charts"] .ct-r #feedBadge,
+body[data-page="charts"] .ct-r #journalBtn {
+  display: none;
+}
+body[data-page="charts"] .cshell {
+  background: #ffffff;
+}
+body[data-page="charts"] .crail,
+body[data-page="charts"] .chart-dock {
+  background: #ffffff;
+  border-color: #dfe4ec;
+}
+body[data-page="charts"] .rtool {
+  border-radius: 3px;
+  color: #718096;
+}
+body[data-page="charts"] .rtool:hover,
+body[data-page="charts"] .rtool.on {
+  background: #e9efff;
+  color: #3654ff;
+}
+body[data-page="charts"] .grid {
+  background: #dfe4ec;
+}
+body[data-page="charts"] .cw {
+  background: #ffffff;
+}
+body[data-page="charts"] .panel {
+  flex-basis: 318px;
+  background: #ffffff;
+  border-left-color: #dfe4ec;
+}
+body[data-page="charts"] .tabs {
+  background: #f6f8fb;
+  border-bottom-color: #dfe4ec;
+}
+body[data-page="charts"] .tab {
+  color: #718096;
+}
+body[data-page="charts"] .tab.active {
+  color: #1d4ed8;
+  border-bottom-color: #3654ff;
+}
+body[data-page="charts"] .tabpane {
+  padding: 12px;
+}
+body[data-page="charts"] .card,
+body[data-page="charts"] .ob,
+body[data-page="charts"] .obj {
+  background: #ffffff;
+  border-color: #dfe4ec;
+  border-radius: 3px;
+}
+body[data-page="charts"] .chart-bottom {
+  background: #ffffff;
+  border-top-color: #dfe4ec;
+  color: #5e6b7a;
+}
+
 body[data-page="charts"] .rdiv {
   width: 20px;
   height: 1px;
@@ -3478,6 +3596,83 @@ body[data-page="charts"].focus-mode .notebar {
 }
 body[data-page="charts"].focus-mode #fsBtn {
   color: var(--accent);
+}
+
+/* Final terminal presentation overrides. */
+body[data-page="charts"] header.topbar {
+  display: none !important;
+}
+body[data-page="charts"] {
+  --paper: #fff;
+  --surface: #fff;
+  --surface-2: #f6f8fb;
+  --line: #dfe4ec;
+  --line-soft: #edf0f4;
+  --line-strong: #c3cad6;
+  --ink: #1b2430;
+  --ink-700: #263241;
+  --muted: #687586;
+  --faint: #8c98a8;
+  --tint: #f2f5f9;
+  background: #fff !important;
+}
+body[data-page="charts"] .ctoolbar,
+body[data-page="charts"] .crail,
+body[data-page="charts"] .chart-dock,
+body[data-page="charts"] .panel,
+body[data-page="charts"] .chart-bottom,
+body[data-page="charts"] .notebar {
+  background: #fff !important;
+  border-color: #dfe4ec !important;
+}
+body[data-page="charts"] .ctoolbar {
+  height: 48px !important;
+  flex-basis: 48px !important;
+  padding: 0 9px !important;
+}
+body[data-page="charts"] .sym {
+  min-width: 150px;
+  background: #fff !important;
+  border: 0;
+  border-right: 1px solid #dfe4ec;
+  border-radius: 0;
+}
+body[data-page="charts"] #symName,
+body[data-page="charts"] .tb-btn,
+body[data-page="charts"] .chip {
+  color: #4d5b6b;
+}
+body[data-page="charts"] .chip.on {
+  color: #1d4ed8;
+  background: #e9efff;
+  border-bottom: 2px solid #3654ff;
+}
+body[data-page="charts"] .grid {
+  background: #dfe4ec !important;
+}
+body[data-page="charts"] .cw {
+  background: #fff !important;
+}
+body[data-page="charts"] .panel {
+  flex-basis: 318px !important;
+}
+body[data-page="charts"] .tabs {
+  background: #f6f8fb !important;
+  border-color: #dfe4ec !important;
+}
+body[data-page="charts"] .tab.active {
+  color: #1d4ed8;
+  border-bottom-color: #3654ff;
+}
+body[data-page="charts"] .card,
+body[data-page="charts"] .obj {
+  background: #fff !important;
+  border-color: #dfe4ec;
+}
+body[data-page="charts"] .ct-r .risk-pill,
+body[data-page="charts"] .ct-r #feedBadge,
+body[data-page="charts"] .ct-r #journalBtn {
+  display: none;
 }
 
 /* Terminal skin: keep the existing chart engine and controls, but give the
