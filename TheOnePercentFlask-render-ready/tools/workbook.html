@@ -48,6 +48,10 @@
   ul { margin: 0 0 8px; padding-left: 18px; }
   li { margin: 0 0 3px; }
   .note { border-left: 3px solid #3654ff; background: #f3f5ff; padding: 8px 12px; margin: 8px 0 10px; font-size: 10pt; border-radius: 0 6px 6px 0; }
+  .video-ref { border: 1px solid #d7ddff; background: #f8f9ff; padding: 8px 12px; margin: 8px 0 10px; border-radius: 6px; break-inside: avoid; }
+  .video-ref b, .video-ref small { display: block; font: 600 8pt var(--mono); text-transform: uppercase; letter-spacing: .08em; color: #3654ff; }
+  .video-ref a { display: block; margin: 3px 0; color: #1d3fd4; text-decoration: underline; }
+  .video-ref small { font: 400 8.5pt var(--sans); text-transform: none; letter-spacing: 0; color: #6b7280; }
   .fig { break-inside: avoid; margin: 10px 0 12px; border-color: #e5e7eb; background: #fbfcfe; }
   .boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
   .box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; break-inside: avoid; }
@@ -98,6 +102,7 @@
 <div id="out"></div>
 <script src="../assets/academy/catalog.js"></script>
 <script src="../assets/academy/figures.js"></script>
+<script src="../assets/academy/videos.js"></script>
 <script src="../assets/academy/courses/market-structure.js"></script>
 <script src="../assets/academy/courses/supply-demand.js"></script>
 <script src="../assets/academy/courses/liquidity.js"></script>
@@ -198,6 +203,10 @@
     "</section>";
 
   const lessons = L.map((l, i) => {
+    const video = (window.AcademyVideos && AcademyVideos.lesson && AcademyVideos.lesson[l.id]) || null;
+    const videoBlock = video
+      ? '<div class="video-ref"><b>Suggested video</b><a href="https://www.youtube.com/watch?v=' + encodeURIComponent(video.id) + '">' + esc(video.title) + '</a><small>Watch the explanation, then complete the practice task below.</small></div>'
+      : "";
     const secs = l.sections.map((s) =>
       (s.h ? "<h3>" + esc(s.h) + "</h3>" : "") +
       (s.p || []).map((t) => "<p>" + esc(t) + "</p>").join("") +
@@ -207,7 +216,7 @@
     ).join("");
     return (
       '<section class="pg"><div class="lessonhead"><div class="kick2">Lesson ' + (i + 1) + " of " + L.length + " · " + esc(l.module) + "</div><span>" + esc(shortT) + " · " + l.minutes + " min</span></div>" +
-      '<h1 class="t">' + esc(l.title) + '</h1><p class="lead2">' + esc(l.summary) + "</p>" + secs +
+      '<h1 class="t">' + esc(l.title) + '</h1><p class="lead2">' + esc(l.summary) + "</p>" + videoBlock + secs +
       '<div class="boxes"><div class="box ok"><h4>Key takeaways</h4><ul>' + l.takeaways.map((t) => "<li>" + esc(t) + "</li>").join("") + '</ul></div>' +
       '<div class="box bad"><h4>Common mistakes</h4><ul>' + l.mistakes.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
       '<div class="box psy"><h4>Psychology check</h4><p>' + esc(l.psych) + '</p></div><div class="box do"><h4>Practice task</h4><p>' + esc(l.practice) + "</p></div></div>" +
@@ -216,7 +225,7 @@
   }).join("");
 
   const notes =
-    '<section class="pg"><div class="lessonhead"><div class="kick2">Notes</div><span>' + esc(shortT) + '</span></div><h1 class="t">Your notes</h1><p class="lead2">Write what you saw in the market while doing the practice tasks: the instrument, the date, what the lesson predicted and what actually happened.</p>' +
+    '<section class="pg"><div class="lessonhead"><div class="kick2">Notes</div><span>' + esc(shortT) + '</span></div><h1 class="t">Your notes</h1><p class="lead2">Write what you saw in the market while doing the practice tasks: the instrument, the date, what the lesson predicted and what actually happened.</p><div class="note"><b>Use this page to record:</b> the lesson or video watched, one rule you can explain in your own words, one chart example, and one question to revisit.</div>' +
     '<div class="notes" style="border-style:solid">' + lines(26) + "</div></section>";
 
   const quiz =

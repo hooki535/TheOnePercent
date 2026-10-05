@@ -5,22 +5,14 @@ window.AcademyVideos = {
  "course": {
   "starter-setup": [
    {
-    "id": "0qoGdWKEWaM",
-    "title": "How to Use MetaTrader 5: A Step-by-Step Guide for Beginners. Making Money Online"
-   },
-   {
-    "id": "tLJdCQli8y0",
-    "title": "Easy way to place a trade on MT5 for Beginners!"
-   },
-   {
-    "id": "uTudeCn2VaE",
-    "title": "How To Use Meta Trader 5 For Beginners 2025 Full Course (A Step-By-Step Guide)"
+    "id": "O0zTdzhNyJY",
+    "title": "MetaTrader 5 Tutorial For Beginners (PC/Desktop Guide)"
    }
   ],
   "trading-foundations": [
    {
-    "id": "8LRQIDAzyv8",
-    "title": "Trading Explained For Complete Beginners - In 17 Minutes"
+    "id": "s3HtXQnEmTo",
+    "title": "Ultimate Price Action Trading Course"
    },
    {
     "id": "xHU5MHuUSKI",
@@ -89,8 +81,8 @@ window.AcademyVideos = {
   ],
   "market-structure": [
    {
-    "id": "bDsB0_iH7Hc",
-    "title": "Complete Market Structure Trading Course (Strategy Reveal)"
+    "id": "0aqqxwiE0ac",
+    "title": "Market Structure Explained: The Foundation of Smart Money Trading"
    },
    {
     "id": "kwTUJ2KtiWo",
@@ -159,8 +151,8 @@ window.AcademyVideos = {
   ],
   "pure-price-action": [
    {
-    "id": "0L6Rcgp6j7Y",
-    "title": "Four Price Action Secrets (The Ultimate Guide To Price Action)"
+    "id": "DoRwrw7JPes",
+    "title": "9 Price Action Strategies with Entries, Stops and Targets - Complete Strategies"
    },
    {
     "id": "zUZAuq9iSM4",
@@ -173,8 +165,8 @@ window.AcademyVideos = {
   ],
   "liquidity": [
    {
-    "id": "uuWKiMNGHto",
-    "title": "Liquidity Concepts SIMPLIFIED"
+    "id": "M8apkbOVe7Q",
+    "title": "Liquidity Explained: Why Does Price Hunt Certain Levels?"
    },
    {
     "id": "rqwiL8aNYHY",
@@ -201,8 +193,8 @@ window.AcademyVideos = {
   ],
   "fvg": [
    {
-    "id": "ZTMregh_428",
-    "title": "I Found A Secret To Fair Value Gaps"
+    "id": "_ZCpmoQyWJs",
+    "title": "Imbalance Explained: Understanding Inefficient Price Movement"
    },
    {
     "id": "KeISTu-XVRQ",
@@ -285,8 +277,8 @@ window.AcademyVideos = {
   ],
   "psychology": [
    {
-    "id": "YfhHuqUMz3U",
-    "title": "Trading Psychology and the 5 Rules to follow"
+    "id": "QSqIeu9tjek",
+    "title": "ICT Forex - Trade Psychology & Effective Journaling"
    },
    {
     "id": "-52IN7H8kMs",
@@ -299,8 +291,8 @@ window.AcademyVideos = {
   ],
   "discipline": [
    {
-    "id": "XuqyEhJVynM",
-    "title": "8 Trading Habits Every Beginner Must Learn in 2025 | Discipline & Consistency"
+    "id": "4mY4zWQE3Wg",
+    "title": "How to Read Price Psychology and Understand Market Rhythm"
    },
    {
     "id": "RKu5SernXY8",
@@ -383,8 +375,8 @@ window.AcademyVideos = {
   ],
   "risk-management": [
    {
-    "id": "7f2bpEwiJCY",
-    "title": "ULTIMATE Risk Management & Position Sizing in Forex Trading Guide"
+    "id": "tlKC9nvLRK0",
+    "title": "ICT Forex - Considerations In Risk Management"
    },
    {
     "id": "gM65dEuNsMw",
@@ -397,8 +389,8 @@ window.AcademyVideos = {
   ],
   "position-sizing": [
    {
-    "id": "IIiUE4pMfYI",
-    "title": "How I calculate Position Size when Day Trading"
+    "id": "RtMRykCZtC4",
+    "title": "ICT Forex - Money Management That Works"
    },
    {
     "id": "_XyuJAVl5ac",
@@ -607,8 +599,8 @@ window.AcademyVideos = {
   ],
   "day-trading": [
    {
-    "id": "xHU5MHuUSKI",
-    "title": "How To Start Day Trading As A Beginner In 2025 [Full Tutorial]"
+    "id": "plNN9n7nrxc",
+    "title": "ICT Forex - The ICT New York Killzone"
    },
    {
     "id": "8LRQIDAzyv8",
@@ -907,8 +899,8 @@ window.AcademyVideos = {
    "title": "How to Deposit & Withdraw on Exness Using USDT (Binance) | Step-by-Step Tutorial"
   },
   "ss5": {
-   "id": "zddE9nc4PhM",
-   "title": "How to Install and Log In to MT5 on Computer (PC/Laptop) | MT5 (MetaTrader 5) Guide [0030MT]"
+   "id": "O0zTdzhNyJY",
+   "title": "MetaTrader 5 Tutorial For Beginners (PC/Desktop Guide)"
   },
   "ss6": {
    "id": "fLAwazVKs1M",
@@ -923,16 +915,16 @@ window.AcademyVideos = {
    "title": "how to place stop loss and take profit in metatrader 5 (MT5)"
   },
   "tf1": {
-   "id": "edfHZq5lrTA",
-   "title": "DAY TRADING Explained in 11 Minutes"
+   "id": "s3HtXQnEmTo",
+   "title": "Ultimate Price Action Trading Course"
   },
   "tf2": {
    "id": "IUUmoucb5l0",
    "title": "Forex Tutorial: How to Read a Currency Quote 🙌"
   },
   "tf3": {
-   "id": "edfHZq5lrTA",
-   "title": "DAY TRADING Explained in 11 Minutes"
+   "id": "0aqqxwiE0ac",
+   "title": "Market Structure Explained: The Foundation of Smart Money Trading"
   },
   "tf4": {
    "id": "pZvWfwS1264",
@@ -967,16 +959,16 @@ window.AcademyVideos = {
    "title": "The ONLY Candlestick Pattern Guide You'll EVER NEED"
   },
   "ms1": {
-   "id": "Rne2LjvcNC4",
-   "title": "Everything about Swing points; How to Identify Swing Highs and Swing Lows"
+   "id": "0aqqxwiE0ac",
+   "title": "Market Structure Explained: The Foundation of Smart Money Trading"
   },
   "ms2": {
-   "id": "uTkqtI4GGxs",
-   "title": "The ONLY Market Structure Trading Video You’ll Ever Need"
+   "id": "tWaYCHbZdic",
+   "title": "Internal Market Structure & CHoCH Explained | SMC"
   },
   "ms3": {
-   "id": "jeewXSLHt2g",
-   "title": "The ONLY Break Of Structure Video You’ll Ever Need"
+   "id": "TdKx9YcDtsI",
+   "title": "Multi-Timeframe Market Structure: How to Read the Bigger Picture"
   },
   "ms4": {
    "id": "bItfkMUC490",
@@ -1039,8 +1031,8 @@ window.AcademyVideos = {
    "title": "Timeframe Confluence is THE SECRET of HIGH QUALITY Supply & Demand zones"
   },
   "lq1": {
-   "id": "Vulini8xbB0",
-   "title": "The ONLY Liquidity Guide You’ll Ever Need"
+   "id": "M8apkbOVe7Q",
+   "title": "Liquidity Explained: Why Does Price Hunt Certain Levels?"
   },
   "lq3": {
    "id": "U8xH2dEgH5A",
@@ -1083,16 +1075,16 @@ window.AcademyVideos = {
    "title": "How To Trade Order Blocks"
   },
   "fv1": {
-   "id": "ZTMregh_428",
-   "title": "I Found A Secret To Fair Value Gaps"
+   "id": "_ZCpmoQyWJs",
+   "title": "Imbalance Explained: Understanding Inefficient Price Movement"
   },
   "fv2": {
-   "id": "ZTMregh_428",
-   "title": "I Found A Secret To Fair Value Gaps"
+   "id": "eN6F_g2Cv94",
+   "title": "Premium vs Discount Explained | Where Should You Look for Entries?"
   },
   "fv3": {
-   "id": "ZTMregh_428",
-   "title": "I Found A Secret To Fair Value Gaps"
+   "id": "779jcCqyldY",
+   "title": "ES Futures Live Trade Example November 28, 2023 [FVG / Silver Bullet]"
   },
   "fv4": {
    "id": "ZTMregh_428",
@@ -1107,8 +1099,8 @@ window.AcademyVideos = {
    "title": "I Found A Secret To Fair Value Gaps"
   },
   "ps1": {
-   "id": "zIfkgC7ZPiQ",
-   "title": "Jesse Livermore's SECRET to Mastering Trading Patience"
+   "id": "QSqIeu9tjek",
+   "title": "ICT Forex - Trade Psychology & Effective Journaling"
   },
   "ps2": {
    "id": "BbJAPJ7BujY",
@@ -1135,12 +1127,12 @@ window.AcademyVideos = {
    "title": "Jesse Livermore's SECRET to Mastering Trading Patience"
   },
   "rm1": {
-   "id": "A67gaIG9u0s",
-   "title": "The Mathematics of Risk Survival"
+   "id": "tlKC9nvLRK0",
+   "title": "ICT Forex - Considerations In Risk Management"
   },
   "rm2": {
-   "id": "yFKCn5e1ERc",
-   "title": "How To Manage Position Sizing"
+   "id": "RtMRykCZtC4",
+   "title": "ICT Forex - Money Management That Works"
   },
   "rm3": {
    "id": "WgRQWJq54OY",
@@ -1159,12 +1151,12 @@ window.AcademyVideos = {
    "title": "How to Handle Trading Drawdowns (Step-by-step process)"
   },
   "dt1": {
-   "id": "edfHZq5lrTA",
-   "title": "DAY TRADING Explained in 11 Minutes"
+   "id": "plNN9n7nrxc",
+   "title": "ICT Forex - The ICT New York Killzone"
   },
   "dt2": {
-   "id": "at1pT36n7Mo",
-   "title": "The NEW Way to Find Daily Bias in 2026"
+   "id": "vJvcZGGeTZU",
+   "title": "ICT Forex - Essentials To Trading the Daily Bias"
   },
   "dt3": {
    "id": "CniaInMpugI",
