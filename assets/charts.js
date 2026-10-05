@@ -3600,6 +3600,15 @@ $("#paletteBtn").onclick = () => {
 };
 $("#palIn").oninput = (e) => paintPal(e.target.value);
 $$(".tab").forEach((t) => (t.onclick = () => switchTab(t.dataset.tab)));
+$$(".dock-btn[data-tab]").forEach((b) => (b.onclick = () => {
+  switchTab(b.dataset.tab);
+  $$(".dock-btn").forEach((x) => x.classList.toggle("active", x === b));
+}));
+$("#dockSettings").onclick = () => $("#setBtn").click();
+$$(".chart-bottom [data-open]").forEach((b) => (b.onclick = () => {
+  const target = $("#" + b.dataset.open);
+  if (target) target.click();
+}));
 $$(".st").forEach(
   (b) =>
     (b.onclick = () => {

@@ -443,7 +443,26 @@
           <div id="al" class="al"></div>
         </div>
       </aside>
+      <nav class="chart-dock" aria-label="Chart workspace tools">
+        <button class="dock-btn active" data-tab="position" title="Position">P</button>
+        <button class="dock-btn" data-tab="watchlist" title="Watchlist">W</button>
+        <button class="dock-btn" data-tab="objects" title="Objects and layers">O</button>
+        <button class="dock-btn" data-tab="journal" title="Journal">J</button>
+        <button class="dock-btn" data-tab="alerts" title="Alerts">A</button>
+        <span class="dock-rule"></span>
+        <button class="dock-btn" id="dockSettings" title="Chart settings">S</button>
+      </nav>
     </main>
+
+    <nav class="chart-bottom" aria-label="Chart quick actions">
+      <button data-open="indBtn">Studies</button>
+      <button data-open="alertBtn">Alert</button>
+      <button data-open="replayBtn">Replay</button>
+      <button data-open="wsBtn">Save workspace</button>
+      <span class="bottom-spacer"></span>
+      <span class="bottom-status">Read-only charting workspace</span>
+      <button data-open="fsBtn">Focus</button>
+    </nav>
 
     <div class="replaybar" id="replaybar" hidden>
       <button class="btn sm" id="rbPlay">▶ Play</button>

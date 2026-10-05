@@ -3565,3 +3565,75 @@ body[data-page="charts"] .notebar {
   background: #11151e;
   border-top-color: #273043;
 }
+
+body[data-page="charts"] .chart-dock {
+  flex: 0 0 48px;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 0;
+  background: #11151e;
+  border-left: 1px solid #273043;
+}
+body[data-page="charts"] .dock-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: #8190aa;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+body[data-page="charts"] .dock-btn:hover,
+body[data-page="charts"] .dock-btn.active {
+  color: #fff;
+  background: #24345e;
+  border-color: #4c7dff;
+}
+body[data-page="charts"] .dock-rule {
+  width: 24px;
+  height: 1px;
+  margin: 3px 0;
+  background: #273043;
+}
+body[data-page="charts"] .chart-bottom {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px 0 58px;
+  background: #11151e;
+  border-top: 1px solid #273043;
+  color: #8f9bb2;
+}
+body[data-page="charts"] .chart-bottom button {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+body[data-page="charts"] .chart-bottom button:hover {
+  color: #fff;
+  background: #20283a;
+}
+body[data-page="charts"] .bottom-spacer {
+  flex: 1;
+}
+body[data-page="charts"] .bottom-status {
+  font-size: 10px;
+  color: #65728a;
+  margin-right: 8px;
+}
+@media (max-width: 720px) {
+  body[data-page="charts"] .chart-dock {
+    display: none;
+  }
+  body[data-page="charts"] .chart-bottom {
+    padding-left: 10px;
+    overflow-x: auto;
+  }
+}
