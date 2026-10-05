@@ -71,7 +71,7 @@ window.Feed = (() => {
         return cache[key];
       } catch (e) {
         console.warn("Dukascopy history unavailable", sym, iv, e);
-        cache[key] = cache[key] || [];
+        cache[key] = cache[key] && cache[key].length ? cache[key] : demoHistory(sym, iv);
         notify();
         return cache[key];
       } finally {
@@ -145,6 +145,31 @@ window.Feed = (() => {
   const IV_DEFAULT_FAVS = ["1m", "5m", "15m", "1H", "4H", "1D", "1W"];
   const IV_BASE = 15 * MIN;
   const BARS = 620;
+
+  function demoHistory(sym, iv) {
+    const S = symbol(sym);
+    const ms = IV_MS[iv];
+    if (!S || !ms) return [];
+    let price = S.px;
+    let seed = 0;
+    const out = [];
+    for (let i = 0; i < String(sym).length; i++) seed = (seed * 31 + String(sym).charCodeAt(i)) >>> 0;
+    const random = () => {
+      seed = (1664525 * seed + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    for (let i = 0; i < BARS; i++) {
+      const move = (random() - 0.5) * S.vol * price * 1.8;
+      const open = price;
+      const close = Math.max(S.tick, open + move);
+      const spread = Math.abs(move) + S.vol * price * random();
+      out.push({ t: Date.now() - (BARS - i) * ms, o: open,
+        h: Math.max(open, close) + spread, l: Math.max(S.tick, Math.min(open, close) - spread),
+        c: close, v: Math.round(100 + random() * 900) });
+      price = close;
+    }
+    return out;
+  }
 
   /* ---------------------------------------------------------- chart metadata
 
@@ -492,8 +517,8 @@ window.Feed = (() => {
     const live = o.symbol ? isLive(o.symbol) : Object.keys(liveQuotes).length > 0;
     return (
       '<span class="feed-badge' + (live ? ' live' : '') + (o.compact ? ' compact' : '') +
-      '" title="' + (live ? DEMO_NOTE : 'Waiting for Dukascopy data. No synthetic fallback is used.') + '">' +
-      '<i aria-hidden="true"></i>' + (live ? 'Live · Dukascopy' : 'Dukascopy · connecting') +
+      '" title="' + (live ? DEMO_NOTE : 'Demo fallback data. The live Dukascopy API is unavailable, so prices are not tradeable.') + '">' +
+      '<i aria-hidden="true"></i>' + (live ? 'Live · Dukascopy' : 'Demo fallback') +
       '</span>'
     );
   }

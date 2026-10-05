@@ -79,14 +79,13 @@ position sizing.
 
 The existing canvas sparklines stay, unchanged, for the same reason as before.
 
-### 1.4 Market data: simulated now, real behind one interface
+### 1.4 Market data: real first, explicit demo fallback
 
-All quotes come from `Feed` (`assets/feed.js`), which streams deterministic,
-realistic prices and carries a visible **Demo data** badge wherever it is
-displayed. Swapping in a real provider is one module, and the badge is the
-promise that we will never quietly show fake prices as real ones. The PDF's
-"visible refresh time and a graceful failure state" is kept, and now has
-something to be true about.
+All quotes come from `Feed` (`assets/feed.js`). When the Flask API is available,
+historical candles and forming candles come from Dukascopy and the UI shows a
+**Live · Dukascopy** badge. When the API cannot provide a series, the
+deterministic chart series remains available behind a **Demo fallback** badge.
+The fallback is never presented as tradeable market data.
 
 `Feed` is the single price source for the whole app:
 

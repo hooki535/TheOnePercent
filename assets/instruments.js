@@ -96,6 +96,20 @@ window.Instruments = (() => {
     { symbol: "EURJPY", name: "Euro / yen", market: "Forex", base: "EUR", quote: "JPY", price: 170.66, dp: 3, pip: 0.01, contract: 100000, unitValue: 1 },
     { symbol: "GBPJPY", name: "Pound / yen", market: "Forex", base: "GBP", quote: "JPY", price: 200.41, dp: 3, pip: 0.01, contract: 100000, unitValue: 1 },
     { symbol: "EURGBP", name: "Euro / pound", market: "Forex", base: "EUR", quote: "GBP", price: 0.8516, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "AUDJPY", name: "Australian dollar / yen", market: "Forex", base: "AUD", quote: "JPY", price: 104.5, dp: 3, pip: 0.01, contract: 100000, unitValue: 1 },
+    { symbol: "CADJPY", name: "Canadian dollar / yen", market: "Forex", base: "CAD", quote: "JPY", price: 115.2, dp: 3, pip: 0.01, contract: 100000, unitValue: 1 },
+    { symbol: "CHFJPY", name: "Swiss franc / yen", market: "Forex", base: "CHF", quote: "JPY", price: 175.4, dp: 3, pip: 0.01, contract: 100000, unitValue: 1 },
+    { symbol: "NZDJPY", name: "New Zealand dollar / yen", market: "Forex", base: "NZD", quote: "JPY", price: 96.0, dp: 3, pip: 0.01, contract: 100000, unitValue: 1 },
+    { symbol: "EURAUD", name: "Euro / Australian dollar", market: "Forex", base: "EUR", quote: "AUD", price: 1.63, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "EURNZD", name: "Euro / New Zealand dollar", market: "Forex", base: "EUR", quote: "NZD", price: 1.78, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "GBPAUD", name: "Pound / Australian dollar", market: "Forex", base: "GBP", quote: "AUD", price: 1.92, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "GBPCAD", name: "Pound / Canadian dollar", market: "Forex", base: "GBP", quote: "CAD", price: 1.74, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "GBPCHF", name: "Pound / Swiss franc", market: "Forex", base: "GBP", quote: "CHF", price: 1.14, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "EURCAD", name: "Euro / Canadian dollar", market: "Forex", base: "EUR", quote: "CAD", price: 1.48, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "AUDCAD", name: "Australian dollar / Canadian dollar", market: "Forex", base: "AUD", quote: "CAD", price: 0.91, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "AUDNZD", name: "Australian dollar / New Zealand dollar", market: "Forex", base: "AUD", quote: "NZD", price: 1.09, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "CADCHF", name: "Canadian dollar / Swiss franc", market: "Forex", base: "CAD", quote: "CHF", price: 0.66, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
+    { symbol: "NZDCAD", name: "New Zealand dollar / Canadian dollar", market: "Forex", base: "NZD", quote: "CAD", price: 0.83, dp: 5, pip: 0.0001, contract: 100000, unitValue: 1 },
 
     /* East African pairs. Quoted at the bank rather than a broker, so the
        spread is wide and the pip is a whole point on the shilling pairs —

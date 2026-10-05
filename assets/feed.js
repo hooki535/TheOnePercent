@@ -29,12 +29,15 @@ window.Feed = (() => {
 
   const I = window.Instruments;
 
-  /* Demo until a broker is wired in. Every screen that shows a price is
-     expected to render the badge — see `Feed.badge()`. */
+  /* Every screen that shows a price renders the badge — see `Feed.badge()`.
+     The Flask build can replace a cached demo series with verified candles. */
   const DEMO = true;
+  const LIVE_API = "";
+  const LIVE_MAX_AGE_MS = 30000;
+  const liveQuotes = {};
+  const realKeys = new Set();
   const DEMO_NOTE =
-    "Simulated market data. Prices are generated on your device and anchored to a fixed reference, " +
-    "so they are consistent and repeatable but they are not live. No order is ever placed.";
+    "Real Dukascopy market data when the Flask API is available. No orders are placed; otherwise the chart uses clearly labeled demo data.";
 
   /* The full ladder, grouped the way the interval menu groups it. A chart
      can ask for any of these; `build()` is generic in milliseconds. Ticks
@@ -369,6 +372,43 @@ window.Feed = (() => {
   }
 
   const cache = {};
+  const loading = new Set();
+
+  function notify() {
+    subs.forEach((fn) => {
+      try { fn(); } catch (e) { /* one view must not stop the feed */ }
+    });
+  }
+
+  function toBars(rows) {
+    return (rows || []).map((b) => ({
+      t: Number(b.t) * 1000,
+      o: Number(b.o), h: Number(b.h), l: Number(b.l), c: Number(b.c),
+      v: Number(b.v || 0),
+    })).filter((b) => [b.t, b.o, b.h, b.l, b.c].every(Number.isFinite));
+  }
+
+  function loadHistory(sym, iv) {
+    const key = String(sym).toUpperCase() + "|" + iv;
+    if (loading.has(key) || !window.fetch) return;
+    loading.add(key);
+    fetch(LIVE_API + "/api/candles/" + encodeURIComponent(String(sym).toUpperCase()) + "/" + encodeURIComponent(iv) + "?limit=" + BARS, { cache: "no-store" })
+      .then((res) => {
+        if (!res.ok) throw new Error("candle API returned " + res.status);
+        return res.json();
+      })
+      .then((body) => {
+        const bars = toBars(body.candles);
+        if (!bars.length) throw new Error("candle API returned no candles");
+        cache[key] = bars;
+        realKeys.add(key);
+        notify();
+      })
+      .catch(() => {
+        /* The deterministic series remains visible and is labeled below. */
+      })
+      .finally(() => loading.delete(key));
+  }
 
   /* Bars are built backwards from a fixed anchor and then scaled so the
      final close lands on the instrument price. The scale is skipped if it
@@ -473,8 +513,9 @@ window.Feed = (() => {
   }
 
   function history(sym, iv) {
-    const key = sym + iv;
+    const key = String(sym).toUpperCase() + "|" + iv;
     if (!cache[key]) cache[key] = build(sym, iv);
+    loadHistory(sym, iv);
     return cache[key];
   }
 
@@ -534,6 +575,7 @@ window.Feed = (() => {
   function tick() {
     if (!running) return;
     Object.keys(cache).forEach((key) => {
+      if (realKeys.has(key)) return;
       const d = cache[key];
       if (!d || !d.length) return;
       const sym = key.replace(/(1m|5m|15m|1H|4H|1D|1W)$/, "");
@@ -546,13 +588,7 @@ window.Feed = (() => {
       b.l = Math.min(b.l, b.c);
       b.v += Math.round(Math.random() * 40);
     });
-    subs.forEach((fn) => {
-      try {
-        fn();
-      } catch (e) {
-        /* a broken subscriber must not stop the feed */
-      }
-    });
+    notify();
   }
 
   function subscribe(fn) {
@@ -574,19 +610,35 @@ window.Feed = (() => {
      nobody opens. */
   function badge(opts) {
     const o = opts || {};
-    return (
-      '<span class="feed-badge' +
-      (o.compact ? " compact" : "") +
-      '" title="' +
-      DEMO_NOTE +
-      '">' +
-      '<i aria-hidden="true"></i>Demo data' +
-      "</span>"
-    );
+    const live = o.symbol ? isLive(o.symbol) : Object.keys(liveQuotes).length > 0;
+    return '<span class="feed-badge' + (live ? ' live' : '') + (o.compact ? ' compact' : '') +
+      '" title="' + (live ? DEMO_NOTE : 'Demo fallback data. Connect the Flask app for real Dukascopy candles.') + '">' +
+      '<i aria-hidden="true"></i>' + (live ? 'Live · Dukascopy' : 'Demo fallback') + '</span>';
   }
+
+  function isLive(sym) {
+    const q = liveQuotes[String(sym || "").toUpperCase()];
+    return !!(q && !q.error && Number.isFinite(q.price) &&
+      Date.now() - Date.parse(q.time) < LIVE_MAX_AGE_MS);
+  }
+
+  function pollLive() {
+    if (!window.fetch) return;
+    fetch(LIVE_API + "/api/quotes", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : {})
+      .then((quotes) => {
+        Object.keys(quotes || {}).forEach((key) => { liveQuotes[key] = quotes[key]; });
+        notify();
+      })
+      .catch(() => {});
+  }
+  pollLive();
+  setInterval(pollLive, 5000);
 
   return {
     DEMO,
+    LIVE_API,
+    isLive,
     DEMO_NOTE,
     INTERVALS,
     IV_MS,
@@ -596,6 +648,7 @@ window.Feed = (() => {
     symbol,
     list,
     history,
+    loadHistory,
     last,
     quote,
     spark,
