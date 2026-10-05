@@ -1174,7 +1174,7 @@ function specHTML(sym, S) {
           `<div class="sc-sr"${t ? ` title="${t}"` : ""}><span>${k}</span><b class="mono">${v}</b></div>`,
       )
       .join("")}
-    <p class="sc-sn">Read from the same instrument table the position panel and the calculators size from, so the three cannot disagree. Prices are simulated.</p>
+    <p class="sc-sn">Read from the same instrument table as the position panel and calculators. ${Feed.isLive(S.symbol) ? "Live Dukascopy quote." : "Demo fallback until the Flask feed is connected."}</p>
   </div>`;
 }
 

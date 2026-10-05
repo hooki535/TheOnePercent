@@ -3371,7 +3371,7 @@ class Chart {
     this.bdg.innerHTML =
       (R.on
         ? `<span class="bdg rep">Replay ${R.blind ? "· blind" : ""}</span>`
-        : `<span class="bdg live">Live · simulated</span>`) +
+        : `<span class="bdg live">${Feed.isLive(this.cfg.sym) ? "Live · Dukascopy" : "Demo fallback"}</span>`) +
       (marks
         ? `<span class="bdg">${marks} drawing${marks > 1 ? "s" : ""}</span>`
         : "") +

@@ -3479,3 +3479,89 @@ body[data-page="charts"].focus-mode .notebar {
 body[data-page="charts"].focus-mode #fsBtn {
   color: var(--accent);
 }
+
+/* Terminal skin: keep the existing chart engine and controls, but give the
+   workspace the tighter, edge-to-edge hierarchy expected from a market
+   terminal rather than a general application page. */
+body[data-page="charts"] {
+  background: #0b0e14;
+}
+body[data-page="charts"] .ctoolbar {
+  height: 52px;
+  flex-basis: 52px;
+  gap: 6px;
+  padding: 0 12px;
+  background: #11151e;
+  border-bottom-color: #273043;
+}
+body[data-page="charts"] .sym {
+  min-width: 138px;
+  padding: 7px 11px;
+  border-color: #34405a;
+  background: #171d2a;
+}
+body[data-page="charts"] #symName {
+  font-size: 15px;
+  letter-spacing: 0.03em;
+}
+body[data-page="charts"] .chips {
+  background: transparent;
+}
+body[data-page="charts"] .chip {
+  padding: 6px 9px;
+  color: #aab6ce;
+}
+body[data-page="charts"] .chip.on {
+  background: #2f6df6;
+  color: #fff;
+}
+body[data-page="charts"] .tb-btn {
+  padding: 7px 10px;
+  color: #b8c2d7;
+}
+body[data-page="charts"] .tb-btn:hover,
+body[data-page="charts"] .sym:hover {
+  background: #20283a;
+  color: #fff;
+}
+body[data-page="charts"] .cshell {
+  background: #0b0e14;
+}
+body[data-page="charts"] .crail {
+  background: #11151e;
+  border-right-color: #273043;
+}
+body[data-page="charts"] .grid {
+  gap: 1px;
+  background: #273043;
+}
+body[data-page="charts"] .cw {
+  background: #0b0e14;
+}
+body[data-page="charts"] .panel {
+  flex-basis: 320px;
+  background: #11151e;
+  border-left-color: #273043;
+}
+body[data-page="charts"] .tabs {
+  flex-basis: 40px;
+  background: #141a26;
+  border-bottom-color: #273043;
+}
+body[data-page="charts"] .tab {
+  font-size: 11px;
+  color: #8190aa;
+}
+body[data-page="charts"] .tab.active {
+  color: #fff;
+  border-bottom-color: #4c7dff;
+}
+body[data-page="charts"] .card {
+  background: #151b27;
+  border-color: #273043;
+  border-radius: 5px;
+}
+body[data-page="charts"] .notebar {
+  background: #11151e;
+  border-top-color: #273043;
+}
