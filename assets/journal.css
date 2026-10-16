@@ -853,3 +853,14 @@
 .pt-verdict.wait b {
   color: var(--muted);
 }
+
+/* Stage C: additive Journal filters and readable metrics; shared tokens stay authoritative. */
+body[data-page="journal"] .journal-advanced-filters { display:grid; grid-template-columns:repeat(5,minmax(120px,1fr)); gap:8px; width:100%; }
+body[data-page="journal"] .journal-advanced-filters label { display:flex; flex-direction:column; gap:5px; min-width:0; font-size:11px; color:var(--muted,var(--text-muted,#64748b)); }
+body[data-page="journal"] .journal-advanced-filters :is(input,select) { width:100%; min-width:0; min-height:36px; border:1px solid var(--border,#cbd5e1); border-radius:6px; padding:6px 8px; background:var(--surface,#fff); color:var(--text,#172238); }
+body[data-page="journal"] .journal-advanced-filters :is(input,select):focus-visible { outline:2px solid var(--accent,#2962ff); outline-offset:2px; }
+body[data-page="journal"] .stat-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(max-width:1050px){body[data-page="journal"] .journal-advanced-filters { grid-template-columns:repeat(3,minmax(0,1fr)); }body[data-page="journal"] .stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }}
+@media(max-width:600px){body[data-page="journal"] .journal-advanced-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }body[data-page="journal"] .stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }}
+@media(max-width:390px){body[data-page="journal"] .journal-advanced-filters { grid-template-columns:1fr 1fr; gap:6px; }body[data-page="journal"] .stat-grid { grid-template-columns:1fr 1fr; }}
+html[data-theme="dark"] body[data-page="journal"] .journal-advanced-filters :is(input,select) { background:var(--surface,#172338); color:var(--text,#e6edfb); border-color:var(--border,#34425c); }
