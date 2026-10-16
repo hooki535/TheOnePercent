@@ -876,25 +876,69 @@ window.AcademyUI = (() => {
     } else route(h);
   });
 
-  /* real-chart screenshots open full size; any click or Escape closes */
+  /* Historical charts open in a focused viewer with zoom controls. */
   document.addEventListener("click", (e) => {
-    const s = e.target.closest && e.target.closest("[data-shot]");
-    if (!s) return;
-    const img = s.querySelector("img");
+    const trigger = e.target.closest && e.target.closest("[data-shot]");
+    if (!trigger) return;
+    const source = trigger.querySelector("img");
+    const figure = trigger.closest(".fig-shot");
+    const title = figure && figure.querySelector(".fig-head b");
+    const metadata = figure && figure.querySelector(".shot-meta");
     const box = document.createElement("div");
     box.className = "shot-box";
     box.setAttribute("role", "dialog");
-    box.setAttribute("aria-label", img ? img.alt : "Chart");
-    box.innerHTML = '<img src="' + s.dataset.shot + '" alt="">';
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-label", "Historical chart viewer");
+    box.innerHTML = '<div class="shot-viewer">' +
+      '<div class="shot-viewer-bar"><div class="shot-viewer-heading"><strong></strong><span></span></div>' +
+      '<div class="shot-viewer-actions"><button type="button" data-zoom="out" aria-label="Zoom out">−</button>' +
+      '<button type="button" data-zoom="reset">100%</button>' +
+      '<button type="button" data-zoom="in" aria-label="Zoom in">+</button>' +
+      '<button type="button" data-zoom="close" aria-label="Close chart viewer">✕</button></div></div>' +
+      '<div class="shot-viewer-scroll" tabindex="0"><img alt=""></div></div>';
+    box.querySelector("strong").textContent = title ? title.textContent : "Historical chart";
+    box.querySelector(".shot-viewer-heading span").textContent = metadata ? metadata.textContent : "";
+    const picture = box.querySelector("img");
+    picture.src = trigger.dataset.shot;
+    picture.alt = source ? source.alt : "Historical price chart";
+    const scroll = box.querySelector(".shot-viewer-scroll");
+    const reset = box.querySelector('[data-zoom="reset"]');
+    let scale = 1;
+    const zoom = (value) => {
+      scale = Math.min(3, Math.max(1, value));
+      picture.style.width = (scale * 100) + "%";
+      reset.textContent = Math.round(scale * 100) + "%";
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const close = () => {
+      document.body.style.overflow = previousOverflow;
       box.remove();
       document.removeEventListener("keydown", onKey);
-      s.focus();
+      trigger.focus();
     };
-    const onKey = (k) => k.key === "Escape" && close();
-    box.addEventListener("click", close);
-    document.addEventListener("keydown", onKey);
+    const onKey = (key) => {
+      if (key.key === "Escape") close();
+      if (key.key === "Tab") {
+        const focusables = Array.from(box.querySelectorAll("button, [tabindex]"));
+        const first = focusables[0], last = focusables[focusables.length - 1];
+        if (key.shiftKey && document.activeElement === first) { key.preventDefault(); last.focus(); }
+        else if (!key.shiftKey && document.activeElement === last) { key.preventDefault(); first.focus(); }
+      }
+    };
+    box.addEventListener("click", (event) => {
+      const control = event.target.closest("[data-zoom]");
+      if (control) {
+        const action = control.dataset.zoom;
+        if (action === "close") close();
+        else if (action === "in") zoom(scale + 0.25);
+        else if (action === "out") zoom(scale - 0.25);
+        else zoom(1);
+      } else if (event.target === box) close();
+    });
     document.body.appendChild(box);
+    document.addEventListener("keydown", onKey);
+    box.querySelector('[data-zoom="close"]').focus();
   });
 
   const onAuth = (user) => {
