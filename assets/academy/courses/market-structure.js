@@ -16,6 +16,22 @@ Academy.register("market-structure", {
       summary: "Every structure tool in this academy is built from one thing: the turning points of price. Mark them consistently and the rest follows.",
       sections: [
         {
+          h: "Real-market example: gold (XAUUSD)",
+          p: [
+            "Start with an actual daily chart rather than a generated pattern. This historical XAUUSD example shows how successive rallies and pullbacks create higher highs and higher lows. Study the wick extremes and compare each confirmed swing with the previous one.",
+            "The chart is a fixed historical example, not a live quote. The next diagram simplifies the same concepts so you can practise identifying swings candle by candle."
+          ],
+          fig: {
+            type: "shot",
+            src: "ms-uptrend-gold",
+            title: "XAUUSD · real daily price history",
+            tag: "Historical chart",
+            caption: "Gold, July–October 2025. Examine the actual candle structure and the annotated higher highs, higher lows and break of structure.",
+            meta: "XAUUSD · 1D · Jul to Oct 2025",
+            alt: "Historical gold daily candlestick chart with market structure annotations"
+          }
+        },
+        {
           h: "What a swing point is",
           p: [
             "A swing high is a peak with lower highs on both sides of it. A swing low is a trough with higher lows on both sides. That is all. They are the places where one side of the market stopped winning and the other side took over for a while.",
