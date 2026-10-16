@@ -1467,3 +1467,12 @@
 .ac-answer-feedback.correct { border-color:var(--up); }
 .ac-answer-feedback.incorrect { border-color:var(--down); }
 .ac-chart-practice small { display:block; margin-top:14px; color:var(--muted); line-height:1.5; }
+
+/* Trading-terminal-inspired educational chart axes */
+.fig-body .fg-axis-bg { fill:var(--surface-2, #f6f8fb); }
+.fig-body .fg-axis-line { stroke:var(--line, #dce3eb); stroke-width:1; }
+.fig-body .fg-axis-text { fill:var(--muted, #7b8798); font:11px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.fig-body .fg-axis-caption { fill:var(--muted, #7b8798); font:9px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing:.04em; }
+.fig-body .fg-last-text { font:600 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.fig-body .fg-candle { cursor:crosshair; }
+.fig-body .fg-candle:hover { opacity:.78; }
