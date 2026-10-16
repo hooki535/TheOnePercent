@@ -1420,3 +1420,22 @@
 .ac-vcap a{font-size:12px}
 .ac-vcap small{font-size:11px;color:var(--muted)}
 .ac-videos.one .ac-video{max-width:720px}
+
+/* Academy study sequence and annotated chart readability */
+.ac-study-heading { margin: 28px 0 18px; padding: 18px 20px; border-left: 3px solid var(--brand); background: var(--surface-2); border-radius: 0 var(--r-m) var(--r-m) 0; }
+.ac-study-heading span { display: block; font: 600 11px var(--mono); letter-spacing: .09em; color: var(--brand); margin-bottom: 6px; }
+.ac-study-heading h2 { margin: 0 0 5px; font-size: 20px; }
+.ac-study-heading p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.ac-video-heading { margin-top: 36px; }
+.lesson-main .fig { margin: 22px 0 26px; border-radius: var(--r-l); background: var(--surface); box-shadow: var(--shadow-card); }
+.lesson-main .fig-head { padding: 14px 18px; align-items: center; }
+.lesson-main .fig-head b { font-size: 14px; line-height: 1.45; }
+.lesson-main .fig-body { padding: 18px 12px 6px; background: var(--surface-2); }
+.lesson-main .fig figcaption { padding: 13px 18px 16px; border-top: 1px solid var(--line-soft); line-height: 1.65; }
+.fig-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 18px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--line-soft); }
+.fig-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.fig-key { display: inline-block; width: 9px; height: 12px; border-radius: 2px; }
+.fig-key-up { background: var(--up); }
+.fig-key-down { background: var(--down); }
+.fig-synthetic { margin-left: auto; font-family: var(--mono); font-size: 10px; }
+@media (max-width: 620px) { .ac-study-heading { padding: 14px 15px; } .lesson-main .fig-body { padding: 12px 3px 3px; } .fig-synthetic { margin-left: 0; width: 100%; } }
