@@ -150,3 +150,67 @@ body[data-page="charts"] .feed-badge { font-size: 10px; font-weight: 700; }
   body[data-page="charts"] .panel { flex-basis: auto !important; }
   body[data-page="charts"] .tabs { overflow-x: auto; }
 }
+
+/* Phase two: chart-first visual hierarchy, legible crosshair data and watchlist. */
+body[data-page="charts"] .rtool {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  color: #5b6d86 !important;
+  margin: 2px auto;
+}
+body[data-page="charts"] .rtool:hover,
+body[data-page="charts"] .rtool.on,
+body[data-page="charts"] .rtool.active {
+  background: #eaf0ff !important;
+  color: #2454d8 !important;
+}
+body[data-page="charts"] .rtool svg { width: 18px; height: 18px; }
+body[data-page="charts"] .dwin {
+  top: 34px;
+  right: 72px;
+  min-width: 158px;
+  padding: 11px 12px;
+  border: 1px solid #dce4f1 !important;
+  border-radius: 9px;
+  background: #fffffff2 !important;
+  box-shadow: 0 8px 28px #172b4d16;
+  backdrop-filter: blur(10px);
+  color: #26364d;
+  font-size: 11px;
+  line-height: 1.55;
+}
+body[data-page="charts"] .cbot { min-height: 34px; padding: 4px 10px; }
+body[data-page="charts"] .cb-btn {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 5px 8px;
+  color: #61728d;
+}
+body[data-page="charts"] .cb-btn:hover,
+body[data-page="charts"] .cb-btn.on {
+  background: #eaf0ff !important;
+  color: #2454d8 !important;
+}
+body[data-page="charts"] .side-toggle {
+  border: 1px solid #e3e9f2;
+  background: #f3f6fa !important;
+  border-radius: 7px;
+  padding: 3px;
+}
+body[data-page="charts"] .st { border-radius: 5px; font-weight: 700; padding: 6px 10px; }
+body[data-page="charts"] .st.on { box-shadow: 0 1px 3px #172b4d12; }
+body[data-page="charts"] .src-note { color: #7c8ba2; line-height: 1.55; }
+body[data-page="charts"] .tabpane button:focus-visible,
+body[data-page="charts"] .ctoolbar button:focus-visible,
+body[data-page="charts"] .crail button:focus-visible,
+body[data-page="charts"] .chart-dock button:focus-visible {
+  outline: 2px solid #2962ff !important;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="charts"] .rtool,
+  body[data-page="charts"] .tb-btn,
+  body[data-page="charts"] .ctoolbar .chip { transition: none !important; }
+}
