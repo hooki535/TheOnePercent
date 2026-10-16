@@ -395,3 +395,26 @@ body[data-page="charts"] .study-visibility {
   cursor: pointer;
 }
 body[data-page="charts"] .study-visibility input { accent-color: #2962ff; }
+
+/* Adjustable chart/right-panel split */
+body[data-page="charts"] #panel { position: relative; min-width: 240px; max-width: min(620px, 65vw); }
+body[data-page="charts"] .workspace-panel-grip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 10px;
+  z-index: 30;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+body[data-page="charts"] .workspace-panel-grip:hover,
+body[data-page="charts"] .workspace-panel-grip:focus-visible {
+  background: #2962ff55;
+  outline: 1px solid #2962ff;
+}
+@media (max-width: 720px) {
+  body[data-page="charts"] #panel { width: auto !important; max-width: none; }
+  body[data-page="charts"] .workspace-panel-grip { display: none; }
+}
