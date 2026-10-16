@@ -1490,3 +1490,13 @@
 .shot-viewer-scroll { flex:1; min-height:0; overflow:auto; display:block; background:#0d111a; }
 .shot-viewer-scroll img { display:block; width:100%; max-width:none; max-height:none; height:auto; border-radius:0; box-shadow:none; }
 @media(max-width:650px) { .shot-viewer-bar { flex-wrap:wrap; } .shot-viewer-actions { width:100%; justify-content:space-between; } .shot-viewer-heading span { font-size:10px; } }
+
+/* Real-market embedded charts replace the old synthetic candlestick illustrations. */
+.fig-market-chart { overflow:hidden; }
+.fig-market-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 14px; border-bottom:1px solid var(--line); }
+.fig-market-toolbar strong { font-size:14px; letter-spacing:.025em; }
+.fig-market-toolbar span { color:var(--muted); font:11px var(--mono); }
+.fig-market-toolbar a { margin-left:auto; font-size:12px; font-weight:600; text-decoration:underline; text-underline-offset:3px; }
+.fig-market-frame { display:block; width:100%; height:clamp(350px,48vw,540px); border:0; background:var(--surface); }
+.fig-market-chart figcaption { padding:12px 14px; color:var(--muted); line-height:1.6; }
+@media(max-width:620px) { .fig-market-toolbar a { margin-left:0; width:100%; } .fig-market-frame { height:390px; } }
