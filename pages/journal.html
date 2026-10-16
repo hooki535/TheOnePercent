@@ -124,6 +124,13 @@
               aria-label="Search trades"
             />
           </div>
+          <div class="journal-advanced-filters" role="group" aria-label="Additional trade filters">
+            <label>Symbol <input id="f-symbol" type="search" placeholder="EURUSD" autocomplete="off"></label>
+            <label>Direction <select id="f-side"><option value="all">Both</option><option value="Long">Long</option><option value="Short">Short</option></select></label>
+            <label>From <input id="f-from" type="date"></label>
+            <label>To <input id="f-to" type="date"></label>
+            <label>Setup / tag <input id="f-setup" type="search" placeholder="Setup or tag" autocomplete="off"></label>
+          </div>
           <div
             class="chip-set"
             id="f-result"
@@ -405,6 +412,7 @@
             <button type="button" class="btn btn-quiet sm" id="add-exit">
               Add an exit
             </button>
+            <button type="button" class="btn btn-quiet sm" id="close-trade">Close remaining position</button>
             <p class="hint">
               Leave this empty while the trade is still open. Add a row per
               scale-out and the result is size-weighted.
