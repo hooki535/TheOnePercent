@@ -567,6 +567,16 @@ window.AcademyUI = (() => {
     return v ? '<section class="ac-videos one"><h2>Watch: this lesson on video</h2>' + videoTile(v) + "</section>" : "";
   }
   document.addEventListener("click", (e) => {
+    const toggle = e.target.closest && e.target.closest(".fig-toggle");
+    if (!toggle) return;
+    const figure = toggle.closest(".fig");
+    if (!figure) return;
+    const hidden = figure.classList.toggle("fig-hide-annotations");
+    toggle.setAttribute("aria-pressed", String(!hidden));
+    toggle.textContent = hidden ? "Reveal annotations" : "Hide annotations";
+  });
+
+  document.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest(".ac-vthumb");
     if (!b) return;
     const f = document.createElement("iframe");
