@@ -1374,6 +1374,12 @@ class Chart {
         this.drag = { mode: "axisX", x: e.clientX, n: this.view.n };
         return;
       }
+      // Drawings store price/bar anchors, not indicator-pane coordinates.
+      // Leave cursor/eraser and vertical-line placement to their own guards.
+      if (!this.inPricePlot(p) &&
+          (e.altKey || (state.tool !== "cursor" &&
+           state.tool !== "eraser" && state.tool !== "vline" &&
+           !!DRAW[state.tool]))) return;
       if (e.altKey) {
         /* Alt-drag is always a measurement, like TradingView */
         this.pending = this.newObj("measure", p);
@@ -1383,9 +1389,12 @@ class Chart {
       if (state.tool === "cursor") {
         const h = this.grab(p);
         if (h) {
-          state.selObj = h.o.id;
+          // Position handles are {pos:true,k}; drawing handles are {o,k}.
+          if (!h.pos) {
+            state.selObj = h.o.id;
+            paintObjects();
+          }
           this.drag = { mode: "handle", h };
-          paintObjects();
           return;
         }
         const i = this.nearest(p);
@@ -1758,14 +1767,25 @@ class Chart {
     const b = d[Math.max(0, Math.min(d.length - 1, Math.round(i)))];
     return b ? b.t : null;
   }
+  inChartBody(p) {
+    return p.x >= 0 && p.x <= this.plotW &&
+      p.y >= 0 && p.y < this.axisY;
+  }
+  inPricePlot(p) {
+    const pr = this.panes.price;
+    return this.inChartBody(p) &&
+      p.y >= pr.y && p.y < pr.y + pr.h;
+  }
   grab(p) {
-    if (state.pos && state.pos.key === this.key)
+    if (!this.inChartBody(p)) return null;
+    const inPrice = this.inPricePlot(p);
+    if (inPrice && state.pos && state.pos.key === this.key)
       for (const k of ["entry", "stop", "target"])
         if (Math.abs(this.y(state.pos[k]) - p.y) < 5 && p.x > this.plotW * 0.35)
           return { pos: true, k };
     for (let n = this.drw.length - 1; n >= 0; n--) {
       const o = this.drw[n];
-      if (o.hidden || o.locked) continue;
+      if (o.hidden || o.locked || (!inPrice && o.t !== "vline")) continue;
       for (let k = 0; k < o.pts.length; k++) {
         const q = o.pts[k];
         const x = o.t === "hline" ? p.x : this.x(q.i),
@@ -1776,10 +1796,12 @@ class Chart {
     return null;
   }
   nearest(p) {
+    if (!this.inChartBody(p)) return -1;
+    const inPrice = this.inPricePlot(p);
     let bi = -1,
       bd = 8;
     this.drw.forEach((o, i) => {
-      if (o.hidden) return;
+      if (o.hidden || (!inPrice && o.t !== "vline")) return;
       let d = Infinity;
       if (o.t === "hline") d = Math.abs(this.y(o.pts[0].p) - p.y);
       else if (o.t === "vline") d = Math.abs(this.x(o.pts[0].i) - p.x);
@@ -1985,11 +2007,22 @@ class Chart {
     /* price line, trades, drawings, position, alerts */
     this.lastPrice(c, d, pw);
     if (state.trades) this.tradeLayer(c, d, i0, i1);
+    // Preserve saved-object order and the pending-preview position.
     this.drw.forEach((o) => {
-      if (!o.hidden) this.drawObj(c, o, false, o.id === state.selObj);
+      if (!o.hidden) this.drawScopedObj(c, o, false, o.id === state.selObj);
     });
-    if (this.pending) this.drawObj(c, this.pending, true);
-    if (state.pos && state.pos.key === this.key) this.posTool(c);
+    if (this.pending) this.drawScopedObj(c, this.pending, true);
+    if (state.pos && state.pos.key === this.key) {
+      c.save();
+      try {
+        const clip = new Path2D();
+        clip.rect(0, pr.y, pw, pr.h);
+        c.clip(clip);
+        this.posTool(c);
+      } finally {
+        c.restore();
+      }
+    }
     this.alertLines(c, pw);
 
     /* sub panes */
@@ -2554,7 +2587,45 @@ class Chart {
       c.globalAlpha = 1;
     }
   }
-  drawObj(c, o, ghost, sel) {
+  drawScopedObj(c, o, ghost, sel) {
+    const pr = this.panes.price;
+    c.save();
+    try {
+      const clip = new Path2D();
+      if (o.t === "vline") clip.rect(0, 0, this.plotW, this.axisY);
+      else clip.rect(0, pr.y, this.plotW, pr.h);
+      c.clip(clip);
+      this.drawObj(c, o, ghost, sel, true);
+    } finally {
+      c.restore();
+    }
+    // Preserve hline axis labels without exposing other drawing bodies to
+    // the axis. This label pass stays adjacent to its object in draw order.
+    if (o.t === "hline" && o.style?.label !== false) {
+      const y = this.y(o.pts[0].p);
+      if (y < pr.y || y >= pr.y + pr.h) return;
+      const col = o.style?.color || css("--acc2");
+      c.save();
+      try {
+        const clip = new Path2D();
+        clip.rect(this.plotW, pr.y, this.W - this.plotW, pr.h);
+        c.clip(clip);
+        c.globalAlpha = ghost ? 0.65 : 1;
+        c.font = '10px "IBM Plex Sans",sans-serif';
+        c.textBaseline = "middle";
+        const label = fmt(o.pts[0].p, this.cfg.sym);
+        const w = c.measureText(label).width + 10;
+        c.fillStyle = col;
+        c.fillRect(this.plotW + 1, y - 8, w, 16);
+        c.fillStyle = "#fff";
+        c.textAlign = "left";
+        c.fillText(label, this.plotW + 6, y);
+      } finally {
+        c.restore();
+      }
+    }
+  }
+  drawObj(c, o, ghost, sel, suppressAxisLabel = false) {
     const col = o.style && o.style.color ? o.style.color : css("--acc2");
     const pw = this.plotW,
       S = this.cfg.sym;
@@ -2586,7 +2657,8 @@ class Chart {
       c.moveTo(0, y);
       c.lineTo(pw, y);
       c.stroke();
-      if (st.label !== false) tag(pw + 1, y, fmt(o.pts[0].p, S), col, "#fff");
+      if (!suppressAxisLabel && st.label !== false)
+        tag(pw + 1, y, fmt(o.pts[0].p, S), col, "#fff");
       if (o.text) {
         c.setLineDash([]);
         c.fillStyle = col;
