@@ -247,7 +247,21 @@ window.AcademyUI = (() => {
     const list = A.courses.filter(matches);
     $("#ac-count").textContent = list.length + " of " + A.courses.length + " courses";
     if (!list.length) {
-      $("#ac-list").innerHTML = '<div class="notice"><b>No course matches that search.</b> <small>Try a broader word, or clear the filters.</small></div>';
+      $("#ac-list").innerHTML = '<div class="notice" role="status"><b>No courses match your filters.</b> <small>Try a different keyword or reset your filters.</small> <button type="button" class="btn" id="ac-reset-filters">Clear all filters</button></div>';
+      $("#ac-reset-filters").addEventListener("click", () => {
+        filters.q = "";
+        filters.school = "all";
+        filters.level = "all";
+        filters.mine = false;
+        $("#ac-q").value = "";
+        $("#ac-level").value = "all";
+        $("#ac-mine").checked = false;
+        $(".ac-chips button").forEach((button) => {
+          button.setAttribute("aria-selected", String(button.dataset.school === "all"));
+        });
+        renderList();
+        $("#ac-q").focus();
+      });
       return;
     }
     const groups = A.schools.filter((sc) => list.some((c) => c.school === sc.id));
