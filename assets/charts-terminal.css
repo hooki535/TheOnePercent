@@ -214,3 +214,30 @@ body[data-page="charts"] .chart-dock button:focus-visible {
   body[data-page="charts"] .tb-btn,
   body[data-page="charts"] .ctoolbar .chip { transition: none !important; }
 }
+
+/* Reference-inspired chart-first mode: prioritize the chart, reveal tools on demand. */
+body[data-page="charts"] .workspace-toggle {
+  border: 1px solid #e0e6f0 !important;
+  background: #fff !important;
+  padding: 7px 10px;
+  white-space: nowrap;
+  color: #53637d !important;
+}
+body[data-page="charts"] .workspace-toggle.workspace-open {
+  color: #2454d8 !important;
+  border-color: #b9caff !important;
+  background: #eaf0ff !important;
+}
+body[data-page="charts"].chart-first .panel { display: none !important; }
+body[data-page="charts"] .notebar { display: none !important; }
+body[data-page="charts"].chart-notes-open .notebar { display: flex !important; }
+body[data-page="charts"].chart-first .cmid {
+  flex: 1 1 auto !important;
+  width: 0;
+  min-width: 0;
+}
+body[data-page="charts"].chart-first .grid { flex: 1 1 auto; min-height: 0; }
+body[data-page="charts"].chart-first .crail { flex-shrink: 0; }
+@media (max-width: 720px) {
+  body[data-page="charts"] .workspace-toggle { padding: 5px 7px; font-size: 11px; }
+}
