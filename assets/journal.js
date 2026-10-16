@@ -20,6 +20,11 @@
     emotion: "all",
     range: "all",
     account: "all",
+    symbol: "",
+    side: "all",
+    from: "",
+    to: "",
+    setup: "",
     sort: "date",
     asc: false,
     tab: "trades",
@@ -99,14 +104,21 @@
     return all
       .filter((t) => {
         if (cut && new Date(t.date).getTime() < cut) return false;
+        const date = String(t.date || "").slice(0, 10);
+        if (state.from && date < state.from) return false;
+        if (state.to && date > state.to) return false;
+        if (state.symbol && !String(t.symbol || "").toLowerCase().includes(state.symbol)) return false;
+        if (state.side !== "all" && t.side !== state.side) return false;
+        if (state.setup && ![t.setup, ...(Array.isArray(t.tags) ? t.tags : [])]
+          .join(" ").toLowerCase().includes(state.setup)) return false;
         if (state.account !== "all" && (t.account || "") !== state.account) return false;
         if (state.market !== "all" && t.market !== state.market) return false;
         if (state.emotion !== "all" && t.emotion !== state.emotion) return false;
         if (state.result !== "all") {
-          const r = Store.compute(t).result;
-          if (state.result === "open" && r !== "Open") return false;
-          if (state.result === "win" && r !== "Win") return false;
-          if (state.result === "loss" && r !== "Loss") return false;
+          const calc = Store.compute(t);
+          if (state.result === "open" && !calc.open && calc.result !== "Open") return false;
+          if (state.result === "win" && (calc.open || calc.result !== "Win")) return false;
+          if (state.result === "loss" && (calc.open || calc.result !== "Loss")) return false;
         }
         if (q) {
           const hay = [t.symbol, t.setup, t.session, t.review, (t.tags || []).join(" ")]
@@ -150,8 +162,19 @@
 
   function renderSummary(rows) {
     const s = Store.stats(rows.map((r) => r.t), settings());
+    const closed = rows.map(({ c }) => c).filter(c => !c.open && c.result !== "Open");
+    const rs = closed.map(c => c.r).filter(Number.isFinite);
+    const averageR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
+    const bestR = rs.length ? Math.max(...rs) : null;
+    const worstR = rs.length ? Math.min(...rs) : null;
     const cards = [
-      { k: "Trades", v: String(s.count), n: s.open ? s.open + " still open" : "all closed" },
+      { k: "Trades", v: String(s.count), n: "all filtered trades" },
+      { k: "Open trades", v: String(s.open), n: "positions not fully closed" },
+      { k: "Win rate", v: pct(s.winRate, 1), n: "closed trades only" },
+      { k: "Average R", v: rfmt(averageR), n: "closed trades with valid risk", cls: dir(averageR) },
+      { k: "Profit factor", v: s.profitFactor === null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2), n: "gross profits / gross losses" },
+      { k: "Best trade", v: rfmt(bestR), n: "highest realised R", cls: dir(bestR) },
+      { k: "Worst trade", v: rfmt(worstR), n: "lowest realised R", cls: dir(worstR) },
       {
         k: "Net P/L",
         v: money(s.netPL, true),
@@ -1158,6 +1181,11 @@
     state.result = "all";
     state.market = "all";
     state.emotion = "all";
+    state.symbol = ""; state.side = "all"; state.from = ""; state.to = ""; state.setup = "";
+    ["symbol", "side", "from", "to", "setup"].forEach(key => {
+      const el = $("#f-" + key);
+      if (el) el.value = key === "side" ? "all" : "";
+    });
     $("#f-q").value = "";
     buildChips();
     render();
@@ -1264,6 +1292,24 @@
       state.account = e.target.value;
       render();
     });
+    ["symbol", "side", "from", "to", "setup"].forEach(key => {
+      const el = $("#f-" + key);
+      el.addEventListener(key === "side" || key === "from" || key === "to" ? "change" : "input", () => {
+        state[key] = key === "symbol" || key === "setup" ? el.value.trim().toLowerCase() : el.value;
+        render();
+      });
+    });
+    $("#close-trade").onclick = () => {
+      const f = $("#trade-form");
+      const total = Number(f.elements.size.value);
+      const already = $(".exit-row").reduce((sum, row) => sum + (Number($(".ex-size", row).value) || 0), 0);
+      const remaining = total - already;
+      if (!(remaining > 0)) return toast("No remaining size to close");
+      const row = exitRow({ size: remaining });
+      $("#exits").appendChild(row);
+      $(".ex-price", row).focus();
+      toast("Enter the exit price, then save the trade");
+    };
     $("#f-clear").onclick = clearFilters;
 
     $$("#trades th[data-sort]").forEach((th) => {
