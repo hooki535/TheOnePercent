@@ -1453,3 +1453,17 @@
 .fig-replay button:disabled { opacity:.45; cursor:not-allowed; }
 .fig-replaying .fg-annotations { visibility:hidden; }
 @media(max-width:620px) { .fig-replay-status { width:100%; margin-left:0; } }
+
+/* Formative chart knowledge check */
+.ac-chart-practice { margin:32px 0; padding:22px; border:1px solid var(--line); border-radius:var(--r-l); background:var(--surface-2); }
+.ac-practice-eyebrow { color:var(--brand); font:600 11px var(--mono); letter-spacing:.09em; }
+.ac-chart-practice h2 { font-size:20px; margin:10px 0; }
+.ac-chart-practice p { color:var(--muted); font-size:14px; line-height:1.6; }
+.ac-chart-practice fieldset { border:0; padding:0; margin:18px 0; display:grid; gap:9px; }
+.ac-chart-practice label { display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--line); border-radius:var(--r-s); background:var(--surface); cursor:pointer; font-size:14px; line-height:1.5; }
+.ac-chart-practice input { margin-top:4px; accent-color:var(--brand); }
+.ac-chart-practice label:has(input:checked) { border-color:var(--brand); }
+.ac-answer-feedback { margin:14px 0; padding:12px; border:1px solid var(--line); border-radius:var(--r-s); line-height:1.6; font-size:13px; }
+.ac-answer-feedback.correct { border-color:var(--up); }
+.ac-answer-feedback.incorrect { border-color:var(--down); }
+.ac-chart-practice small { display:block; margin-top:14px; color:var(--muted); line-height:1.5; }
