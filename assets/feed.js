@@ -32,7 +32,13 @@ window.Feed = (() => {
   /* Every screen that shows a price renders the badge — see `Feed.badge()`.
      The Flask build can replace a cached demo series with verified candles. */
   const DEMO = true;
-  const LIVE_API = "";
+  // Configure an HTTPS OHLC backend via window.THEONEPERCENT_MARKET_API before feed.js loads.
+  // GitHub Pages has no /api backend; leave demo mode explicit until configured.
+  const LIVE_API = typeof window !== "undefined" && typeof window.THEONEPERCENT_MARKET_API === "string"
+    ? window.THEONEPERCENT_MARKET_API.trim().replace(/\/$/, "") : "";
+  const API_ENABLED = /^https:\/\/[^/]+/i.test(LIVE_API) ||
+    (typeof location !== "undefined" && location.protocol === "http:" && /^http:\/\/localhost(?::\d+)?$/i.test(LIVE_API));
+  const failedKeys = new Set();
   const LIVE_MAX_AGE_MS = 30000;
   const liveQuotes = {};
   const realKeys = new Set();
@@ -390,7 +396,7 @@ window.Feed = (() => {
 
   function loadHistory(sym, iv) {
     const key = String(sym).toUpperCase() + "|" + iv;
-    if (loading.has(key) || !window.fetch) return;
+    if (!API_ENABLED || failedKeys.has(key) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
     loading.add(key);
     fetch(LIVE_API + "/api/candles/" + encodeURIComponent(String(sym).toUpperCase()) + "/" + encodeURIComponent(iv) + "?limit=" + BARS, { cache: "no-store" })
       .then((res) => {
@@ -399,12 +405,14 @@ window.Feed = (() => {
       })
       .then((body) => {
         const bars = toBars(body.candles);
-        if (!bars.length) throw new Error("candle API returned no candles");
+        if (!bars.length || bars.some((b) => b.o <= 0 || b.h < Math.max(b.o, b.c) || b.l > Math.min(b.o, b.c) || b.l <= 0))
+          throw new Error("candle API returned invalid OHLC data");
         cache[key] = bars;
         realKeys.add(key);
         notify();
       })
       .catch(() => {
+        failedKeys.add(key); // Avoid retrying a failing provider on every redraw.
         /* The deterministic series remains visible and is labeled below. */
       })
       .finally(() => loading.delete(key));
@@ -610,10 +618,13 @@ window.Feed = (() => {
      nobody opens. */
   function badge(opts) {
     const o = opts || {};
-    const live = o.symbol ? isLive(o.symbol) : Object.keys(liveQuotes).length > 0;
+    const sym = String(o.symbol || "").toUpperCase();
+    const interval = o.interval || "";
+    const historical = sym && interval && realKeys.has(sym + "|" + interval);
+    const live = !!(sym && isLive(sym));
     return '<span class="feed-badge' + (live ? ' live' : '') + (o.compact ? ' compact' : '') +
-      '" title="' + (live ? DEMO_NOTE : 'Demo fallback data. Connect the Flask app for real Dukascopy candles.') + '">' +
-      '<i aria-hidden="true"></i>' + (live ? 'Live · Dukascopy' : 'Demo fallback') + '</span>';
+      '" title="' + (historical ? "Historical OHLC loaded from configured data provider." : live ? "Recent quote received; historical chart candles may still be demo." : "Synthetic demonstration data; not actual market prices.") + '">' +
+      '<i aria-hidden="true"></i>' + (historical ? "Historical data" : live ? "Quote connected · chart may be demo" : "Demo candles") + '</span>';
   }
 
   function isLive(sym) {
@@ -623,7 +634,7 @@ window.Feed = (() => {
   }
 
   function pollLive() {
-    if (!window.fetch) return;
+    if (!API_ENABLED || !window.fetch) return;
     fetch(LIVE_API + "/api/quotes", { cache: "no-store" })
       .then((res) => res.ok ? res.json() : {})
       .then((quotes) => {
@@ -632,12 +643,16 @@ window.Feed = (() => {
       })
       .catch(() => {});
   }
-  pollLive();
-  setInterval(pollLive, 5000);
+  if (API_ENABLED) {
+    pollLive();
+    setInterval(pollLive, 5000);
+  }
 
   return {
     DEMO,
     LIVE_API,
+    API_ENABLED,
+    isHistorical: (sym, iv) => realKeys.has(String(sym).toUpperCase() + "|" + iv),
     isLive,
     DEMO_NOTE,
     INTERVALS,
