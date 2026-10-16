@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="TheOnePercent Market Data API", version="0.1.0")
@@ -56,7 +56,9 @@ def health():
 
 
 @app.get("/api/candles/{symbol}/{interval}")
-def candles(symbol: str, interval: str, limit: int = Query(500, ge=1, le=1000)):
+def candles(symbol: str, interval: str, response: Response, limit: int = Query(500, ge=1, le=1000)):
+    # A short public cache lifetime reduces unnecessary provider traffic.
+    response.headers["Cache-Control"] = "public, max-age=15"
     pair = SYMBOLS.get(symbol.upper())
     iv = INTERVALS.get(interval)
     if not pair or not iv:
@@ -65,6 +67,7 @@ def candles(symbol: str, interval: str, limit: int = Query(500, ge=1, le=1000)):
     key = (symbol.upper(), pair, iv, limit)
     cached = cache.get(key)
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+        response.headers["X-Market-Cache"] = "HIT"
         return cached[1]
     from urllib.parse import urlencode
     rows = provider_get("/klines?" + urlencode({"symbol": pair, "interval": iv, "limit": limit}))
@@ -87,6 +90,7 @@ def candles(symbol: str, interval: str, limit: int = Query(500, ge=1, le=1000)):
               "market": "spot", "interval": interval, "candles": bars,
               "retrieved_at": datetime.now(timezone.utc).isoformat()}
     cache[key] = (time.monotonic(), result)
+    response.headers["X-Market-Cache"] = "MISS"
     return result
 
 
