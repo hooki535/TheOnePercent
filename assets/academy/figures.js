@@ -466,7 +466,9 @@ window.Figures = (() => {
       '<div class="fig-native-chart-kicker">PRACTISE ON OUR OWN CHARTING WORKSPACE</div>' +
       '<h3>' + esc(label) + ' · Chart analysis</h3>' +
       '<p>Open TheOnePercent Charts to practise swing identification, drawing levels, using indicators and replaying candles. Our charting interface is built into this platform rather than embedded from TradingView.</p>' +
-      '<a class="btn btn-primary" href="' + esc(workspaceLink) + '">Open TheOnePercent Charts ↗</a>' +
+      '<div class="fig-native-actions"><button type="button" class="btn btn-quiet fig-native-preview-toggle" aria-expanded="false">Load chart in lesson</button>' +
+      '<a class="btn btn-primary" href="' + esc(workspaceLink) + '" target="_blank" rel="noopener noreferrer">Open full chart ↗</a></div>' +
+      '<div class="fig-native-preview" data-chart-url="' + esc(workspaceLink) + '" hidden></div>' +
       '<p class="fig-native-chart-warning">Data notice: TheOnePercent Charts currently uses a synthetic demo feed. It is not a historical or live market-data chart. Use the separate documented historical case studies for actual market examples.</p>' +
       '</div></figure>';
   }
