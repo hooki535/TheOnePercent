@@ -70,6 +70,16 @@ class MarketDataContractTests(unittest.TestCase):
         ]
         self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=2").status_code, 502)
 
+    @patch("app.provider_get")
+    def test_cache_headers_and_repeated_requests(self, provider):
+        provider.return_value = [[1720000000000, "60000", "60500", "59000", "60100", "12.5"]]
+        first = client.get("/api/candles/BTCUSD/1H?limit=1")
+        second = client.get("/api/candles/BTCUSD/1H?limit=1")
+        self.assertEqual(first.headers["x-market-cache"], "MISS")
+        self.assertEqual(second.headers["x-market-cache"], "HIT")
+        self.assertEqual(second.headers["cache-control"], "public, max-age=15")
+        provider.assert_called_once()
+
     def test_quotes_are_not_fabricated(self):
         self.assertEqual(client.get("/api/quotes").json(), {})
 
