@@ -189,10 +189,12 @@ window.Figures = (() => {
       const x = X(i);
       const yTop = Y(Math.max(b.o, b.c));
       const yBot = Y(Math.min(b.o, b.c));
+      out.push('<g class="fg-candle" data-bar="' + i + '">');
       out.push('<line x1="' + x + '" x2="' + x + '" y1="' + Y(b.h) + '" y2="' + Y(b.l) + '" stroke="' + c + '" stroke-width="1.2"/>');
       out.push(
         '<rect x="' + (x - bw / 2) + '" y="' + yTop + '" width="' + bw + '" height="' + Math.max(1.2, yBot - yTop) + '" fill="' + c + '" rx="0.8"/>'
       );
+      out.push("</g>");
     });
 
     out.push('<g class="fg-annotations">');
@@ -410,6 +412,8 @@ window.Figures = (() => {
       '<div class="fig-body">' + svg + "</div>" +
       ((spec.type === "shot" || spec.type === "line" || spec.type === "bars" || spec.type === "flow" || !(spec.overlays || []).length) ? "" :
         '<div class="fig-controls"><span>Practice: identify the levels before revealing the labels.</span><button type="button" class="btn btn-quiet sm fig-toggle" aria-pressed="true">Hide annotations</button></div>') +
+      ((spec.type === "shot" || spec.type === "line" || spec.type === "bars" || spec.type === "flow" || spec.only) ? "" :
+        '<div class="fig-replay" role="group" aria-label="Candlestick replay"><button type="button" class="btn btn-quiet sm fig-replay-start">Start replay</button><button type="button" class="btn btn-quiet sm fig-replay-prev" disabled>Previous</button><button type="button" class="btn btn-quiet sm fig-replay-next" disabled>Next candle</button><span class="fig-replay-status" role="status" aria-live="polite">Full chart</span></div>') +
       ((spec.type === "shot" || spec.type === "line" || spec.type === "bars" || spec.type === "flow") ? "" :
         '<div class="fig-legend"><span><i class="fig-key fig-key-up"></i>Bullish candle</span><span><i class="fig-key fig-key-down"></i>Bearish candle</span><span class="fig-synthetic">Illustrative chart · not live market data</span></div>') +
       (spec.caption ? "<figcaption>" + esc(spec.caption) + "</figcaption>" : "") +
