@@ -419,9 +419,59 @@ window.Figures = (() => {
     );
   }
 
+  /* Multi-market teaching chart: actual exchange/provider chart instead of synthetic OHLC.
+     Labels from schematic overlays are intentionally not drawn on unrelated real candles. */
+  const MARKETS = [
+    { symbol: "FX:EURUSD", label: "EURUSD", market: "Forex" },
+    { symbol: "FX:GBPJPY", label: "GBPJPY", market: "Forex" },
+    { symbol: "FX:USDJPY", label: "USDJPY", market: "Forex" },
+    { symbol: "FX:GBPUSD", label: "GBPUSD", market: "Forex" },
+    { symbol: "OANDA:XAUUSD", label: "XAUUSD", market: "Metals" },
+    { symbol: "OANDA:XAGUSD", label: "XAGUSD", market: "Metals" },
+    { symbol: "BINANCE:BTCUSDT", label: "BTCUSDT", market: "Crypto" },
+    { symbol: "BINANCE:ETHUSDT", label: "ETHUSDT", market: "Crypto" },
+    { symbol: "CME_MINI:ES1!", label: "ES1!", market: "Futures" },
+    { symbol: "CME_MINI:NQ1!", label: "NQ1!", market: "Futures" }
+  ];
+
+  function marketChart(spec) {
+    const context = (typeof location !== "undefined" ? location.hash : "") + "|" + (spec.title || "");
+    let hash = 0;
+    for (let i = 0; i < context.length; i++) hash = ((hash * 31) + context.charCodeAt(i)) >>> 0;
+    const selected = MARKETS[hash % MARKETS.length];
+    const symbol = spec.symbol || selected.symbol;
+    const match = MARKETS.find((item) => item.symbol === symbol);
+    const label = match ? match.label : symbol;
+    const timeframe = spec.interval || "D";
+    const params = new URLSearchParams({
+      symbol: symbol,
+      interval: timeframe,
+      theme: "light",
+      style: "1",
+      locale: "en",
+      timezone: "Etc/UTC",
+      withdateranges: "1",
+      hide_side_toolbar: "0",
+      allow_symbol_change: "1",
+      saveimage: "0"
+    });
+    const chartURL = "https://s.tradingview.com/widgetembed/?" + params.toString();
+    const fullURL = "https://www.tradingview.com/chart/?symbol=" + encodeURIComponent(symbol);
+    return '<figure class="fig fig-market-chart">' +
+      '<div class="fig-head"><b>' + esc(spec.title || "Market chart") + '</b><span>REAL-MARKET CHART</span></div>' +
+      '<div class="fig-market-toolbar"><strong>' + esc(label) + '</strong><span>' + esc(match ? match.market : "Market") + ' · ' + esc(timeframe === "D" ? "1D" : timeframe) + '</span>' +
+      '<a href="' + esc(fullURL) + '" target="_blank" rel="noopener noreferrer">Open full chart ↗</a></div>' +
+      '<iframe class="fig-market-frame" src="' + esc(chartURL) + '" title="' + esc(label + " market chart") + '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>' +
+      '<figcaption>Explore real market price action for ' + esc(label) + '. ' +
+      'The written lesson describes the concept; its former synthetic annotations are not mapped to these candles. ' +
+      'Quotes may be delayed and chart availability depends on the external data provider.</figcaption>' +
+      '</figure>';
+  }
+
   function render(spec) {
     if (!spec) return "";
     if (spec.type === "shot") return shot(spec);
+    if (!spec.type || spec.type === "candles") return marketChart(spec);
     const svg =
       spec.type === "line" ? line(spec) : spec.type === "bars" ? barsChart(spec) : spec.type === "flow" ? flow(spec) : candles(spec);
     return (
