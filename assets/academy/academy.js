@@ -618,8 +618,9 @@ window.AcademyUI = (() => {
       "<h1>" + esc(l.title) + "</h1>" +
       '<p class="lead">' + esc(l.summary) + "</p>" +
       '<div class="quiz-meta"><span>' + l.minutes + " min read</span><span>" + esc(c.level) + "</span><span>" + esc(A.BRAND) + " Academy</span></div>" +
-      lessonVideo(c, l) +
+      '<div class="ac-study-heading"><span>01 / STUDY NOTES</span><h2>Learn the concept</h2><p>Read the explanation and study each annotated chart before watching the walkthrough.</p></div>' +
       sections +
+      (lessonVideo(c, l) ? '<div class="ac-study-heading ac-video-heading"><span>02 / VIDEO WALKTHROUGH</span><h2>Watch and reinforce</h2><p>Use the video to reinforce the notes above, then complete the practice task.</p></div>' + lessonVideo(c, l) : "") +
       '<div class="ac-boxes">' +
       '<div class="ac-box good"><h3>Key takeaways</h3><ul>' + l.takeaways.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
       '<div class="ac-box bad"><h3>Common mistakes</h3><ul>' + l.mistakes.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
