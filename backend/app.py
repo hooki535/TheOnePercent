@@ -37,6 +37,18 @@ def provider_get(path):
         raise HTTPException(status_code=503, detail="Market-data provider unavailable") from exc
 
 
+@app.get("/")
+def index():
+    return {
+        "service": "TheOnePercent Market Data API",
+        "status": "running",
+        "documentation": "/docs",
+        "health": "/health",
+        "market_data": "/api/candles/BTCUSD/1H?limit=5",
+        "note": "Spot-crypto historical candles only; other instruments may use demo data.",
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "market-data", "provider": "binance-spot"}
