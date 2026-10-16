@@ -46,6 +46,30 @@ class MarketDataContractTests(unittest.TestCase):
         provider.return_value = [[1720000000000, "60000", "59000", "61000", "60100", "1"]]
         self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=1").status_code, 502)
 
+    @patch("app.provider_get")
+    def test_aliases_keep_correct_symbols_in_cache(self, provider):
+        provider.return_value = [[1720000000000, "60000", "60500", "59000", "60100", "12.5"]]
+        usd = client.get("/api/candles/BTCUSD/1H?limit=1").json()
+        usdt = client.get("/api/candles/BTCUSDT/1H?limit=1").json()
+        self.assertEqual(usd["symbol"], "BTCUSD")
+        self.assertEqual(usdt["symbol"], "BTCUSDT")
+        self.assertEqual(provider.call_count, 2)
+
+    @patch("app.provider_get")
+    def test_rejects_provider_error_object(self, provider):
+        provider.return_value = {"code": -1121, "msg": "Invalid symbol"}
+        self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=1").status_code, 502)
+
+    @patch("app.provider_get")
+    def test_rejects_nonfinite_or_out_of_order_candles(self, provider):
+        provider.return_value = [[1720000000000, "nan", "60500", "59000", "60100", "12.5"]]
+        self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=1").status_code, 502)
+        provider.return_value = [
+            [1720000000000, "60000", "60500", "59000", "60100", "12.5"],
+            [1719990000000, "60000", "60500", "59000", "60100", "12.5"],
+        ]
+        self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=2").status_code, 502)
+
     def test_quotes_are_not_fabricated(self):
         self.assertEqual(client.get("/api/quotes").json(), {})
 
