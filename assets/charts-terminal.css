@@ -418,3 +418,104 @@ body[data-page="charts"] .workspace-panel-grip:focus-visible {
   body[data-page="charts"] #panel { width: auto !important; max-width: none; }
   body[data-page="charts"] .workspace-panel-grip { display: none; }
 }
+
+/* Dark terminal: the earlier light-only !important overrides prevented the
+   app's saved dark theme from affecting Charts. Keep this after those rules. */
+html[data-theme="dark"] body[data-page="charts"] {
+  --terminal-line: #263247;
+  --terminal-muted: #95a4bc;
+  --terminal-accent: #779aff;
+  --terminal-surface: #111b2b;
+  --terminal-soft: #172338;
+  --grid: rgba(152,174,208,.10);
+  --chart-grid: rgba(152,174,208,.10);
+  background: #0b1422 !important;
+  color: #dce6f7;
+}
+html[data-theme="dark"] body[data-page="charts"] .ctoolbar,
+html[data-theme="dark"] body[data-page="charts"] .crail,
+html[data-theme="dark"] body[data-page="charts"] .panel,
+html[data-theme="dark"] body[data-page="charts"] .tabs,
+html[data-theme="dark"] body[data-page="charts"] .tabpane,
+html[data-theme="dark"] body[data-page="charts"] .chart-dock,
+html[data-theme="dark"] body[data-page="charts"] .notebar,
+html[data-theme="dark"] body[data-page="charts"] .cbot,
+html[data-theme="dark"] body[data-page="charts"] .chart-bottom {
+  background: #111b2b !important;
+  color: #dce6f7 !important;
+  border-color: #263247 !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .cshell,
+html[data-theme="dark"] body[data-page="charts"] .grid {
+  background: #263247 !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .cmid,
+html[data-theme="dark"] body[data-page="charts"] .cw {
+  background: #0d1727 !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .sym {
+  background: #19273d !important;
+  border-color: #31415b !important;
+  color: #edf3ff !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .tb-btn,
+html[data-theme="dark"] body[data-page="charts"] .ctoolbar .chip,
+html[data-theme="dark"] body[data-page="charts"] .tab,
+html[data-theme="dark"] body[data-page="charts"] .rtool {
+  color: #afbdd3 !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .tb-btn:hover,
+html[data-theme="dark"] body[data-page="charts"] .ctoolbar .chip:hover,
+html[data-theme="dark"] body[data-page="charts"] .rtool:hover {
+  background: #253657 !important;
+  color: #e4ecff !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .ctoolbar .chip.on,
+html[data-theme="dark"] body[data-page="charts"] .ctoolbar .chip.active,
+html[data-theme="dark"] body[data-page="charts"] .workspace-toggle.workspace-open,
+html[data-theme="dark"] body[data-page="charts"] .tab.active {
+  background: #25395e !important;
+  color: #a7beff !important;
+  border-color: #5576bc !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .workspace-toggle {
+  background: #19273d !important;
+  color: #b9c8dd !important;
+  border-color: #31415b !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .card,
+html[data-theme="dark"] body[data-page="charts"] .ob,
+html[data-theme="dark"] body[data-page="charts"] .obj {
+  background: #172338 !important;
+  border-color: #31415b !important;
+  color: #dce6f7 !important;
+}
+html[data-theme="dark"] body[data-page="charts"] .workspace-settings-sheet {
+  background: #142035;
+  border-color: #34425c;
+  color: #e6edfb;
+}
+html[data-theme="dark"] body[data-page="charts"] .workspace-settings-options label,
+html[data-theme="dark"] body[data-page="charts"] .workspace-appearance-options label {
+  border-color: #34425c;
+  color: #dce6f7;
+}
+html[data-theme="dark"] body[data-page="charts"] .workspace-settings-options label:hover {
+  background: #253657;
+}
+html[data-theme="dark"] body[data-page="charts"] .workspace-settings-heading p,
+html[data-theme="dark"] body[data-page="charts"] .workspace-settings-hint,
+html[data-theme="dark"] body[data-page="charts"] .workspace-settings-subtitle {
+  color: #9aaecb;
+}
+html[data-theme="dark"] body[data-page="charts"] .workspace-appearance-link {
+  background: #23365a;
+  border-color: #47679b;
+  color: #dce8ff;
+}
+html[data-theme="dark"] body[data-page="charts"] .workspace-presets button {
+  color: #dce6f7;
+  background: #1c2b44;
+  border-color: #34425c;
+}
