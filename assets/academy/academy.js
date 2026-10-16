@@ -619,6 +619,22 @@ window.AcademyUI = (() => {
     b.replaceWith(f);
   });
 
+  // Formative chart check; deliberately separate from graded course quizzes.
+  function chartPractice(c, l) {
+    if (c.id !== "market-structure" || l.id !== "ms1") return "";
+    return '<section class="ac-chart-practice" aria-labelledby="ac-practice-title">' +
+      '<span class="ac-practice-eyebrow">CHART PRACTICE · 1 QUESTION</span>' +
+      '<h2 id="ac-practice-title">When is a swing high confirmed?</h2>' +
+      '<p>After studying the chart, choose the rule used in this masterclass.</p>' +
+      '<fieldset><legend class="sr-only">Choose a swing-high confirmation rule</legend>' +
+      '<label><input type="radio" name="ac-swing-check" value="a"> Immediately when a candle makes a new high</label>' +
+      '<label><input type="radio" name="ac-swing-check" value="b"> When two candles on each side have lower highs than the candidate high</label>' +
+      '<label><input type="radio" name="ac-swing-check" value="c"> Whenever a bullish candle closes above the previous close</label>' +
+      '</fieldset><button type="button" class="btn btn-primary" id="ac-check-answer">Check answer</button>' +
+      '<div id="ac-answer-feedback" class="ac-answer-feedback" role="status" aria-live="polite" hidden></div>' +
+      '<small>This is an ungraded knowledge check. Your certificate progress is unchanged.</small></section>';
+  }
+
   function renderLesson(c, lid) {
     const s = st();
     if (!s.enrolled[c.id]) return gate(c, "Enroll to open this lesson");
@@ -663,6 +679,7 @@ window.AcademyUI = (() => {
       '<div class="ac-study-heading"><span>01 / STUDY NOTES</span><h2>Learn the concept</h2><p>Read the explanation and study each annotated chart before watching the walkthrough.</p></div>' +
       sections +
       (lessonVideo(c, l) ? '<div class="ac-study-heading ac-video-heading"><span>02 / VIDEO WALKTHROUGH</span><h2>Watch and reinforce</h2><p>Use the video to reinforce the notes above, then complete the practice task.</p></div>' + lessonVideo(c, l) : "") +
+      chartPractice(c, l) +
       '<div class="ac-boxes">' +
       '<div class="ac-box good"><h3>Key takeaways</h3><ul>' + l.takeaways.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
       '<div class="ac-box bad"><h3>Common mistakes</h3><ul>' + l.mistakes.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div>" +
@@ -681,6 +698,22 @@ window.AcademyUI = (() => {
       A.pdfs(c.id).map((d) => '<a class="ac-toc-pdf" href="#mc/' + c.id + "/read/" + d.id + '">' + PDF_ICON + "<span>" + esc(d.title) + "</span></a>").join("") +
       "</div>" +
       "</aside></div>";
+
+    const answerButton = $("#ac-check-answer");
+    if (answerButton) answerButton.addEventListener("click", () => {
+      const chosen = $('input[name="ac-swing-check"]:checked');
+      const feedback = $("#ac-answer-feedback");
+      feedback.hidden = false;
+      if (!chosen) {
+        feedback.className = "ac-answer-feedback";
+        feedback.textContent = "Select an answer before checking.";
+        return;
+      }
+      const correct = chosen.value === "b";
+      feedback.className = "ac-answer-feedback " + (correct ? "correct" : "incorrect");
+      feedback.textContent = (correct ? "Correct. " : "Not quite. ") +
+        "A swing high is confirmed under this course's two-candle rule when the candidate high has at least two candles with lower highs on both its left and right. The right-side candles must occur before you can confirm it.";
+    });
 
     $("#ac-mark").addEventListener("click", () => {
       if (done) {
