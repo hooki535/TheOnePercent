@@ -1506,3 +1506,15 @@
 .fig-market-toolbar select { max-width:185px; padding:7px 26px 7px 9px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:var(--surface); font:inherit; cursor:pointer; }
 .fig-market-toolbar select:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
 @media(max-width:620px) { .fig-market-toolbar label { width:100%; justify-content:space-between; } .fig-market-toolbar select { flex:1; max-width:none; } }
+
+/* Persistent, local-only chart-analysis notebook */
+.fig-market-workspace { border-top:1px solid var(--line); }
+.fig-market-notes summary { padding:13px 15px; cursor:pointer; font-size:13px; font-weight:650; }
+.fig-market-notes summary span { color:var(--muted); font-size:11px; font-weight:400; }
+.fig-market-notes[open] summary { border-bottom:1px solid var(--line); }
+.fig-market-notes label { display:grid; gap:8px; padding:14px 15px 8px; font-size:12px; font-weight:600; }
+.fig-market-note { width:100%; min-height:96px; padding:12px; resize:vertical; border:1px solid var(--line); border-radius:8px; color:var(--ink); background:var(--surface); font:13px/1.6 inherit; }
+.fig-market-note:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+.fig-market-note-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:0 15px 14px; }
+.fig-market-note-status { color:var(--muted); font-size:11px; }
+.fig-market-note-clear { padding:7px 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); font-size:12px; cursor:pointer; }
