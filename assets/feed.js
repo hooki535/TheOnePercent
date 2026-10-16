@@ -675,6 +675,7 @@ window.Feed = (() => {
     resume() {
       running = true;
     },
-    isLive: () => running,
+    // Quote freshness is exposed above as isLive(symbol); do not overwrite it with timer state.
+    isRunning: () => running,
   };
 })();
