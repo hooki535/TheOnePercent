@@ -876,6 +876,46 @@ window.AcademyUI = (() => {
     } else route(h);
   });
 
+  // Analysis notebook is local-only and scoped to course, chart, instrument and timeframe.
+  const chartNoteKey = (figure) => {
+    const symbol = figure.querySelector(".fig-market-symbol").value;
+    const interval = figure.querySelector(".fig-market-interval").value;
+    const title = figure.querySelector(".fig-head b").textContent;
+    return "the1-ac-chart-note:" + location.hash + ":" + title + ":" + symbol + ":" + interval;
+  };
+  const loadChartNote = (figure) => {
+    const field = figure.querySelector(".fig-market-note");
+    if (!field) return;
+    try {
+      field.value = localStorage.getItem(chartNoteKey(figure)) || "";
+      figure.querySelector(".fig-market-note-status").textContent =
+        field.value ? "Saved analysis loaded." : "Notes are private to this browser.";
+    } catch (_) {
+      figure.querySelector(".fig-market-note-status").textContent = "Local saving is unavailable.";
+    }
+  };
+  document.addEventListener("focusin", (event) => {
+    if (event.target.matches(".fig-market-note")) loadChartNote(event.target.closest(".fig-market-chart"));
+  });
+  document.addEventListener("input", (event) => {
+    if (!event.target.matches(".fig-market-note")) return;
+    const figure = event.target.closest(".fig-market-chart");
+    try {
+      localStorage.setItem(chartNoteKey(figure), event.target.value);
+      figure.querySelector(".fig-market-note-status").textContent = "Saved on this device.";
+    } catch (_) {
+      figure.querySelector(".fig-market-note-status").textContent = "Could not save notes on this device.";
+    }
+  });
+  document.addEventListener("click", (event) => {
+    if (!event.target.matches(".fig-market-note-clear")) return;
+    const figure = event.target.closest(".fig-market-chart");
+    if (!figure || !window.confirm("Clear notes for this chart and timeframe?")) return;
+    figure.querySelector(".fig-market-note").value = "";
+    try { localStorage.removeItem(chartNoteKey(figure)); } catch (_) {}
+    figure.querySelector(".fig-market-note-status").textContent = "Notes cleared.";
+  });
+
   // Reuse the embedded chart for any chosen market and timeframe.
   document.addEventListener("change", (event) => {
     if (!event.target.matches(".fig-market-symbol, .fig-market-interval")) return;
@@ -889,6 +929,7 @@ window.AcademyUI = (() => {
     url.searchParams.set("interval", interval);
     frame.src = url.toString();
     frame.title = symbol + " market chart";
+    loadChartNote(figure);
     figure.querySelector(".fig-market-open").href =
       "https://www.tradingview.com/chart/?symbol=" + encodeURIComponent(symbol);
   });
