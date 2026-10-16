@@ -455,13 +455,18 @@ window.Figures = (() => {
     const symbol = spec.symbol || (suggested ? suggested[1] : "FX:EURUSD");
     const market = MARKETS.find((item) => item.symbol === symbol);
     const label = market ? market.label : symbol.split(":").pop();
+    const nativeSymbol = label === "BTCUSDT" ? "BTCUSD" : label === "ETHUSDT" ? "ETHUSD" :
+      label === "ES1!" ? "SPX500" : label === "NQ1!" ? "NAS100" : label;
+    const nativeInterval = ({ "15": "15m", "60": "1H", "240": "4H", D: "1D", W: "1W" })[spec.interval || "D"] || "1D";
+    const workspaceLink = "charts.html?symbol=" + encodeURIComponent(nativeSymbol) +
+      "&interval=" + encodeURIComponent(nativeInterval) + "&source=academy";
     return '<figure class="fig fig-market-chart fig-native-chart">' +
       '<div class="fig-head"><b>' + esc(title) + '</b><span>THEONEPERCENT CHARTS</span></div>' +
       '<div class="fig-native-chart-content">' +
       '<div class="fig-native-chart-kicker">PRACTISE ON OUR OWN CHARTING WORKSPACE</div>' +
       '<h3>' + esc(label) + ' · Chart analysis</h3>' +
       '<p>Open TheOnePercent Charts to practise swing identification, drawing levels, using indicators and replaying candles. Our charting interface is built into this platform rather than embedded from TradingView.</p>' +
-      '<a class="btn btn-primary" href="charts.html">Open TheOnePercent Charts ↗</a>' +
+      '<a class="btn btn-primary" href="' + esc(workspaceLink) + '">Open TheOnePercent Charts ↗</a>' +
       '<p class="fig-native-chart-warning">Data notice: TheOnePercent Charts currently uses a synthetic demo feed. It is not a historical or live market-data chart. Use the separate documented historical case studies for actual market examples.</p>' +
       '</div></figure>';
   }
