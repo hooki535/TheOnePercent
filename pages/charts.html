@@ -707,6 +707,12 @@
           <div><h2 id="workspaceSettingsTitle">Customize workspace</h2><p>Choose which parts of your charting terminal remain visible. Saved on this device.</p></div>
           <button id="workspaceSettingsClose" type="button" aria-label="Close workspace settings">✕</button>
         </div>
+        <div class="workspace-presets" role="group" aria-label="Workspace presets">
+          <button type="button" data-workspace-preset="clean">Clean chart</button>
+          <button type="button" data-workspace-preset="analysis">Technical analysis</button>
+          <button type="button" data-workspace-preset="trading">Trading desk</button>
+        </div>
+        <button id="workspaceChartAppearance" type="button" class="workspace-appearance-link">🎨 Candle colors, grid, scales &amp; crosshair <span>Open chart settings →</span></button>
         <div class="workspace-settings-options">
           <label><input type="checkbox" data-workspace-pref="panel"> Right-side workspace panel</label>
           <label><input type="checkbox" data-workspace-pref="notes"> Journal notes editor</label>
