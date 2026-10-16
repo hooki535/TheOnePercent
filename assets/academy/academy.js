@@ -876,6 +876,23 @@ window.AcademyUI = (() => {
     } else route(h);
   });
 
+  // Reuse the embedded chart for any chosen market and timeframe.
+  document.addEventListener("change", (event) => {
+    if (!event.target.matches(".fig-market-symbol, .fig-market-interval")) return;
+    const figure = event.target.closest(".fig-market-chart");
+    if (!figure) return;
+    const symbol = figure.querySelector(".fig-market-symbol").value;
+    const interval = figure.querySelector(".fig-market-interval").value;
+    const frame = figure.querySelector(".fig-market-frame");
+    const url = new URL(frame.src);
+    url.searchParams.set("symbol", symbol);
+    url.searchParams.set("interval", interval);
+    frame.src = url.toString();
+    frame.title = symbol + " market chart";
+    figure.querySelector(".fig-market-open").href =
+      "https://www.tradingview.com/chart/?symbol=" + encodeURIComponent(symbol);
+  });
+
   /* Historical charts open in a focused viewer with zoom controls. */
   document.addEventListener("click", (e) => {
     const trigger = e.target.closest && e.target.closest("[data-shot]");
