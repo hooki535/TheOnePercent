@@ -409,7 +409,7 @@ window.Figures = (() => {
     return (
       '<figure class="fig fig-shot">' +
       (spec.title ? '<div class="fig-head"><b>' + esc(spec.title) + "</b><span>" + esc(spec.tag || "Real chart") + "</span></div>" : "") +
-      '<button type="button" class="shot" data-shot="' + esc(src) + '" aria-label="Enlarge chart: ' + esc(spec.alt || spec.title || "") + '">' +
+      '<button type="button" class="shot" data-shot="' + esc(src) + '" aria-label="Open zoomable historical chart: ' + esc(spec.alt || spec.title || "") + '">' +
       '<img src="' + esc(src) + '" alt="' + esc(spec.alt || spec.title || "") + '" width="1440" height="810" loading="lazy" decoding="async">' +
       "</button>" +
       "<figcaption>" + (spec.caption ? esc(spec.caption) : "") +
