@@ -76,6 +76,49 @@
       apply();
     });
   });
+  // Drag the panel's left edge to allocate more room to the chart.
+  const panelEl = $("panel");
+  const panelGrip = $("workspacePanelGrip");
+  const panelWidthKey = "top.chartPanelWidth.v1";
+  const savedWidth = Number(localStorage.getItem(panelWidthKey));
+  function setPanelWidth(px) {
+    if (!panelEl || !Number.isFinite(px)) return;
+    const max = Math.max(240, Math.min(620, window.innerWidth - 340));
+    const width = Math.max(240, Math.min(max, px));
+    panelEl.style.setProperty("flex-basis", width + "px", "important");
+    panelEl.style.setProperty("width", width + "px", "important");
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+    return width;
+  }
+  if (savedWidth >= 240) setPanelWidth(savedWidth);
+  if (panelGrip && panelEl) {
+    panelGrip.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      panelGrip.setPointerCapture(e.pointerId);
+      const startX = e.clientX, startWidth = panelEl.getBoundingClientRect().width;
+      const move = event => {
+        const width = setPanelWidth(startWidth + startX - event.clientX);
+        if (width) {
+          try { localStorage.setItem(panelWidthKey, String(width)); } catch (_) {}
+        }
+      };
+      const stop = () => {
+        panelGrip.removeEventListener("pointermove", move);
+        panelGrip.removeEventListener("pointerup", stop);
+        panelGrip.removeEventListener("pointercancel", stop);
+      };
+      panelGrip.addEventListener("pointermove", move);
+      panelGrip.addEventListener("pointerup", stop);
+      panelGrip.addEventListener("pointercancel", stop);
+    });
+    panelGrip.addEventListener("keydown", e => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      const width = setPanelWidth(panelEl.getBoundingClientRect().width + (e.key === "ArrowLeft" ? 20 : -20));
+      if (width) localStorage.setItem(panelWidthKey, String(width));
+    });
+  }
   const LOOK_KEY = "top.chartAppearance.v1";
   const lookDefaults = { up: "#089981", dn: "#f23645", wickUp: "#089981", wickDn: "#f23645", borderUp: "#089981", borderDn: "#f23645", background: "#ffffff", candleWidth: 0.68, candleBorders: true, gridH: true, gridV: true, dataWin: true, countdown: true };
   let lookPrefs;
