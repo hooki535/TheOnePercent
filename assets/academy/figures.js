@@ -446,41 +446,24 @@ window.Figures = (() => {
     [/risk|position|entry|pullback/i, "CME_MINI:ES1!"]
   ];
 
+  // Academy chart launcher. TheOnePercent Charts currently uses a clearly
+  // labeled synthetic demo feed; do not misrepresent it as live market data.
   function marketChart(spec) {
+    const title = spec.title || "Chart practice";
     const route = typeof location !== "undefined" ? location.hash : "";
-    const title = spec.title || "Market chart";
-    const context = route + " " + title;
-    const suggested = LESSON_MARKETS.find(([pattern]) => pattern.test(context));
+    const suggested = LESSON_MARKETS.find(([pattern]) => pattern.test(route + " " + title));
     const symbol = spec.symbol || (suggested ? suggested[1] : "FX:EURUSD");
-    const match = MARKETS.find((item) => item.symbol === symbol);
-    const label = match ? match.label : symbol;
-    const timeframe = spec.interval || "D";
-    const params = new URLSearchParams({
-      symbol: symbol, interval: timeframe, theme: "light", style: "1",
-      locale: "en", timezone: "Etc/UTC", withdateranges: "1",
-      hide_side_toolbar: "0", allow_symbol_change: "1", saveimage: "0"
-    });
-    const chartURL = "https://s.tradingview.com/widgetembed/?" + params.toString();
-    const fullURL = "https://www.tradingview.com/chart/?symbol=" + encodeURIComponent(symbol);
-    const choices = MARKETS.map((item) =>
-      '<option value="' + esc(item.symbol) + '"' + (item.symbol === symbol ? " selected" : "") + '>' +
-      esc(item.label + " · " + item.market) + "</option>").join("");
-    return '<figure class="fig fig-market-chart">' +
-      '<div class="fig-head"><b>' + esc(title) + '</b><span>MARKET EXPLORER</span></div>' +
-      '<div class="fig-market-toolbar"><label>Instrument <select class="fig-market-symbol" aria-label="Choose market instrument">' + choices + '</select></label>' +
-      '<label>Timeframe <select class="fig-market-interval" aria-label="Choose chart timeframe">' +
-      [["15","15m"],["60","1H"],["240","4H"],["D","1D"],["W","1W"]].map(([value, name]) =>
-        '<option value="' + value + '"' + (value === timeframe ? " selected" : "") + '>' + name + "</option>").join("") +
-      '</select></label>' +
-      '<a class="fig-market-open" href="' + esc(fullURL) + '" target="_blank" rel="noopener noreferrer">Open full chart ↗</a></div>' +
-      '<iframe class="fig-market-frame" src="' + esc(chartURL) + '" title="' + esc(label + " market chart") + '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>' +
-      '<div class="fig-market-workspace"><details class="fig-market-notes"><summary>My chart analysis <span>· saved on this device</span></summary>' +
-      '<label>Structure and levels<textarea class="fig-market-note" rows="4" maxlength="3000" placeholder="Example: Trend direction, last confirmed swing high/low, key level, invalidation…"></textarea></label>' +
-      '<div class="fig-market-note-actions"><span class="fig-market-note-status" role="status" aria-live="polite">Notes are private to this browser.</span><button type="button" class="fig-market-note-clear">Clear notes</button></div></details></div>' +
-      '<figcaption>Explore actual market prices and identify the lesson concept yourself. ' +
-      'The default instrument is a suggested practice market, not a verified example of the described setup. ' +
-      'Historical examples with confirmed annotations are provided separately. Quotes may be delayed; data and embedding depend on TradingView.</figcaption>' +
-      '</figure>';
+    const market = MARKETS.find((item) => item.symbol === symbol);
+    const label = market ? market.label : symbol.split(":").pop();
+    return '<figure class="fig fig-market-chart fig-native-chart">' +
+      '<div class="fig-head"><b>' + esc(title) + '</b><span>THEONEPERCENT CHARTS</span></div>' +
+      '<div class="fig-native-chart-content">' +
+      '<div class="fig-native-chart-kicker">PRACTISE ON OUR OWN CHARTING WORKSPACE</div>' +
+      '<h3>' + esc(label) + ' · Chart analysis</h3>' +
+      '<p>Open TheOnePercent Charts to practise swing identification, drawing levels, using indicators and replaying candles. Our charting interface is built into this platform rather than embedded from TradingView.</p>' +
+      '<a class="btn btn-primary" href="charts.html">Open TheOnePercent Charts ↗</a>' +
+      '<p class="fig-native-chart-warning">Data notice: TheOnePercent Charts currently uses a synthetic demo feed. It is not a historical or live market-data chart. Use the separate documented historical case studies for actual market examples.</p>' +
+      '</div></figure>';
   }
 
   function render(spec) {
