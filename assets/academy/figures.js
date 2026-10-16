@@ -434,37 +434,49 @@ window.Figures = (() => {
     { symbol: "CME_MINI:NQ1!", label: "NQ1!", market: "Futures" }
   ];
 
+  // A stable default per lesson concept. This is an exploration chart, not a
+  // claim that a particular historical setup occurred on the chosen symbol.
+  const LESSON_MARKETS = [
+    [/liquidity|sweep|stop hunt/i, "BINANCE:BTCUSDT"],
+    [/break of structure|\bbos\b/i, "CME_MINI:NQ1!"],
+    [/change of character|\bchoch\b/i, "FX:GBPJPY"],
+    [/supply|demand|order block/i, "OANDA:XAUUSD"],
+    [/range|consolidation/i, "FX:EURUSD"],
+    [/trend|swing|structure/i, "FX:GBPUSD"],
+    [/risk|position|entry|pullback/i, "CME_MINI:ES1!"]
+  ];
+
   function marketChart(spec) {
-    const context = (typeof location !== "undefined" ? location.hash : "") + "|" + (spec.title || "");
-    let hash = 0;
-    for (let i = 0; i < context.length; i++) hash = ((hash * 31) + context.charCodeAt(i)) >>> 0;
-    const selected = MARKETS[hash % MARKETS.length];
-    const symbol = spec.symbol || selected.symbol;
+    const route = typeof location !== "undefined" ? location.hash : "";
+    const title = spec.title || "Market chart";
+    const context = route + " " + title;
+    const suggested = LESSON_MARKETS.find(([pattern]) => pattern.test(context));
+    const symbol = spec.symbol || (suggested ? suggested[1] : "FX:EURUSD");
     const match = MARKETS.find((item) => item.symbol === symbol);
     const label = match ? match.label : symbol;
     const timeframe = spec.interval || "D";
     const params = new URLSearchParams({
-      symbol: symbol,
-      interval: timeframe,
-      theme: "light",
-      style: "1",
-      locale: "en",
-      timezone: "Etc/UTC",
-      withdateranges: "1",
-      hide_side_toolbar: "0",
-      allow_symbol_change: "1",
-      saveimage: "0"
+      symbol: symbol, interval: timeframe, theme: "light", style: "1",
+      locale: "en", timezone: "Etc/UTC", withdateranges: "1",
+      hide_side_toolbar: "0", allow_symbol_change: "1", saveimage: "0"
     });
     const chartURL = "https://s.tradingview.com/widgetembed/?" + params.toString();
     const fullURL = "https://www.tradingview.com/chart/?symbol=" + encodeURIComponent(symbol);
+    const choices = MARKETS.map((item) =>
+      '<option value="' + esc(item.symbol) + '"' + (item.symbol === symbol ? " selected" : "") + '>' +
+      esc(item.label + " · " + item.market) + "</option>").join("");
     return '<figure class="fig fig-market-chart">' +
-      '<div class="fig-head"><b>' + esc(spec.title || "Market chart") + '</b><span>REAL-MARKET CHART</span></div>' +
-      '<div class="fig-market-toolbar"><strong>' + esc(label) + '</strong><span>' + esc(match ? match.market : "Market") + ' · ' + esc(timeframe === "D" ? "1D" : timeframe) + '</span>' +
-      '<a href="' + esc(fullURL) + '" target="_blank" rel="noopener noreferrer">Open full chart ↗</a></div>' +
+      '<div class="fig-head"><b>' + esc(title) + '</b><span>MARKET EXPLORER</span></div>' +
+      '<div class="fig-market-toolbar"><label>Instrument <select class="fig-market-symbol" aria-label="Choose market instrument">' + choices + '</select></label>' +
+      '<label>Timeframe <select class="fig-market-interval" aria-label="Choose chart timeframe">' +
+      [["15","15m"],["60","1H"],["240","4H"],["D","1D"],["W","1W"]].map(([value, name]) =>
+        '<option value="' + value + '"' + (value === timeframe ? " selected" : "") + '>' + name + "</option>").join("") +
+      '</select></label>' +
+      '<a class="fig-market-open" href="' + esc(fullURL) + '" target="_blank" rel="noopener noreferrer">Open full chart ↗</a></div>' +
       '<iframe class="fig-market-frame" src="' + esc(chartURL) + '" title="' + esc(label + " market chart") + '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>' +
-      '<figcaption>Explore real market price action for ' + esc(label) + '. ' +
-      'The written lesson describes the concept; its former synthetic annotations are not mapped to these candles. ' +
-      'Quotes may be delayed and chart availability depends on the external data provider.</figcaption>' +
+      '<figcaption>Explore actual market prices and identify the lesson concept yourself. ' +
+      'The default instrument is a suggested practice market, not a verified example of the described setup. ' +
+      'Historical examples with confirmed annotations are provided separately. Quotes may be delayed; data and embedding depend on TradingView.</figcaption>' +
       '</figure>';
   }
 
