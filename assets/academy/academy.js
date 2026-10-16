@@ -878,6 +878,28 @@ window.AcademyUI = (() => {
     } else route(h);
   });
 
+  // Load the first-party chart only on demand: multiple full chart workspaces
+  // would otherwise slow down long Academy lessons considerably.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest && event.target.closest(".fig-native-preview-toggle");
+    if (!button) return;
+    const figure = button.closest(".fig-native-chart");
+    const container = figure && figure.querySelector(".fig-native-preview");
+    if (!container) return;
+    const opening = container.hidden;
+    container.hidden = !opening;
+    button.setAttribute("aria-expanded", String(opening));
+    button.textContent = opening ? "Hide lesson chart" : "Load chart in lesson";
+    if (opening && !container.querySelector("iframe")) {
+      const frame = document.createElement("iframe");
+      frame.className = "fig-native-iframe";
+      frame.title = "TheOnePercent Charts practice workspace";
+      frame.loading = "lazy";
+      frame.src = container.dataset.chartUrl;
+      container.appendChild(frame);
+    }
+  });
+
   // Analysis notebook is local-only and scoped to course, chart, instrument and timeframe.
   const chartNoteKey = (figure) => {
     const symbol = figure.querySelector(".fig-market-symbol").value;
