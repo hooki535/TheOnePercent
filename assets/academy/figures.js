@@ -404,6 +404,8 @@ window.Figures = (() => {
       '<figure class="fig">' +
       (spec.title ? '<div class="fig-head"><b>' + esc(spec.title) + "</b>" + (spec.tag ? "<span>" + esc(spec.tag) + "</span>" : "") + "</div>" : "") +
       '<div class="fig-body">' + svg + "</div>" +
+      ((spec.type === "shot" || spec.type === "line" || spec.type === "bars" || spec.type === "flow") ? "" :
+        '<div class="fig-legend"><span><i class="fig-key fig-key-up"></i>Bullish candle</span><span><i class="fig-key fig-key-down"></i>Bearish candle</span><span class="fig-synthetic">Illustrative chart · not live market data</span></div>') +
       (spec.caption ? "<figcaption>" + esc(spec.caption) + "</figcaption>" : "") +
       "</figure>"
     );
