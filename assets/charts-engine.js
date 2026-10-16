@@ -1832,7 +1832,7 @@ class Chart {
       S = SYMBOLS[this.cfg.sym];
     const { d, i0, i1, n } = this.bars(),
       bw = pw / n,
-      cw = Math.max(1, Math.min(15, bw * 0.68));
+      cw = Math.max(1, Math.min(22, bw * (Number(state.look.candleWidth) || 0.68)));
     const up = state.look.up || css("--up"),
       dn = state.look.dn || css("--dn");
     /* Axis numbers are read, not glanced at, so they take the body text
@@ -1842,6 +1842,10 @@ class Chart {
       line = css("--line"),
       grid = css("--grid");
     c.clearRect(0, 0, W, H);
+    if (/^#[0-9a-f]{6}$/i.test(state.look.background || "")) {
+      c.fillStyle = state.look.background;
+      c.fillRect(0, 0, W, H);
+    }
 
     /* grid + price axis */
     c.font = '10px "IBM Plex Mono",monospace';
@@ -2064,7 +2068,7 @@ class Chart {
         x = this.x(i),
         rising = b.c >= b.o,
         col = rising ? up : dn;
-      c.strokeStyle = state.look.wickMatch ? col : css("--txt3");
+      c.strokeStyle = rising ? (state.look.wickUp || (state.look.wickMatch ? col : css("--txt3"))) : (state.look.wickDn || (state.look.wickMatch ? col : css("--txt3")));
       c.fillStyle = col;
       c.lineWidth = 1;
       const yo = this.y(b.o),
@@ -2096,13 +2100,23 @@ class Chart {
             Math.round(cw),
             Math.round(h),
           );
-        } else
+        } else {
           c.fillRect(
             Math.round(x - cw / 2),
             Math.round(top),
             Math.round(cw),
             Math.max(1, Math.round(h)),
           );
+          if (state.look.candleBorders !== false) {
+            c.strokeStyle = rising ? (state.look.borderUp || col) : (state.look.borderDn || col);
+            c.strokeRect(
+              Math.round(x - cw / 2) + 0.5,
+              Math.round(top) + 0.5,
+              Math.max(1, Math.round(cw)),
+              Math.max(1, Math.round(h)),
+            );
+          }
+        }
       }
     }
   }
