@@ -76,7 +76,33 @@
       apply();
     });
   });
+  const LOOK_KEY = "top.chartAppearance.v1";
+  const lookDefaults = { up: "#089981", dn: "#f23645", gridH: true, gridV: true, dataWin: true, countdown: true };
+  let lookPrefs;
+  try { lookPrefs = Object.assign({}, lookDefaults, JSON.parse(localStorage.getItem(LOOK_KEY) || "{}")); }
+  catch (_) { lookPrefs = Object.assign({}, lookDefaults); }
+  const lookFields = Array.from(settings.querySelectorAll("[data-chart-look]"));
+  function applyLook() {
+    if (typeof state === "undefined" || !state.look) return;
+    for (const [key, value] of Object.entries(lookPrefs)) {
+      if (key === "up" || key === "dn") {
+        if (/^#[0-9a-f]{6}$/i.test(value)) state.look[key] = value;
+      } else state.look[key] = !!value;
+    }
+    lookFields.forEach(el => {
+      const value = lookPrefs[el.dataset.chartLook];
+      if (el.type === "checkbox") el.checked = !!value;
+      else if (/^#[0-9a-f]{6}$/i.test(value)) el.value = value;
+    });
+    try { localStorage.setItem(LOOK_KEY, JSON.stringify(lookPrefs)); } catch (_) {}
+    if (typeof draw === "function") draw();
+  }
+  lookFields.forEach(el => el.addEventListener(el.type === "color" ? "input" : "change", () => {
+    lookPrefs[el.dataset.chartLook] = el.type === "checkbox" ? el.checked : el.value;
+    applyLook();
+  }));
   const reset = $("workspaceReset");
-  if (reset) reset.addEventListener("click", () => { prefs = Object.assign({}, defaults); apply(); });
+  if (reset) reset.addEventListener("click", () => { prefs = Object.assign({}, defaults); lookPrefs = Object.assign({}, lookDefaults); apply(); applyLook(); });
   apply();
+  applyLook();
 })();
