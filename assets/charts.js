@@ -670,6 +670,7 @@ function draw() {
   raf = requestAnimationFrame(() => {
     raf = null;
     charts.forEach((c) => c.render());
+    if (document.body.dataset.workspaceTab === "data") paintWorkspaceData();
     // Reflect the provenance of the selected chart, not a global quote status.
     const active = state.charts[state.sel];
     const badge = $("#feedBadge");
@@ -689,6 +690,7 @@ function select(slot) {
   paintIndCount();
   paintObjects();
   paintTypeBtn();
+  if (document.body.dataset.workspaceTab === "data") paintWorkspaceData();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -2993,13 +2995,47 @@ function switchWatchView(view, remember = true) {
   if (view === "list") paintWatchlist();
 }
 
+function paintWorkspaceData() {
+  const host = document.getElementById("workspaceDataReadout");
+  if (!host || !charts.length) return;
+  const chart = charts[state.sel];
+  const data = chart && chart.data;
+  if (!data || !data.length) { host.textContent = "No chart data available."; return; }
+  const index = state.hover && state.hover.slot === chart.slot
+    ? Math.max(0, Math.min(data.length - 1, state.hover.i)) : data.length - 1;
+  const bar = data[index];
+  if (!bar) return;
+  const cfg = state.charts[state.sel];
+  const rows = [["Time", clock(bar.t)], ["Open", fmt(bar.o, cfg.sym)],
+    ["High", fmt(bar.h, cfg.sym)], ["Low", fmt(bar.l, cfg.sym)],
+    ["Close", fmt(bar.c, cfg.sym)]];
+  (chart.studies || []).filter(s => s.visible).forEach(study => {
+    const result = chart.study(study);
+    if (!result) return;
+    [...(result.lines || []), ...(result.hist ? [result.hist] : [])].forEach(line => {
+      if (line && line.data && line.data[index] != null)
+        rows.push([line.name, String(Number(line.data[index]).toFixed(4))]);
+    });
+  });
+  host.replaceChildren(...rows.map(([label, value]) => {
+    const row = document.createElement("div");
+    row.className = "workspace-data-row";
+    const name = document.createElement("span"), val = document.createElement("strong");
+    name.textContent = label; val.textContent = value;
+    row.append(name, val);
+    return row;
+  }));
+}
 function switchTab(name) {
+  document.body.dataset.workspaceTab = name;
   $$(".tab").forEach((t) =>
     t.classList.toggle("active", t.dataset.tab === name),
   );
   $$(".tabpane").forEach((p) =>
     p.classList.toggle("active", p.dataset.pane === name),
   );
+  $(".dock-btn[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  if (name === "data") paintWorkspaceData();
   if (name === "objects") paintObjects();
   if (name === "watchlist") switchWatchView(state.watchView || "list", false);
 }
@@ -3617,9 +3653,9 @@ $("#palIn").oninput = (e) => paintPal(e.target.value);
 $$(".tab").forEach((t) => (t.onclick = () => switchTab(t.dataset.tab)));
 $$(".dock-btn[data-tab]").forEach((b) => (b.onclick = () => {
   switchTab(b.dataset.tab);
-  $$(".dock-btn").forEach((x) => x.classList.toggle("active", x === b));
+  $(".dock-btn[data-tab]").forEach((x) => x.classList.toggle("active", x === b));
 }));
-$("#dockSettings").onclick = () => $("#setBtn").click();
+
 $$(".chart-bottom [data-open]").forEach((b) => (b.onclick = () => {
   const target = $("#" + b.dataset.open);
   if (target) target.click();
