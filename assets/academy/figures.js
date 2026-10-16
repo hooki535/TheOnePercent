@@ -120,10 +120,10 @@ window.Figures = (() => {
 
   function candles(spec) {
     const H = spec.h || 280;
-    const padL = 14;
-    const padR = 14;
-    const padT = 26;
-    const padB = 24;
+    const padL = 24;
+    const padR = 68; // synthetic price scale
+    const padT = 22;
+    const padB = 38; // candle-index timeline
     const bars = build(spec);
     const n = bars.length;
     const ov = spec.overlays || [];
@@ -157,12 +157,22 @@ window.Figures = (() => {
     const bw = Math.max(2, step * 0.62);
     const out = [];
 
-    /* grid */
+    /* Chart-style price grid and indexed timeline. Values are synthetic, not market quotes. */
+    out.push('<rect x="' + (W - padR) + '" y="0" width="' + padR + '" height="' + H + '" class="fg-axis-bg"/>');
+    out.push('<line x1="' + (W - padR) + '" x2="' + (W - padR) + '" y1="0" y2="' + H + '" class="fg-axis-line"/>');
+    out.push('<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + (H - padB) + '" y2="' + (H - padB) + '" class="fg-axis-line"/>');
     for (let g = 0; g <= 4; g++) {
       const y = padT + (g * (H - padT - padB)) / 4;
+      const price = hi - (g / 4) * (hi - lo);
       out.push('<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + y + '" y2="' + y + '" class="fg-grid"/>');
+      out.push('<text x="' + (W - padR + 7) + '" y="' + (y + 4) + '" class="fg-axis-text">' + price.toFixed(1) + '</text>');
     }
 
+    for (let t = 0; t < 5; t++) {
+      const index = Math.min(n - 1, Math.round(t * (n - 1) / 4));
+      out.push('<text x="' + X(index) + '" y="' + (H - 12) + '" text-anchor="middle" class="fg-axis-text">' + (index + 1) + '</text>');
+    }
+    out.push('<text x="' + (W - padR - 6) + '" y="' + (H - 12) + '" text-anchor="end" class="fg-axis-caption">CANDLE #</text>');
     out.push('<g class="fg-annotations">');
     /* zones first, so candles sit on top of them */
     ov.filter((o) => o.zone).forEach((o) => {
@@ -189,7 +199,7 @@ window.Figures = (() => {
       const x = X(i);
       const yTop = Y(Math.max(b.o, b.c));
       const yBot = Y(Math.min(b.o, b.c));
-      out.push('<g class="fg-candle" data-bar="' + i + '">');
+      out.push('<g class="fg-candle" data-bar="' + i + '"><title>Candle ' + (i + 1) + ' | Open ' + b.o.toFixed(2) + ' | High ' + b.h.toFixed(2) + ' | Low ' + b.l.toFixed(2) + ' | Close ' + b.c.toFixed(2) + ' (synthetic units)</title>');
       out.push('<line x1="' + x + '" x2="' + x + '" y1="' + Y(b.h) + '" y2="' + Y(b.l) + '" stroke="' + c + '" stroke-width="1.2"/>');
       out.push(
         '<rect x="' + (x - bw / 2) + '" y="' + yTop + '" width="' + bw + '" height="' + Math.max(1.2, yBot - yTop) + '" fill="' + c + '" rx="0.8"/>'
@@ -197,6 +207,14 @@ window.Figures = (() => {
       out.push("</g>");
     });
 
+    if (!spec.only && bars.length) {
+      const last = bars[bars.length - 1];
+      const lastColor = last.c >= last.o ? COLOR.up : COLOR.down;
+      const lastY = Y(last.c);
+      out.push('<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + lastY + '" y2="' + lastY + '" stroke="' + lastColor + '" stroke-width="1" stroke-dasharray="3 4" opacity=".65" class="fg-last-price"/>');
+      out.push('<rect x="' + (W - padR) + '" y="' + (lastY - 9) + '" width="' + padR + '" height="18" fill="' + lastColor + '" rx="2"/>');
+      out.push('<text x="' + (W - padR + 7) + '" y="' + (lastY + 4) + '" fill="#fff" class="fg-last-text">' + last.c.toFixed(1) + '</text>');
+    }
     out.push('<g class="fg-annotations">');
     /* lines and annotations */
     ov.forEach((o) => {
