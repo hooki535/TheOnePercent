@@ -676,6 +676,7 @@ window.AcademyUI = (() => {
       "<h1>" + esc(l.title) + "</h1>" +
       '<p class="lead">' + esc(l.summary) + "</p>" +
       '<div class="quiz-meta"><span>' + l.minutes + " min read</span><span>" + esc(c.level) + "</span><span>" + esc(A.BRAND) + " Academy</span></div>" +
+      ((l.objectives || []).length ? '<section class="ac-learning-objectives"><div class="ac-objectives-kicker">YOUR LEARNING GOALS</div><h2>By the end of this lesson</h2><ul>' + l.objectives.map((goal) => '<li>' + esc(goal) + '</li>').join("") + '</ul></section>' : "") +
       '<div class="ac-study-heading"><span>01 / STUDY NOTES</span><h2>Learn the concept</h2><p>Read the explanation and study each annotated chart before watching the walkthrough.</p></div>' +
       sections +
       (lessonVideo(c, l) ? '<div class="ac-study-heading ac-video-heading"><span>02 / VIDEO WALKTHROUGH</span><h2>Watch and reinforce</h2><p>Use the video to reinforce the notes above, then complete the practice task.</p></div>' + lessonVideo(c, l) : "") +
@@ -686,6 +687,7 @@ window.AcademyUI = (() => {
       "</div>" +
       '<div class="ac-psych"><b>Psychology check</b><p>' + esc(l.psych) + "</p></div>" +
       '<div class="ac-practice"><b>Practice task</b><p>' + esc(l.practice) + "</p></div>" +
+      '<div class="ac-lesson-checklist"><h3>Before moving on</h3><label><input type="checkbox"> I can explain the concept without looking at the notes.</label><label><input type="checkbox"> I have checked a real market chart and recorded what I observed.</label><p>These self-checks are for reflection and do not affect course progress.</p></div>' +
       (l.apply ? '<div class="apply"><div><b>' + esc(l.apply.label) + "</b><small>" + esc(l.apply.why) + '</small></div><a class="btn btn-primary" href="' + esc(l.apply.href) + '">Open it</a></div>' : "") +
       '<div class="lesson-foot">' +
       '<button class="btn ' + (done ? "btn-quiet" : "btn-primary") + '" id="ac-mark">' + (done ? "Completed · undo" : "Mark lesson complete") + "</button>" +
