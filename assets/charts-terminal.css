@@ -318,3 +318,22 @@ body[data-page="charts"] .workspace-settings-options input {
   height: 16px;
   accent-color: #2962ff;
 }
+
+body[data-page="charts"] .workspace-presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 12px 0; }
+body[data-page="charts"] .workspace-presets button {
+  min-height: 48px; border: 1px solid #dce5f2; border-radius: 8px;
+  background: #f8faff; color: #263c5c; font-size: 11px; font-weight: 700;
+  padding: 8px; cursor: pointer;
+}
+body[data-page="charts"] .workspace-presets button:hover,
+body[data-page="charts"] .workspace-presets button:focus-visible {
+  background: #e9f0ff; border-color: #8eaaff; outline: 2px solid #2962ff30;
+}
+body[data-page="charts"] .workspace-appearance-link {
+  display: flex; width: 100%; justify-content: space-between; align-items: center;
+  gap: 12px; text-align: left; border: 1px solid #c8d8ff; border-radius: 9px;
+  background: #eff4ff; color: #2349a4; font-size: 12px; font-weight: 700;
+  padding: 13px 12px; cursor: pointer;
+}
+body[data-page="charts"] .workspace-appearance-link span { font-size: 10px; white-space: nowrap; }
+body[data-page="charts"] .workspace-appearance-link:hover { background: #e3ecff; }
