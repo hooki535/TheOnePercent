@@ -230,10 +230,17 @@ window.Store = (() => {
     return Number.isFinite(n) ? n : null;
   }
 
+  function requiredNumber(v) {
+    if (v === null || v === undefined || (typeof v === "string" && !v.trim())) return null;
+    if (typeof v !== "number" && typeof v !== "string") return null;
+    const n = typeof v === "number" ? v : Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
   function compute(trade) {
     const t = trade || {};
     const dir = t.side === "Short" ? -1 : 1;
-    const entry = num(t.entry);
+    const entry = requiredNumber(t.entry);
     const stop = num(t.stop);
     const size = num(t.size) || 0;
     const fees = num(t.fees) || 0;
@@ -246,17 +253,18 @@ window.Store = (() => {
     const open = size > 0 && closedSize < size - 1e-9;
 
     let gross = 0;
-    legs.forEach((l) => {
+    if (entry !== null) legs.forEach((l) => {
       gross += (num(l.price) - entry) * dir * num(l.size);
     });
 
     const contract = num(t.contractValue) || 1;
-    const grossPL = gross * contract;
-    const netPL = grossPL - fees;
+    const pnlUnavailableReason = legs.length && entry === null ? "Entry price is missing or invalid" : null;
+    const grossPL = pnlUnavailableReason ? null : gross * contract;
+    const netPL = grossPL === null ? null : grossPL - fees;
 
     const riskPerUnit = entry !== null && stop !== null ? Math.abs(entry - stop) : null;
     const riskMoney = riskPerUnit !== null && size ? riskPerUnit * size * contract : null;
-    const r = riskMoney ? netPL / riskMoney : null;
+    const r = Number.isFinite(netPL) && riskMoney ? netPL / riskMoney : null;
 
     /* planned R:R, known before the trade is taken */
     const target = num(t.target);
@@ -266,7 +274,7 @@ window.Store = (() => {
     const balance = num(t.balanceAtOpen);
     const riskPct = riskMoney && balance ? (riskMoney / balance) * 100 : null;
 
-    const result = !legs.length ? "Open" : netPL > 0 ? "Win" : netPL < 0 ? "Loss" : "Break-even";
+    const result = !legs.length ? "Open" : netPL === null ? "Unavailable" : netPL > 0 ? "Win" : netPL < 0 ? "Loss" : "Break-even";
 
     return {
       grossPL,
@@ -279,6 +287,7 @@ window.Store = (() => {
       closedSize,
       open,
       result,
+      pnlUnavailableReason,
       avgExit: closedSize ? legs.reduce((a, l) => a + num(l.price) * num(l.size), 0) / closedSize : null,
     };
   }
@@ -642,45 +651,46 @@ window.Store = (() => {
     const balance = num(s.balance) || DEFAULT_SETTINGS.balance;
 
     const open = (trades || [])
-      .map((t) => ({ t, c: compute(t) }))
+      .map((t) => {
+        const c = compute(t);
+        const size = num(t.size) || 0;
+        const remainingSize = Math.max(0, size - c.closedSize);
+        const riskMoney = c.riskMoney === null || !size ? null : Math.abs(c.riskMoney) * remainingSize / size;
+        return { t, c, remainingSize, openRiskMoney: riskMoney, openRiskPct: null };
+      })
       .filter((x) => x.c.open);
-
-    let risk = 0;
-    let unknown = 0;
-    open.forEach((x) => {
-      if (x.c.riskMoney === null) unknown++;
-      else risk += Math.abs(x.c.riskMoney);
-    });
 
     return {
       n: open.length,
       rows: open,
-      riskMoney: risk,
-      riskPct: balance ? (risk / balance) * 100 : null,
-      unknown,
+      riskMoney: open.length ? null : 0,
+      riskPct: open.length ? null : 0,
+      unknown: open.filter((x) => x.openRiskMoney === null).length,
+      measurable: open.filter((x) => x.openRiskMoney !== null).length,
+      aggregateReason: open.length ? "instrument currency/unit compatibility is not recorded" : null,
       /* three positions each risking the full rule is a three percent day
          waiting to happen, so the cap is compared against the daily stop */
       cap: num(s.maxDailyLossPct) || null,
-      over: num(s.maxDailyLossPct) > 0 && balance ? (risk / balance) * 100 > num(s.maxDailyLossPct) : false,
+      over: null,
     };
   }
 
   function stats(trades, settings) {
-    const closed = trades.filter((t) => !compute(t).open && compute(t).result !== "Open");
-    const rows = closed.map((t) => compute(t));
-    const wins = rows.filter((r) => r.netPL > 0);
-    const losses = rows.filter((r) => r.netPL < 0);
-
-    const grossWin = wins.reduce((a, r) => a + r.netPL, 0);
-    const grossLoss = Math.abs(losses.reduce((a, r) => a + r.netPL, 0));
-    const withR = rows.filter((r) => r.r !== null);
+    const completed = (trades || []).map((t) => ({t, c: compute(t)}))
+      .filter((x) => !x.c.open && x.c.result !== "Open");
+    const closed = completed.map(x=>x.t);
+    const rows = completed.map(x=>x.c);
+    const pnlRows = rows.filter(r=>Number.isFinite(r.netPL));
+    const wins = pnlRows.filter(r=>r.netPL>0);
+    const losses = pnlRows.filter(r=>r.netPL<0);
+    const withR = pnlRows.filter(r=>Number.isFinite(r.r));
     const rValues = withR.map((r) => r.r);
     const averageR = rValues.length ? rValues.reduce((a, r) => a + r, 0) / rValues.length : null;
     const bestR = rValues.length ? rValues.reduce((a, r) => Math.max(a, r), -Infinity) : null;
     const worstR = rValues.length ? rValues.reduce((a, r) => Math.min(a, r), Infinity) : null;
 
-    const netPL = rows.reduce((a, r) => a + r.netPL, 0);
-    const winRate = rows.length ? (wins.length / rows.length) * 100 : null;
+    const netPL = null;
+    const winRate = pnlRows.length ? (wins.length / pnlRows.length) * 100 : null;
     const avgWinR = wins.length
       ? wins.filter((r) => r.r !== null).reduce((a, r) => a + r.r, 0) / (wins.filter((r) => r.r !== null).length || 1)
       : null;
@@ -691,39 +701,35 @@ window.Store = (() => {
     /* expectancy in R — the number that actually predicts survival */
     const expectancy = withR.length ? withR.reduce((a, r) => a + r.r, 0) / withR.length : null;
 
-    /* equity curve and peak-to-trough drawdown, in account currency */
-    let equity = num((settings || {}).balance) || DEFAULT_SETTINGS.balance;
-    let peak = equity;
-    let maxDD = 0;
-    const curve = [{ t: null, equity }];
-    closed
-      .slice()
-      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-      .forEach((t) => {
-        equity += compute(t).netPL;
-        peak = Math.max(peak, equity);
-        maxDD = Math.max(maxDD, peak ? ((peak - equity) / peak) * 100 : 0);
-        curve.push({ t: t.date, equity });
-      });
-
-    const avgRisk = rows.filter((r) => r.riskPct !== null);
+    const aggregatePLReason = "trade P/L currency and compatible units are not recorded";
+    const profitFactorUnavailableReason = "compatible monetary units are not recorded";
 
     return {
       count: trades.length,
       closed: rows.length,
       open: trades.length - rows.length,
+      eligiblePL: pnlRows.length,
+      pnlUnavailable: rows.length - pnlRows.length,
+      eligibleR: withR.length,
+      rUnavailable: rows.length - withR.length,
+      aggregatePLReason,
+      profitFactorUnavailableReason,
+      drawdownUnavailableReason: "currency-compatible P/L series is unavailable",
       netPL,
       winRate,
       averageR,
       bestR,
       worstR,
-      profitFactor: grossLoss ? grossWin / grossLoss : grossWin ? Infinity : null,
+      profitFactor: null,
       expectancy,
       avgWinR,
       avgLossR,
-      avgRiskPct: avgRisk.length ? avgRisk.reduce((a, r) => a + r.riskPct, 0) / avgRisk.length : null,
-      maxDrawdownPct: maxDD,
-      curve,
+      avgRiskPct: null,
+      avgRiskPctUnavailableReason: "trade currency and compatible balance units are not recorded",
+      maxDrawdownPct: null,
+      curve: null,
+      realizedCurve: null,
+      maxRealizedDrawdown: null,
       discipline: trades.length
         ? Math.round(trades.reduce((a, t) => a + discipline(t, settings), 0) / trades.length)
         : null,
@@ -757,10 +763,11 @@ window.Store = (() => {
 
     const todays = list.filter((t) => String(t.date || "").slice(0, 10) === today);
     const closedToday = todays.filter((t) => !compute(t).open);
-
-    const netToday = closedToday.reduce((a, t) => a + compute(t).netPL, 0);
+    const todayRows = closedToday.map(compute);
+    const unavailableToday = todayRows.filter((c) => !Number.isFinite(c.netPL)).length;
+    const netToday = closedToday.length ? null : 0;
     const balance = num(s.balance) || DEFAULT_SETTINGS.balance;
-    const lossPct = netToday < 0 ? (Math.abs(netToday) / balance) * 100 : 0;
+    const lossPct = netToday === null ? null : 0;
 
     /* consecutive losses, newest first, across days — a losing streak does
        not politely reset at midnight */
@@ -768,13 +775,25 @@ window.Store = (() => {
       .filter((t) => !compute(t).open)
       .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
     let run = 0;
+    let streakUnavailable = false;
     for (const t of closed) {
-      if (compute(t).netPL < 0) run++;
+      const p = compute(t).netPL;
+      if (!Number.isFinite(p)) { streakUnavailable = true; break; }
+      if (p < 0) run++;
       else break;
     }
 
     const breaches = [];
-    if (num(s.maxDailyLossPct) > 0 && lossPct >= num(s.maxDailyLossPct))
+    const unavailableReasons = [];
+    const dailyConfigured = num(s.maxDailyLossPct) > 0;
+    const tradesConfigured = num(s.maxTradesPerDay) > 0;
+    const streakConfigured = num(s.coolOffAfterLosses) > 0;
+    const dailyLossStatus = !dailyConfigured ? "notConfigured" : lossPct === null ? "unavailable" :
+      lossPct >= num(s.maxDailyLossPct) ? "breached" : "withinLimit";
+    const tradeCountStatus = !tradesConfigured ? "notConfigured" : todays.length >= num(s.maxTradesPerDay) ? "breached" : "withinLimit";
+    const lossStreakStatus = !streakConfigured ? "notConfigured" : streakUnavailable ? "unavailable" :
+      run >= num(s.coolOffAfterLosses) ? "breached" : "withinLimit";
+    if (dailyLossStatus === "breached")
       breaches.push({
         kind: "dailyLoss",
         text:
@@ -782,7 +801,7 @@ window.Store = (() => {
           num(s.maxDailyLossPct) + "% daily stop. The rule says the day is over.",
       });
 
-    if (num(s.maxTradesPerDay) > 0 && todays.length >= num(s.maxTradesPerDay))
+    if (tradeCountStatus === "breached")
       breaches.push({
         kind: "tradeCount",
         text:
@@ -790,7 +809,7 @@ window.Store = (() => {
           num(s.maxTradesPerDay) + ". Over-trading is the most common way a good system loses money.",
       });
 
-    if (num(s.coolOffAfterLosses) > 0 && run >= num(s.coolOffAfterLosses))
+    if (lossStreakStatus === "breached")
       breaches.push({
         kind: "coolOff",
         text:
@@ -798,11 +817,25 @@ window.Store = (() => {
           " — step away before the next entry, not after it.",
       });
 
+    if (dailyLossStatus === "unavailable") unavailableReasons.push("daily P/L cannot be assessed because compatible trade currency units are not recorded");
+    if (unavailableToday) unavailableReasons.push(unavailableToday + " closed trade(s) have invalid P/L inputs");
+    if (lossStreakStatus === "unavailable") unavailableReasons.push("loss streak cannot be assessed because a relevant trade has invalid P/L");
+    const configured = [dailyLossStatus, tradeCountStatus, lossStreakStatus].filter(x=>x!=="notConfigured");
+    const assessmentStatus = breaches.length ? "breached" :
+      configured.some(x=>x==="unavailable") ? "unavailable" :
+      configured.length ? "withinLimit" : "notConfigured";
     return {
       today,
       tradesToday: todays.length,
       netToday,
       lossPctToday: lossPct,
+      unavailableToday,
+      dailyPLStatus: netToday === null ? "unavailable" : "assessed",
+      dailyLossStatus,
+      tradeCountStatus,
+      lossStreakStatus,
+      assessmentStatus,
+      unavailableReasons,
       consecutiveLosses: run,
       breaches,
       muted: !s.guardrailsOn,

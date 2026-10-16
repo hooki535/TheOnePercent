@@ -153,7 +153,7 @@
     box.innerHTML =
       rail(
         "Today's P&L",
-        money(g.netToday, s.currency),
+        g.netToday === null ? "Unavailable" : money(g.netToday, s.currency),
         s.maxDailyLossPct > 0 ? "stop at −" + s.maxDailyLossPct + "%" : "no daily stop",
         g.breaches.some((b) => b.kind === "dailyLoss")
       ) +
@@ -170,6 +170,8 @@
         g.breaches.some((b) => b.kind === "coolOff")
       );
 
+    if (g.unavailableReasons && g.unavailableReasons.length)
+      box.insertAdjacentHTML("beforeend", '<p class="gl-note">Assessment unavailable: ' + esc(g.unavailableReasons.join("; ")) + '</p>');
     if (g.breaches.length && g.muted)
       box.insertAdjacentHTML(
         "beforeend",
@@ -376,7 +378,7 @@
 
     const cols = [
       "date", "symbol", "market", "side", "setup", "session", "entry", "stop", "target",
-      "size", "fees", "result", "netPL", "R", "riskPct", "plannedRR", "discipline", "emotion", "tags", "review",
+      "size", "fees", "result", "netPL_calculation_units", "R", "riskPct", "plannedRR", "discipline", "emotion", "tags", "review",
     ];
 
     const rows = trades.map((t) => {

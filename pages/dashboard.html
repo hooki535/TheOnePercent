@@ -65,7 +65,7 @@
             <div class="account-overview-head">
               <div>
                 <h2 id="account-overview-title">Account overview</h2>
-                <p id="account-overview-note">Equity uses the saved balance plus realised P/L in this view. Account labels share one balance setting; open P/L is not included.</p>
+                <p id="account-overview-note">The balance setting is shared across account labels and is for sizing. Current exposure includes all open positions for the selected account, regardless of opening date. Performance uses journal dates because close timestamps are not stored; trade currency units are not recorded.</p>
               </div>
             </div>
             <div class="stat-grid account-grid" id="account-summary" aria-live="polite"></div>
@@ -94,8 +94,8 @@
           <div class="dash-grid" id="live-grid" hidden>
             <div class="panel">
               <div class="panel-head">
-                <h2>Equity</h2>
-                <span id="eq-note">account currency</span>
+                <h2>Cumulative P/L of fully closed trades</h2>
+                <span id="eq-note">unavailable: compatible units not recorded</span>
               </div>
               <div class="panel-body">
                 <div class="eq-wrap">
@@ -109,8 +109,7 @@
                 </div>
                 <div class="eq-legend">
                   <span
-                    ><i class="dot brand"></i> balance after each closed
-                    trade</span
+                    ><i class="dot brand"></i> ordered by journal date; no close timestamps</span
                   >
                   <span id="eq-dd"></span>
                 </div>
@@ -156,7 +155,7 @@
                       <th>Symbol</th>
                       <th>Setup</th>
                       <th class="num">R</th>
-                      <th class="num">Net P/L</th>
+                      <th class="num">Net P/L (calculation units)</th>
                       <th class="num">Discipline</th>
                     </tr>
                   </thead>
