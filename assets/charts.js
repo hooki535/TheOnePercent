@@ -1659,7 +1659,7 @@ function paintIndSettings() {
               return `<div class="sp-r"><span>${k}</span><input type="number" step="${k === "mult" ? 0.1 : 1}" value="${v}" data-uid="${s.uid}" data-k="${k}"></div>`;
             })
             .join("");
-          return `<div class="sp"><div class="sp-h">${S.name}<button data-rm="${s.uid}">remove</button></div>
+          return `<div class="sp"><div class="sp-h">${S.name}<label class="study-visibility"><input type="checkbox" data-study-visible="${s.uid}" ${s.visible !== false ? "checked" : ""}> Show</label><button data-rm="${s.uid}">remove</button></div>
       ${fields || '<div class="sp-r"><span>No parameters</span><span>—</span></div>'}
       <div class="sp-r"><span>Colour</span><input type="color" value="${hexOf(s.color)}" data-uid="${s.uid}" data-k="__color"></div>
       <div class="sp-r"><span>Pane</span><span>${S.where === "sub" ? "separate" : "on price"}</span></div>
@@ -1680,7 +1680,15 @@ function paintIndSettings() {
       draw();
     };
   });
-  $$("#indSettings [data-rm]").forEach(
+  $("#indSettings [data-study-visible]").forEach((input) => {
+    input.onchange = () => {
+      const study = cfg.studies.find((x) => x.uid === input.dataset.studyVisible);
+      if (!study) return;
+      study.visible = input.checked;
+      draw();
+    };
+  });
+  $("#indSettings [data-rm]").forEach(
     (b) =>
       (b.onclick = () => {
         pushUndo();
