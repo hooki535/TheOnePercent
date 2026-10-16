@@ -46,6 +46,36 @@ Academy.register("market-structure", {
           note: "Pick one timeframe to define your structure and mark it before you look anywhere else. Structure that changes every time you switch timeframe is not structure, it is mood.",
         },
         {
+          h: "Worked example: confirm a swing before labeling it",
+          p: [
+            "Read the candles from left to right. A possible swing high is not confirmed the moment a high prints: under our two-candle rule, wait for two subsequent candles whose highs stay below that candidate high. The same logic applies in reverse to swing lows.",
+            "In the illustrative chart below, the pullback after each peak gives the market time to confirm the prior swing. Mark the wick extreme, not the body. If a later candle exceeds the candidate high before confirmation, restart the count from the new extreme.",
+          ],
+          fig: {
+            title: "Illustrative price action: confirmed peaks and pullbacks",
+            tag: "Practice chart · synthetic candles",
+            n: 36, seed: 19, vol: 0.45,
+            path: [[0, 100], [5, 107], [10, 102], [16, 112], [21, 106], [27, 117], [31, 111], [35, 119]],
+            overlays: [
+              { poly: [[0, 100], [5, 107], [10, 102], [16, 112], [21, 106], [27, 117], [31, 111], [35, 119]], kind: "brand", dash: true },
+              { label: "Swing high", at: [5, 108.4], kind: "down" },
+              { label: "Swing low", at: [10, 100.5], pos: "below", kind: "up" },
+              { label: "Higher high", at: [16, 113.5], kind: "down" },
+              { label: "Higher low", at: [21, 104.5], pos: "below", kind: "up" },
+              { label: "Higher high", at: [27, 118.5], kind: "down" },
+            ],
+            caption: "Synthetic teaching example, not a historical price series. Peaks and troughs illustrate the labeling process; verify the two-candle confirmation rule against the actual highs and lows on your chart.",
+          },
+          ul: [
+            "Step 1 — Choose your structure timeframe and do not switch midway through the exercise.",
+            "Step 2 — Identify a candidate wick high or low; wait for two candles on the right to confirm it.",
+            "Step 3 — Label confirmed highs and lows in sequence. Compare each with the previous confirmed swing of the same type.",
+            "Step 4 — If a candidate is invalidated before confirmation, remove it rather than forcing a label.",
+            "Step 5 — Record whether price is forming higher highs and higher lows, lower highs and lower lows, or a range.",
+          ],
+          note: "A visually obvious peak is not automatically a confirmed swing under a mechanical rule. Wait for the required candles, and avoid using future price information when reviewing past trades.",
+        },
+        {
           h: "Major and minor swings",
           ul: [
             "Major swings are the obvious turning points you would see from across the room. They define the trend.",
