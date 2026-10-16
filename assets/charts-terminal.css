@@ -241,3 +241,80 @@ body[data-page="charts"].chart-first .crail { flex-shrink: 0; }
 @media (max-width: 720px) {
   body[data-page="charts"] .workspace-toggle { padding: 5px 7px; font-size: 11px; }
 }
+
+/* User-configurable workspace controls */
+body[data-page="charts"].workspace-no-tools .crail { display: none !important; }
+body[data-page="charts"].workspace-no-dock .chart-dock { display: none !important; }
+body[data-page="charts"].workspace-no-ranges .cbot-r { display: none !important; }
+body[data-page="charts"].workspace-no-badge #feedBadge { display: none !important; }
+body[data-page="charts"] .workspace-settings-backdrop[hidden] { display: none !important; }
+body[data-page="charts"] .workspace-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  background: #0713239e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+body[data-page="charts"] .workspace-settings-sheet {
+  width: min(100%, 470px);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  color: #1c2c45;
+  border: 1px solid #e2e8f2;
+  border-radius: 14px;
+  box-shadow: 0 25px 85px #0005;
+  padding: 22px;
+}
+body[data-page="charts"] .workspace-settings-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+body[data-page="charts"] .workspace-settings-heading h2 {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 5px;
+}
+body[data-page="charts"] .workspace-settings-heading p,
+body[data-page="charts"] .workspace-settings-hint {
+  color: #65758f;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+body[data-page="charts"] #workspaceSettingsClose {
+  border: 0;
+  background: #f2f5fb;
+  color: #3b4b63;
+  border-radius: 7px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+body[data-page="charts"] .workspace-settings-options {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 16px;
+}
+body[data-page="charts"] .workspace-settings-options label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e4eaf3;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+body[data-page="charts"] .workspace-settings-options label:hover { background: #f6f9ff; }
+body[data-page="charts"] .workspace-settings-options input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2962ff;
+}
