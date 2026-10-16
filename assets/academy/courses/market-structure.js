@@ -14,6 +14,7 @@ Academy.register("market-structure", {
       title: "Swing highs and swing lows",
       minutes: 8,
       summary: "Every structure tool in this academy is built from one thing: the turning points of price. Mark them consistently and the rest follows.",
+      objectives: ["Identify candidate swing highs and lows at wick extremes.","Confirm a swing only after two candles on each side fail to exceed it.","Distinguish major structure from minor fluctuations."],
       sections: [
         {
           h: "Real-market example: gold (XAUUSD)",
@@ -120,6 +121,7 @@ Academy.register("market-structure", {
       title: "Trends and ranges",
       minutes: 8,
       summary: "Markets do only three things: go up, go down, or go sideways. Knowing which one you are in decides which setups are allowed.",
+      objectives: ["Classify a market as an uptrend, downtrend, or range.","Recognize higher highs/higher lows versus lower highs/lower lows.","Identify the middle of a range as a poor location for a new range trade."],
       sections: [
         {
           h: "The definitions",
@@ -189,6 +191,7 @@ Academy.register("market-structure", {
       title: "Break of structure (BOS)",
       minutes: 9,
       summary: "A break of structure is the trend proving itself again. It is also the event that tells you where the next pullback entry will come from.",
+      objectives: ["Identify a BOS using a candle close beyond a confirmed swing.","Mark the protected swing created by the break.","Distinguish a decisive break from a marginal close."],
       sections: [
         {
           h: "Definition",
@@ -262,6 +265,7 @@ Academy.register("market-structure", {
       title: "Change of character (CHoCH)",
       minutes: 9,
       summary: "A change of character is the first break against the trend. It does not guarantee a reversal, but it ends the trend's right to your trust.",
+      objectives: ["Recognize a CHoCH as a close through the protected swing against the trend.","Explain why a CHoCH alone does not confirm a full reversal.","Wait for the next structural swing to assess a potential trend change."],
       sections: [
         {
           h: "Definition",
@@ -333,6 +337,7 @@ Academy.register("market-structure", {
       title: "Internal and external structure",
       minutes: 10,
       summary: "A downtrend on the 15-minute chart can be nothing more than a pullback inside a daily uptrend. Knowing which structure you are looking at prevents most bad trades.",
+      objectives: ["Separate higher-timeframe external structure from internal pullbacks.","Apply a three-timeframe routine for bias, current leg, and entry timing.","Avoid mistaking lower-timeframe countertrend movement for a higher-timeframe reversal."],
       sections: [
         {
           h: "Two layers of the same chart",
@@ -390,6 +395,7 @@ Academy.register("market-structure", {
       title: "Trading with structure: the pullback entry",
       minutes: 10,
       summary: "Put it all together into one repeatable trade: trend confirmed by BOS, pullback to the broken level, entry, stop beyond the protected swing, target at the next structure point.",
+      objectives: ["Outline the sequence: BOS, pullback, trigger, entry.","Place stop and target using chart structure.","Calculate the reward-to-risk ratio and reject setups below the workbook's 1.5R threshold."],
       sections: [
         {
           h: "The setup, step by step",
