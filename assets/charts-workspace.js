@@ -57,6 +57,25 @@
     if (full) { full.setAttribute("aria-pressed", String(!!document.fullscreenElement)); full.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; }
     requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
   });
+  const appearance = $("workspaceChartAppearance");
+  if (appearance) appearance.addEventListener("click", () => {
+    showSettings(false);
+    // Reuse the native chart settings modal and its existing canvas rendering.
+    $("setBtn")?.click();
+  });
+  const presets = {
+    clean: { panel: false, notes: false, tools: false, dock: false, ranges: false, badge: true },
+    analysis: { panel: true, notes: false, tools: true, dock: true, ranges: true, badge: true },
+    trading: { panel: true, notes: true, tools: true, dock: true, ranges: true, badge: true }
+  };
+  settings.querySelectorAll("[data-workspace-preset]").forEach(button => {
+    button.addEventListener("click", () => {
+      const next = presets[button.dataset.workspacePreset];
+      if (!next) return;
+      Object.assign(prefs, next);
+      apply();
+    });
+  });
   const reset = $("workspaceReset");
   if (reset) reset.addEventListener("click", () => { prefs = Object.assign({}, defaults); apply(); });
   apply();
