@@ -1530,3 +1530,11 @@
 .ac-lesson-checklist label { display:flex; align-items:flex-start; gap:10px; margin:10px 0; font-size:13px; line-height:1.6; cursor:pointer; }
 .ac-lesson-checklist input { margin-top:4px; accent-color:var(--brand); }
 .ac-lesson-checklist p { margin:12px 0 0; font-size:11px; color:var(--muted); }
+
+/* Native TheOnePercent Charts entry point, replacing third-party embeds. */
+.fig-native-chart-content { padding:clamp(20px,4vw,36px); background:var(--surface-2); }
+.fig-native-chart-kicker { color:var(--brand); font:600 11px var(--mono); letter-spacing:.08em; }
+.fig-native-chart-content h3 { margin:10px 0; font-size:clamp(19px,2.5vw,25px); }
+.fig-native-chart-content > p { max-width:680px; font-size:14px; line-height:1.7; }
+.fig-native-chart-content .btn { display:inline-flex; margin:12px 0; }
+.fig-native-chart-warning { color:var(--muted); font-size:12px!important; }
