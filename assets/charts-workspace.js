@@ -128,7 +128,7 @@
   }
   if (themeButton && window.Theme) {
     themeButton.addEventListener("click", () => { Theme.toggle(); syncThemeButton(); });
-    window.addEventListener("themechange", syncThemeButton);
+    window.addEventListener("themechange", () => { syncThemeButton(); applyLook(); });
     syncThemeButton();
   }
   const LOOK_KEY = "top.chartAppearance.v1";
@@ -139,6 +139,11 @@
   const lookFields = Array.from(settings.querySelectorAll("[data-chart-look]"));
   function applyLook() {
     if (typeof state === "undefined" || !state.look) return;
+    // A default white canvas was masking the dark terminal. Respect a
+    // deliberate custom background, but adapt the default to the active theme.
+    const storedAppearance = (() => { try { return JSON.parse(localStorage.getItem(LOOK_KEY) || "{}"); } catch (_) { return {}; } })();
+    const automaticBackground = !storedAppearance.background || storedAppearance.background === "#ffffff" || storedAppearance.background === "#0d1727";
+    if (automaticBackground) lookPrefs.background = window.Theme?.current() === "dark" ? "#0d1727" : "#ffffff";
     for (const [key, value] of Object.entries(lookPrefs)) {
       if (["up", "dn", "wickUp", "wickDn", "borderUp", "borderDn", "background"].includes(key)) {
         if (/^#[0-9a-f]{6}$/i.test(value)) state.look[key] = value;
