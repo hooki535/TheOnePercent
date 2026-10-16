@@ -163,6 +163,7 @@ window.Figures = (() => {
       out.push('<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + y + '" y2="' + y + '" class="fg-grid"/>');
     }
 
+    out.push('<g class="fg-annotations">');
     /* zones first, so candles sit on top of them */
     ov.filter((o) => o.zone).forEach((o) => {
       const [b0, b1, zlo, zhi] = o.zone;
@@ -179,6 +180,7 @@ window.Figures = (() => {
         );
     });
 
+    out.push("</g>");
     /* candles */
     bars.forEach((b, i) => {
       if (onlySet && !onlySet.has(i)) return;
@@ -193,6 +195,7 @@ window.Figures = (() => {
       );
     });
 
+    out.push('<g class="fg-annotations">');
     /* lines and annotations */
     ov.forEach((o) => {
       if (o.hline != null) {
@@ -257,6 +260,7 @@ window.Figures = (() => {
       }
     });
 
+    out.push("</g>");
     return '<svg viewBox="0 0 ' + W + " " + H + '" class="fg" role="img" aria-label="' + esc(spec.alt || "Price chart diagram") + '">' + out.join("") + "</svg>";
   }
 
@@ -404,6 +408,8 @@ window.Figures = (() => {
       '<figure class="fig">' +
       (spec.title ? '<div class="fig-head"><b>' + esc(spec.title) + "</b>" + (spec.tag ? "<span>" + esc(spec.tag) + "</span>" : "") + "</div>" : "") +
       '<div class="fig-body">' + svg + "</div>" +
+      ((spec.type === "shot" || spec.type === "line" || spec.type === "bars" || spec.type === "flow" || !(spec.overlays || []).length) ? "" :
+        '<div class="fig-controls"><span>Practice: identify the levels before revealing the labels.</span><button type="button" class="btn btn-quiet sm fig-toggle" aria-pressed="true">Hide annotations</button></div>') +
       ((spec.type === "shot" || spec.type === "line" || spec.type === "bars" || spec.type === "flow") ? "" :
         '<div class="fig-legend"><span><i class="fig-key fig-key-up"></i>Bullish candle</span><span><i class="fig-key fig-key-down"></i>Bearish candle</span><span class="fig-synthetic">Illustrative chart · not live market data</span></div>') +
       (spec.caption ? "<figcaption>" + esc(spec.caption) + "</figcaption>" : "") +
