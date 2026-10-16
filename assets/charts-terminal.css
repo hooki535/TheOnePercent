@@ -519,3 +519,25 @@ html[data-theme="dark"] body[data-page="charts"] .workspace-presets button {
   background: #1c2b44;
   border-color: #34425c;
 }
+
+/* Stage B workspace system: unified semantic tokens, after legacy overrides. */
+body[data-page="charts"] { --ws-surface:#ffffff; --ws-raised:#f7f9fc; --ws-border:#e4e9f1; --ws-text:#152238; --ws-muted:#64748b; --ws-accent:#2962ff; --ws-hover:#edf2ff; --ws-focus:#2962ff; }
+html[data-theme="dark"] body[data-page="charts"] { --ws-surface:#111b2b; --ws-raised:#172338; --ws-border:#31415b; --ws-text:#dce6f7; --ws-muted:#a0b0c8; --ws-accent:#86a5ff; --ws-hover:#253657; --ws-focus:#a7beff; }
+body[data-page="charts"] :is(.ctoolbar,.crail,.panel,.tabs,.tabpane,.chart-dock,.menu,.modal .sheet,.workspace-settings-sheet) { color:var(--ws-text) !important; border-color:var(--ws-border) !important; }
+body[data-page="charts"] :is(.menu,.workspace-settings-sheet) { background:var(--ws-surface) !important; }
+body[data-page="charts"] :is(.menu button,.workspace-settings-sheet button,.tab,.dock-btn) { color:var(--ws-text); }
+body[data-page="charts"] :is(.menu button,.workspace-settings-sheet button,.tab,.dock-btn):hover { background:var(--ws-hover) !important; }
+body[data-page="charts"] :is(button,input,select,textarea,[tabindex]):focus-visible { outline:2px solid var(--ws-focus) !important; outline-offset:2px; }
+body[data-page="charts"] .ctoolbar { display:flex; flex-wrap:nowrap; min-width:0; }
+body[data-page="charts"] .toolbar-market,body[data-page="charts"] .toolbar-analysis,body[data-page="charts"] .toolbar-workspace { display:flex; align-items:center; gap:6px; min-width:0; }
+body[data-page="charts"] .toolbar-market { flex:0 1 auto; }
+body[data-page="charts"] .toolbar-analysis { flex:0 0 auto; }
+body[data-page="charts"] .toolbar-workspace { flex:0 0 auto; }
+body[data-page="charts"] .crail { width:40px; flex-basis:40px; }
+body[data-page="charts"] .chart-dock { width:42px; flex-basis:42px; }
+body[data-page="charts"] .panel { min-width:240px; }
+body[data-page="charts"].chart-first .panel { display:none !important; }
+body[data-page="charts"] .tabs { overflow-x:auto; scrollbar-width:thin; }
+@media(max-width:1300px){body[data-page="charts"] .toolbar-secondary { display:none !important; }}
+@media(max-width:1050px){body[data-page="charts"] .ctoolbar { flex-wrap:wrap; height:auto; min-height:54px; padding:5px 10px; row-gap:4px; }body[data-page="charts"] .ctoolbar>.spacer{display:none;}body[data-page="charts"] .toolbar-market { flex:1 1 100%; }body[data-page="charts"] .toolbar-workspace { margin-left:auto; }body[data-page="charts"] .risk-pill,body[data-page="charts"] #feedBadge { display:none; }}
+@media(max-width:720px){body[data-page="charts"] .ctoolbar { align-content:center; }body[data-page="charts"] .toolbar-market { flex:1 1 100%; }body[data-page="charts"] .toolbar-market #intervals { display:none; }body[data-page="charts"] .toolbar-workspace #workspaceSettingsOpen,body[data-page="charts"] .toolbar-workspace #workspacePanelToggle { display:none; }body[data-page="charts"] .toolbar-analysis { flex:0 0 auto; }body[data-page="charts"] .toolbar-workspace { flex:1 1 auto; justify-content:flex-end; }body[data-page="charts"] #journalBtn { display:inline-flex; }body[data-page="charts"] .crail { width:100%; flex-basis:auto; }}
