@@ -64,16 +64,41 @@
     });
   }
 
+  /* ------------------------------------------------------------ account overview */
+
+  function renderAccountSummary(trades, stats) {
+    const s = settings();
+    const open = Store.openRisk(trades, s);
+    const currentEquity = s.balance + stats.netPL;
+    const missingStops = open.unknown
+      ? " · " + open.unknown + (open.unknown === 1 ? " position has" : " positions have") + " no stop"
+      : "";
+
+    const cards = [
+      { k: "Starting balance", v: money(s.balance), n: "shared balance setting" },
+      { k: "Current equity", v: money(currentEquity), n: "balance + realised P/L in this view" },
+      { k: "Net P/L", v: money(stats.netPL, true), n: stats.closed + " closed trade" + (stats.closed === 1 ? "" : "s"), cls: dir(stats.netPL) },
+      { k: "Open positions", v: String(open.n), n: open.n === 1 ? "position still open" : "positions still open" },
+      { k: "Open risk", v: money(-open.riskMoney), n: pct(open.riskPct, 2) + " of balance" + missingStops, cls: open.riskMoney ? "down" : "" },
+    ];
+
+    $("#account-summary").innerHTML = cards
+      .map(
+        (c) =>
+          `<div class="stat"><div class="k">${esc(c.k)}</div>` +
+          `<div class="v ${c.cls || ""}">${esc(c.v)}</div><div class="n">${esc(c.n)}</div></div>`
+      )
+      .join("");
+  }
+
   /* ------------------------------------------------------------ metrics */
 
   function renderStats(trades) {
     const s = Store.stats(trades, settings());
-    const streak = Store.streak(Store.trades.list());
+    const streak = Store.streak(trades);
     const limit = settings().riskPct;
-
-    /* A win rate on five trades is noise dressed as information, so it
-       stays hidden until the sample can carry it. */
-    const enoughForWinRate = s.closed >= 10;
+    const factor = s.profitFactor === null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2);
+    const hasClosed = s.closed > 0;
 
     const cards = [
       {
@@ -83,17 +108,43 @@
         cls: dir(s.netPL),
       },
       {
+        k: "Win rate",
+        v: pct(s.winRate, 1),
+        n: hasClosed ? "closed trades only" : "no closed trades in this view",
+      },
+      {
+        k: "Average R",
+        v: rfmt(s.averageR),
+        n: hasClosed ? "closed trades with valid risk" : "needs a completed trade with a stop",
+        cls: dir(s.averageR),
+      },
+      {
+        k: "Profit factor",
+        v: factor,
+        n: hasClosed ? "gross profits ÷ gross losses" : "no closed trades in this view",
+      },
+      {
         k: "Expectancy",
         v: rfmt(s.expectancy),
-        n: s.expectancy === null ? "needs a closed trade" : "per trade, in R",
+        n: s.expectancy === null ? "needs a closed trade" : "average per trade, in R",
         cls: dir(s.expectancy),
       },
       {
-        k: "Win rate",
-        v: enoughForWinRate ? pct(s.winRate, 0) : "—",
-        n: enoughForWinRate
-          ? "profit factor " + (s.profitFactor === null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2))
-          : s.closed + " of 10 closed trades",
+        k: "Max drawdown",
+        v: hasClosed ? pct(s.maxDrawdownPct, 1) : "—",
+        n: hasClosed ? "peak-to-trough equity decline" : "starts after the first closed trade",
+      },
+      {
+        k: "Best trade",
+        v: rfmt(s.bestR),
+        n: s.bestR === null ? "no realised R yet" : "highest realised R",
+        cls: dir(s.bestR),
+      },
+      {
+        k: "Worst trade",
+        v: rfmt(s.worstR),
+        n: s.worstR === null ? "no realised R yet" : "lowest realised R",
+        cls: dir(s.worstR),
       },
       {
         k: "Discipline",
@@ -324,7 +375,7 @@
 
   function renderRecent(trades) {
     const rows = trades.slice(0, 8);
-    $("#recent-body").innerHTML = rows
+    $("#recent-body").innerHTML = rows.length ? rows
       .map((t) => {
         const c = Store.compute(t);
         const d = Store.discipline(t, settings());
@@ -338,7 +389,7 @@
           <td class="num"><span class="disc"><span>${d}</span><span class="disc-bar ${band}"><i style="width:${d}%"></i></span></span></td>
         </tr>`;
       })
-      .join("");
+      .join("") : '<tr><td colspan="6" class="muted-note">No trades match this account and period.</td></tr>';
   }
 
   /* ------------------------------------------------------------ open risk
@@ -595,6 +646,7 @@
     });
 
     const stats = renderStats(trades);
+    renderAccountSummary(trades, stats);
     renderGreeting();
     renderGuardrails();
     renderWatchlist();

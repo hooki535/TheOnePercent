@@ -674,6 +674,10 @@ window.Store = (() => {
     const grossWin = wins.reduce((a, r) => a + r.netPL, 0);
     const grossLoss = Math.abs(losses.reduce((a, r) => a + r.netPL, 0));
     const withR = rows.filter((r) => r.r !== null);
+    const rValues = withR.map((r) => r.r);
+    const averageR = rValues.length ? rValues.reduce((a, r) => a + r, 0) / rValues.length : null;
+    const bestR = rValues.length ? rValues.reduce((a, r) => Math.max(a, r), -Infinity) : null;
+    const worstR = rValues.length ? rValues.reduce((a, r) => Math.min(a, r), Infinity) : null;
 
     const netPL = rows.reduce((a, r) => a + r.netPL, 0);
     const winRate = rows.length ? (wins.length / rows.length) * 100 : null;
@@ -710,6 +714,9 @@ window.Store = (() => {
       open: trades.length - rows.length,
       netPL,
       winRate,
+      averageR,
+      bestR,
+      worstR,
       profitFactor: grossLoss ? grossWin / grossLoss : grossWin ? Infinity : null,
       expectancy,
       avgWinR,

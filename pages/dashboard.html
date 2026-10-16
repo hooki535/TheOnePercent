@@ -51,11 +51,26 @@
               </select>
             </label>
           </div>
+          <nav class="dash-quick-links" aria-label="Quick links">
+            <a class="btn btn-quiet" href="journal.html">Journal</a>
+            <a class="btn btn-quiet" href="charts.html">Charts</a>
+            <a class="btn btn-quiet" href="calculators.html">Calculator</a>
+          </nav>
         </div>
       </header>
 
       <section class="dash">
         <div class="wrap">
+          <section class="account-overview" aria-labelledby="account-overview-title">
+            <div class="account-overview-head">
+              <div>
+                <h2 id="account-overview-title">Account overview</h2>
+                <p id="account-overview-note">Equity uses the saved balance plus realised P/L in this view. Account labels share one balance setting; open P/L is not included.</p>
+              </div>
+            </div>
+            <div class="stat-grid account-grid" id="account-summary" aria-live="polite"></div>
+          </section>
+
           <!-- shown only when onboarding saved nothing -->
           <div class="notice" id="notice" hidden>
             <span>
@@ -113,7 +128,7 @@
             <!-- the only forward-looking panel on the screen -->
             <div class="panel span-2" id="panel-open" hidden>
               <div class="panel-head">
-                <h2>On the table now</h2>
+                <h2>Open positions</h2>
                 <span id="or-note">open positions</span>
               </div>
               <div class="panel-body" id="open-risk"></div>
@@ -202,6 +217,7 @@
                   <a class="btn btn-primary" href="journal.html"
                     >Log your first trade</a
                   >
+                  <a class="btn btn-quiet" href="charts.html">Open charts</a>
                   <a class="btn btn-quiet" href="calculators.html"
                     >Open the calculator</a
                   >

@@ -162,11 +162,9 @@
 
   function renderSummary(rows) {
     const s = Store.stats(rows.map((r) => r.t), settings());
-    const closed = rows.map(({ c }) => c).filter(c => !c.open && c.result !== "Open");
-    const rs = closed.map(c => c.r).filter(Number.isFinite);
-    const averageR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
-    const bestR = rs.length ? Math.max(...rs) : null;
-    const worstR = rs.length ? Math.min(...rs) : null;
+    const averageR = s.averageR;
+    const bestR = s.bestR;
+    const worstR = s.worstR;
     const cards = [
       { k: "Trades", v: String(s.count), n: "all filtered trades" },
       { k: "Open trades", v: String(s.open), n: "positions not fully closed" },

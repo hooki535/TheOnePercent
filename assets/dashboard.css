@@ -742,3 +742,74 @@
 .lk-grid {
   align-items: start;
 }
+
+
+/* ── account overview and quick links ───────────────────────────── */
+.account-overview {
+  margin-bottom: 18px;
+}
+
+.account-overview-head {
+  margin-bottom: 10px;
+}
+
+.account-overview-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.account-overview-head p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.account-grid {
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  margin-top: 0;
+}
+
+.dash-quick-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .dh-filter {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dh-filter .sel {
+    flex: 1 1 145px;
+    min-width: 0;
+  }
+
+  .dash-quick-links {
+    width: 100%;
+  }
+
+  .rt-scroll th,
+  .rt-scroll td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .account-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-grid .stat {
+    min-width: 0;
+  }
+
+  .dash-quick-links .btn {
+    flex: 1 1 auto;
+  }
+}
