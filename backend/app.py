@@ -2,6 +2,7 @@
 No credentials, trading, orders, or invented prices. Deploy separately from GitHub Pages.
 """
 import json
+import math
 import os
 import time
 from datetime import datetime, timezone
@@ -60,18 +61,28 @@ def candles(symbol: str, interval: str, limit: int = Query(500, ge=1, le=1000)):
     iv = INTERVALS.get(interval)
     if not pair or not iv:
         raise HTTPException(status_code=422, detail="Unsupported symbol or interval")
-    key = (pair, iv, limit)
+    # Preserve the requested alias in cached responses.
+    key = (symbol.upper(), pair, iv, limit)
     cached = cache.get(key)
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
         return cached[1]
     from urllib.parse import urlencode
     rows = provider_get("/klines?" + urlencode({"symbol": pair, "interval": iv, "limit": limit}))
+    if not isinstance(rows, list) or not rows:
+        raise HTTPException(status_code=502, detail="Unexpected provider response")
     bars = []
-    for row in rows:
-        o, h, l, c = map(float, row[1:5])
-        if not (0 < l <= min(o, c) <= max(o, c) <= h):
-            raise HTTPException(status_code=502, detail="Invalid provider OHLC")
-        bars.append({"t": int(row[0] // 1000), "o": o, "h": h, "l": l, "c": c, "v": float(row[5])})
+    previous_t = -1
+    try:
+        for row in rows:
+            t = int(row[0]) // 1000
+            o, h, l, c, v = (float(row[i]) for i in (1, 2, 3, 4, 5))
+            if (t <= previous_t or not all(map(math.isfinite, (o, h, l, c, v)))
+                    or not (0 < l <= min(o, c) <= max(o, c) <= h) or v < 0):
+                raise ValueError("Invalid candle")
+            bars.append({"t": t, "o": o, "h": h, "l": l, "c": c, "v": v})
+            previous_t = t
+    except (ValueError, TypeError, IndexError, OverflowError) as exc:
+        raise HTTPException(status_code=502, detail="Invalid provider OHLC") from exc
     result = {"symbol": symbol.upper(), "provider_symbol": pair, "source": "Binance spot",
               "market": "spot", "interval": interval, "candles": bars,
               "retrieved_at": datetime.now(timezone.utc).isoformat()}
