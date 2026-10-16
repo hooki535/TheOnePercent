@@ -567,6 +567,38 @@ window.AcademyUI = (() => {
     return v ? '<section class="ac-videos one"><h2>Watch: this lesson on video</h2>' + videoTile(v) + "</section>" : "";
   }
   document.addEventListener("click", (e) => {
+    const button = e.target.closest && e.target.closest(".fig-replay button");
+    if (!button) return;
+    const figure = button.closest(".fig");
+    const replay = figure.querySelector(".fig-replay");
+    const candles = Array.from(figure.querySelectorAll(".fg-candle"));
+    if (!candles.length) return;
+    const total = candles.length;
+    const wasActive = replay.dataset.active === "true";
+    let active = wasActive;
+    let count = Number(replay.dataset.count || total);
+    if (button.classList.contains("fig-replay-start")) {
+      active = !wasActive;
+      count = active ? 1 : total;
+    } else if (button.classList.contains("fig-replay-next")) count = Math.min(total, count + 1);
+    else if (button.classList.contains("fig-replay-prev")) count = Math.max(1, count - 1);
+    replay.dataset.active = String(active);
+    replay.dataset.count = String(count);
+    candles.forEach((c, i) => { c.style.visibility = !active || i < count ? "" : "hidden"; });
+    figure.classList.toggle("fig-replaying", active);
+    replay.querySelector(".fig-replay-start").textContent = active ? "Exit replay" : "Start replay";
+    replay.querySelector(".fig-replay-prev").disabled = !active || count <= 1;
+    replay.querySelector(".fig-replay-next").disabled = !active || count >= total;
+    replay.querySelector(".fig-replay-status").textContent = active ? "Candle " + count + " of " + total : "Full chart";
+    const toggle = figure.querySelector(".fig-toggle");
+    if (active && toggle) {
+      figure.classList.add("fig-hide-annotations");
+      toggle.setAttribute("aria-pressed", "false");
+      toggle.textContent = "Reveal annotations";
+    }
+  });
+
+  document.addEventListener("click", (e) => {
     const toggle = e.target.closest && e.target.closest(".fig-toggle");
     if (!toggle) return;
     const figure = toggle.closest(".fig");
