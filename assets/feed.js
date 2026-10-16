@@ -42,8 +42,11 @@ window.Feed = (() => {
   const LIVE_MAX_AGE_MS = 30000;
   const liveQuotes = {};
   const realKeys = new Set();
+  const historicalSources = Object.create(null);
+  const BACKEND_INTERVALS = new Set(["1m", "3m", "5m", "15m", "30m", "1H", "2H", "4H", "6H", "8H", "12H", "1D", "3D", "1W", "1M"]);
+  const BACKEND_SYMBOLS = new Set(["BTCUSD", "BTCUSDT", "ETHUSD", "ETHUSDT", "SOLUSD", "SOLUSDT"]);
   const DEMO_NOTE =
-    "Real Dukascopy market data when the Flask API is available. No orders are placed; otherwise the chart uses clearly labeled demo data.";
+    "Historical Binance spot crypto candles when the configured API is available; otherwise synthetic demo candles. Forex, metals and futures are not connected.";
 
   /* The full ladder, grouped the way the interval menu groups it. A chart
      can ask for any of these; `build()` is generic in milliseconds. Ticks
@@ -396,7 +399,7 @@ window.Feed = (() => {
 
   function loadHistory(sym, iv) {
     const key = String(sym).toUpperCase() + "|" + iv;
-    if (!API_ENABLED || failedKeys.has(key) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
+    if (!API_ENABLED || !BACKEND_SYMBOLS.has(String(sym).toUpperCase()) || !BACKEND_INTERVALS.has(iv) || failedKeys.has(key) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
     loading.add(key);
     fetch(LIVE_API + "/api/candles/" + encodeURIComponent(String(sym).toUpperCase()) + "/" + encodeURIComponent(iv) + "?limit=" + BARS, { cache: "no-store" })
       .then((res) => {
@@ -404,11 +407,13 @@ window.Feed = (() => {
         return res.json();
       })
       .then((body) => {
+        if (!body || body.market !== "spot" || body.source !== "Binance spot" || body.symbol !== String(sym).toUpperCase() || !body.provider_symbol || !Array.isArray(body.candles)) throw new Error("Unrecognized candle source");
         const bars = toBars(body.candles);
-        if (!bars.length || bars.some((b) => b.o <= 0 || b.h < Math.max(b.o, b.c) || b.l > Math.min(b.o, b.c) || b.l <= 0))
+        if (!bars.length || bars.some((b, i) => b.o <= 0 || b.h < Math.max(b.o, b.c) || b.l > Math.min(b.o, b.c) || b.l <= 0 || b.h < b.l || (i > 0 && b.t <= bars[i - 1].t)))
           throw new Error("candle API returned invalid OHLC data");
         cache[key] = bars;
         realKeys.add(key);
+        historicalSources[key] = "Binance spot (" + body.provider_symbol + ")";
         notify();
       })
       .catch(() => {
@@ -621,10 +626,11 @@ window.Feed = (() => {
     const sym = String(o.symbol || "").toUpperCase();
     const interval = o.interval || "";
     const historical = sym && interval && realKeys.has(sym + "|" + interval);
+    const source = historical ? historicalSources[sym + "|" + interval] : "";
     const live = !!(sym && isLive(sym));
     return '<span class="feed-badge' + (live ? ' live' : '') + (o.compact ? ' compact' : '') +
-      '" title="' + (historical ? "Historical OHLC loaded from configured data provider." : live ? "Recent quote received; historical chart candles may still be demo." : "Synthetic demonstration data; not actual market prices.") + '">' +
-      '<i aria-hidden="true"></i>' + (historical ? "Historical data" : live ? "Quote connected · chart may be demo" : "Demo candles") + '</span>';
+      '" title="' + (historical ? "Historical OHLC: " + source + ". Not a live quote or futures feed." : live ? "Recent quote received; historical chart candles may still be demo." : "Synthetic demonstration data; not actual market prices.") + '">' +
+      '<i aria-hidden="true"></i>' + (historical ? "Spot historical · " + source : live ? "Quote connected · chart may be demo" : "Demo candles") + '</span>';
   }
 
   function isLive(sym) {
@@ -653,6 +659,7 @@ window.Feed = (() => {
     LIVE_API,
     API_ENABLED,
     isHistorical: (sym, iv) => realKeys.has(String(sym).toUpperCase() + "|" + iv),
+    historicalSource: (sym, iv) => historicalSources[String(sym).toUpperCase() + "|" + iv] || null,
     isLive,
     DEMO_NOTE,
     INTERVALS,
