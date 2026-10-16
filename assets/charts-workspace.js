@@ -119,6 +119,18 @@
       if (width) localStorage.setItem(panelWidthKey, String(width));
     });
   }
+  const themeButton = $("workspaceThemeToggle");
+  function syncThemeButton() {
+    if (!themeButton || !window.Theme) return;
+    const dark = Theme.current() === "dark";
+    themeButton.textContent = dark ? "☀ Light mode" : "◐ Dark mode";
+    themeButton.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  }
+  if (themeButton && window.Theme) {
+    themeButton.addEventListener("click", () => { Theme.toggle(); syncThemeButton(); });
+    window.addEventListener("themechange", syncThemeButton);
+    syncThemeButton();
+  }
   const LOOK_KEY = "top.chartAppearance.v1";
   const lookDefaults = { up: "#089981", dn: "#f23645", wickUp: "#089981", wickDn: "#f23645", borderUp: "#089981", borderDn: "#f23645", background: "#ffffff", candleWidth: 0.68, candleBorders: true, gridH: true, gridV: true, dataWin: true, countdown: true };
   let lookPrefs;
