@@ -670,6 +670,13 @@ function draw() {
   raf = requestAnimationFrame(() => {
     raf = null;
     charts.forEach((c) => c.render());
+    // Reflect the provenance of the selected chart, not a global quote status.
+    const active = state.charts[state.sel];
+    const badge = $("#feedBadge");
+    if (active && badge) {
+      const next = Feed.badge({ compact: true, symbol: active.sym, interval: active.iv });
+      if (badge.innerHTML !== next) badge.innerHTML = next;
+    }
   });
 }
 addEventListener("resize", draw);
@@ -3386,7 +3393,7 @@ $("#themeBtn").textContent = Theme.current() === "dark" ? "Light" : "Dark";
 
 /* The demo badge is rendered by the feed, so its wording is identical on
    every screen that shows a price. */
-$("#feedBadge").innerHTML = Feed.badge({ compact: true });
+$("#feedBadge").innerHTML = Feed.badge({ compact: true, symbol: state.charts[state.sel].sym, interval: state.charts[state.sel].iv });
 
 /* Two doors to the same room: the toolbar button and the one under the
    note, which is where the roadmap mockup put it. */
