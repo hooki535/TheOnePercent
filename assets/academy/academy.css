@@ -1439,3 +1439,10 @@
 .fig-key-down { background: var(--down); }
 .fig-synthetic { margin-left: auto; font-family: var(--mono); font-size: 10px; }
 @media (max-width: 620px) { .ac-study-heading { padding: 14px 15px; } .lesson-main .fig-body { padding: 12px 3px 3px; } .fig-synthetic { margin-left: 0; width: 100%; } }
+
+/* Self-check mode: hide chart annotations while keeping candles visible. */
+.fig-hide-annotations .fg-annotations { visibility: hidden; }
+.fig-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line-soft); }
+.fig-controls span { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.fig-controls button { flex-shrink: 0; }
+@media (max-width: 620px) { .fig-controls button { width: 100%; } }
