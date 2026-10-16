@@ -122,6 +122,8 @@
           <span class="rp-val" id="rpVal">—</span>
         </div>
 
+        <button id="workspaceSettingsOpen" class="tb-btn workspace-toggle" type="button" aria-haspopup="dialog" aria-controls="workspaceSettings" aria-expanded="false" title="Customize workspace">⚙ Customize</button>
+        <button id="workspaceFullscreen" class="tb-btn workspace-toggle" type="button" aria-pressed="false" title="Toggle browser full screen (Alt+F)">Full screen</button>
         <button id="workspacePanelToggle" class="tb-btn workspace-toggle" type="button" aria-controls="panel" aria-expanded="false" title="Show or hide right workspace panel">☷ Panel</button>
         <button id="workspaceNotesToggle" class="tb-btn workspace-toggle" type="button" aria-controls="chartNotes" aria-expanded="false" title="Show or hide chart journal notes">✎ Notes</button>
         <div class="menu-wrap">
@@ -699,6 +701,24 @@
       </div>
     </div>
 
+    <div class="workspace-settings-backdrop" id="workspaceSettings" hidden role="presentation">
+      <section class="workspace-settings-sheet" role="dialog" aria-modal="true" aria-labelledby="workspaceSettingsTitle">
+        <div class="workspace-settings-heading">
+          <div><h2 id="workspaceSettingsTitle">Customize workspace</h2><p>Choose which parts of your charting terminal remain visible. Saved on this device.</p></div>
+          <button id="workspaceSettingsClose" type="button" aria-label="Close workspace settings">✕</button>
+        </div>
+        <div class="workspace-settings-options">
+          <label><input type="checkbox" data-workspace-pref="panel"> Right-side workspace panel</label>
+          <label><input type="checkbox" data-workspace-pref="notes"> Journal notes editor</label>
+          <label><input type="checkbox" data-workspace-pref="tools"> Drawing toolbar</label>
+          <label><input type="checkbox" data-workspace-pref="dock"> Right-side quick-access dock</label>
+          <label><input type="checkbox" data-workspace-pref="ranges"> Bottom date-range shortcuts</label>
+          <label><input type="checkbox" data-workspace-pref="badge"> Market-data source badge</label>
+        </div>
+        <p class="workspace-settings-hint">Hidden tools and panels are not deleted. Market data is still labeled as demo or historical in chart details.</p>
+        <button type="button" id="workspaceReset" class="btn sm">Reset workspace</button>
+      </section>
+    </div>
     <div id="ctx" hidden></div>
     <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 
@@ -727,31 +747,7 @@
     <script src="../assets/charts-shapes.js"></script>
     <script src="../assets/charts-rail.js"></script>
     <script src="../assets/charts.js"></script>
-    <script>
-      /* The chart-first layout does not alter the chart engine or stored drawings. */
-      (function () {
-        const body = document.body;
-        const panelButton = document.getElementById("workspacePanelToggle");
-        const notesButton = document.getElementById("workspaceNotesToggle");
-        function sync() {
-          const panelOpen = !body.classList.contains("chart-first");
-          const notesOpen = body.classList.contains("chart-notes-open");
-          panelButton.setAttribute("aria-expanded", String(panelOpen));
-          notesButton.setAttribute("aria-expanded", String(notesOpen));
-          panelButton.classList.toggle("workspace-open", panelOpen);
-          notesButton.classList.toggle("workspace-open", notesOpen);
-          window.dispatchEvent(new Event("resize"));
-        }
-        panelButton.addEventListener("click", function () {
-          body.classList.toggle("chart-first");
-          sync();
-        });
-        notesButton.addEventListener("click", function () {
-          body.classList.toggle("chart-notes-open");
-          sync();
-        });
-        sync();
-      })();
-    </script>
+    <script src="../assets/charts-workspace.js"></script>
+
   </body>
 </html>
