@@ -1500,3 +1500,9 @@
 .fig-market-frame { display:block; width:100%; height:clamp(350px,48vw,540px); border:0; background:var(--surface); }
 .fig-market-chart figcaption { padding:12px 14px; color:var(--muted); line-height:1.6; }
 @media(max-width:620px) { .fig-market-toolbar a { margin-left:0; width:100%; } .fig-market-frame { height:390px; } }
+
+/* Market explorer: instrument and timeframe controls for all candlestick lessons. */
+.fig-market-toolbar label { display:inline-flex; align-items:center; gap:7px; color:var(--muted); font-size:12px; }
+.fig-market-toolbar select { max-width:185px; padding:7px 26px 7px 9px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:var(--surface); font:inherit; cursor:pointer; }
+.fig-market-toolbar select:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+@media(max-width:620px) { .fig-market-toolbar label { width:100%; justify-content:space-between; } .fig-market-toolbar select { flex:1; max-width:none; } }
