@@ -39,3 +39,17 @@ python -m unittest -v test_app
 ```
 
 The tests mock the external provider, so they verify API response structure and validation without claiming a real upstream connection. Spot-crypto historical candles are **not** exchange futures data or tick-by-tick live quotes. Never commit credentials to `market-config.js`.
+
+## Persistent storage (schema only; not yet provisioned)
+
+`backend/schema.sql` defines a PostgreSQL starting point for provider-attributed OHLCV candles, user identities, saved chart workspaces, and Academy progress. It does **not** create a database automatically and the current FastAPI application still uses an in-memory cache. Apply it only after provisioning a database, selecting an authentication provider, and designing authorization policies. Never expose `saved_chart_workspaces` or `academy_progress` via public unauthenticated endpoints.
+
+Example, once a database is available:
+
+```sh
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/schema.sql
+```
+
+### Render deployment synchronization
+
+If GitHub commits appear in `main` but Render still reports the original deployment, verify Render's GitHub repository authorization and auto-deploy webhook in the Render dashboard. Do not assume code is running just because it was committed. The public backend is only current when its deployment commit matches the expected GitHub commit.
