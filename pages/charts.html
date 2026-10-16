@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../assets/charts-terminal.css" />
   </head>
 
-  <body data-page="charts" data-depth="1" data-shell="nav">
+  <body data-page="charts" data-depth="1" data-shell="nav" class="chart-first">
     <!-- The chart toolbar. Primary actions only: the symbol, the interval,
          what is drawn, what is measured, and the one button this screen
          exists for. Everything occasional lives behind More, because
@@ -122,6 +122,8 @@
           <span class="rp-val" id="rpVal">—</span>
         </div>
 
+        <button id="workspacePanelToggle" class="tb-btn workspace-toggle" type="button" aria-controls="panel" aria-expanded="false" title="Show or hide right workspace panel">☷ Panel</button>
+        <button id="workspaceNotesToggle" class="tb-btn workspace-toggle" type="button" aria-controls="chartNotes" aria-expanded="false" title="Show or hide chart journal notes">✎ Notes</button>
         <div class="menu-wrap">
           <button
             id="moreBtn"
@@ -221,7 +223,7 @@
         <!-- The note is the reason the roadmap put a footer here: what you
              expected, written before the outcome is known, becomes the plan
              text on the journal entry. -->
-        <footer class="notebar">
+        <footer class="notebar" id="chartNotes">
           <label class="nb-l" for="notes">
             <span>Note for the journal</span>
             <textarea
@@ -725,5 +727,31 @@
     <script src="../assets/charts-shapes.js"></script>
     <script src="../assets/charts-rail.js"></script>
     <script src="../assets/charts.js"></script>
+    <script>
+      /* The chart-first layout does not alter the chart engine or stored drawings. */
+      (function () {
+        const body = document.body;
+        const panelButton = document.getElementById("workspacePanelToggle");
+        const notesButton = document.getElementById("workspaceNotesToggle");
+        function sync() {
+          const panelOpen = !body.classList.contains("chart-first");
+          const notesOpen = body.classList.contains("chart-notes-open");
+          panelButton.setAttribute("aria-expanded", String(panelOpen));
+          notesButton.setAttribute("aria-expanded", String(notesOpen));
+          panelButton.classList.toggle("workspace-open", panelOpen);
+          notesButton.classList.toggle("workspace-open", notesOpen);
+          window.dispatchEvent(new Event("resize"));
+        }
+        panelButton.addEventListener("click", function () {
+          body.classList.toggle("chart-first");
+          sync();
+        });
+        notesButton.addEventListener("click", function () {
+          body.classList.toggle("chart-notes-open");
+          sync();
+        });
+        sync();
+      })();
+    </script>
   </body>
 </html>
