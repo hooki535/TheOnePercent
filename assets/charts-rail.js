@@ -564,3 +564,5 @@ function railAudit() {
     console.warn("rail tools with nothing behind them:", missing);
   return missing;
 }
+
+/* Stage B retains all rail groups, favourites, flyouts and persisted IDs. */
