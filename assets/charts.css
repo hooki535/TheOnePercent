@@ -3833,3 +3833,12 @@ body[data-page="charts"] .bottom-status {
     overflow-x: auto;
   }
 }
+
+/* Stage B: non-destructive workspace readout and legend presentation. */
+body[data-page="charts"] .workspace-data-readout { padding: 12px; overflow-y: auto; }
+body[data-page="charts"] .workspace-data-row { display:flex; justify-content:space-between; gap:12px; padding:9px 2px; border-bottom:1px solid var(--terminal-line); font-size:12px; }
+body[data-page="charts"] .workspace-data-row span { color:var(--terminal-muted); }
+body[data-page="charts"] .workspace-data-row strong { font-variant-numeric:tabular-nums; }
+body[data-page="charts"] .dwin { display:none !important; }
+body[data-page="charts"] .leg { max-width:min(330px, 55%); }
+body[data-page="charts"] .leg .leg-row { max-width:100%; }
