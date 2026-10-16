@@ -474,6 +474,9 @@ window.Figures = (() => {
       '</select></label>' +
       '<a class="fig-market-open" href="' + esc(fullURL) + '" target="_blank" rel="noopener noreferrer">Open full chart ↗</a></div>' +
       '<iframe class="fig-market-frame" src="' + esc(chartURL) + '" title="' + esc(label + " market chart") + '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>' +
+      '<div class="fig-market-workspace"><details class="fig-market-notes"><summary>My chart analysis <span>· saved on this device</span></summary>' +
+      '<label>Structure and levels<textarea class="fig-market-note" rows="4" maxlength="3000" placeholder="Example: Trend direction, last confirmed swing high/low, key level, invalidation…"></textarea></label>' +
+      '<div class="fig-market-note-actions"><span class="fig-market-note-status" role="status" aria-live="polite">Notes are private to this browser.</span><button type="button" class="fig-market-note-clear">Clear notes</button></div></details></div>' +
       '<figcaption>Explore actual market prices and identify the lesson concept yourself. ' +
       'The default instrument is a suggested practice market, not a verified example of the described setup. ' +
       'Historical examples with confirmed annotations are provided separately. Quotes may be delayed; data and embedding depend on TradingView.</figcaption>' +
