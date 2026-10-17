@@ -1862,6 +1862,7 @@ function paintSettings() {
 let symCls = "all";
 let symSel = 0;
 let symRows = [];
+let symSource = "all";
 const recentList = () => Store.settings.get().chartsRecent || [];
 function pushRecent(k) {
   const list = [k].concat(recentList().filter((x) => x !== k)).slice(0, 8);
@@ -1940,11 +1941,46 @@ function makeSymbolSearchRow(symbol, instrument, index, options = {}) {
   return row;
 }
 
+const BROKER_DIRECTORY = [
+  { id: "exness", name: "Exness", note: "Check products, fees, and entity terms for your region.", url: "https://www.exness.com/", badge: "E" },
+  { id: "deriv", name: "Deriv", note: "Check which account types and markets are available in your region.", url: "https://deriv.com/", badge: "D" },
+  { id: "oanda", name: "OANDA", note: "Account eligibility and the contracting entity vary by residence.", url: "https://www.oanda.com/", badge: "O" },
+  { id: "pepperstone", name: "Pepperstone", note: "Check country eligibility, products, and account costs.", url: "https://pepperstone.com/", badge: "P" },
+  { id: "fxcm", name: "FXCM", note: "Check account eligibility and product availability by country.", url: "https://www.fxcm.com/markets/", badge: "F" },
+  { id: "forexcom", name: "FOREX.com", note: "Account eligibility and products vary by operating entity.", url: "https://www.forex.com/", badge: "FX" },
+];
+
+function renderBrokerDirectory() {
+  const host = $("#symBrokerCards");
+  if (!host || host.childElementCount) return;
+  BROKER_DIRECTORY.forEach((broker) => {
+    const card = document.createElement("article"); card.className = "broker-directory-card";
+    const mark = document.createElement("span"); mark.className = `broker-mark broker-mark-${broker.id}`; mark.textContent = broker.badge; mark.setAttribute("aria-hidden", "true");
+    const name = document.createElement("b"); name.textContent = broker.name;
+    const note = document.createElement("p"); note.textContent = broker.note;
+    const dataStatus = document.createElement("span"); dataStatus.className = "broker-data-status";
+    dataStatus.textContent = broker.id === "exness" ? "Local MT5 source · when connected" : "No chart feed connected";
+    const link = document.createElement("a"); link.href = broker.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = "Official site ↗";
+    const title = document.createElement("div"); title.className = "broker-card-title"; title.append(mark, name);
+    card.append(title, note, dataStatus, link); host.appendChild(card);
+  });
+}
+
+function toggleBrokerDirectory(open) {
+  const directory = $("#symBrokerDirectory");
+  if (!directory) return;
+  directory.hidden = !open;
+  $("#symResultsPane").hidden = open;
+  $("#symTabs").hidden = open;
+  $("#symBrokerDirectoryBtn").setAttribute("aria-pressed", open ? "true" : "false");
+  $("#symBrokerDirectoryBtn").classList.toggle("active", open);
+}
+
 function paintSymSearch(q = "") {
   const s = q.trim().toLowerCase();
   const recents = recentList().filter((k) => SYMBOLS[k]);
-  const categories = [["all", "All"], ["Stocks", "Stocks"], ["Funds", "Funds"], ["Futures", "Futures"], ["Forex", "Forex"], ["Crypto", "Crypto"], ["Indices", "Indices"], ["Bonds", "Bonds"], ["Economy", "Economy"], ["Options", "Options"]];
-  const supportedCategories = new Set(["all", "Forex", "Crypto", "Indices", "Futures"]);
+  const categories = [["all", "All"], ["Forex", "Forex"], ["Crypto", "Crypto"], ["Indices", "Indices"], ["Commodities", "Commodities"]];
+  const supportedCategories = new Set(["all", "Forex", "Crypto", "Indices", "Commodities"]);
   const tabs = categories.concat(recents.length ? [["recent", "Recent"]] : []).concat(state.watch.length ? [["watch", "Watchlist"]] : []);
   if (!tabs.some(([v]) => v === symCls)) symCls = "all";
   $("#symTabs").innerHTML = tabs
@@ -1978,6 +2014,7 @@ function paintSymSearch(q = "") {
   else if (symCls === "watch")
     rows = state.watch.filter((k) => SYMBOLS[k]).map((k) => [k, SYMBOLS[k]]);
   else if (symCls !== "all") rows = rows.filter(([, S]) => S.cls === symCls);
+  if (symSource !== "all") rows = rows.filter(([, S]) => S.provider === symSource);
   if (s)
     /* Exact ticker first, then ticker prefix, then everything else — so "eu"
        puts EURUSD above the pair whose description happens to say "euro". */
@@ -2001,7 +2038,12 @@ function paintSymSearch(q = "") {
   rows.forEach(([k, S], i) => host.appendChild(makeSymbolSearchRow(k, S, i)));
   if (!rows.length) {
     const empty = document.createElement("div"); empty.className = "empty";
-    empty.textContent = !supportedCategories.has(symCls) && !["recent", "watch"].includes(symCls)
+    const unavailableSource = { oanda: "OANDA", fxcm: "FXCM", forexcom: "FOREX.com", pepperstone: "Pepperstone", deriv: "Deriv" }[symSource];
+    empty.textContent = unavailableSource
+      ? `No verified ${unavailableSource} chart feed is connected. No other broker's prices are shown for this filter.`
+      : symSource === "exness_mt5" && !window.THEONEPERCENT_LOCAL_MT5
+        ? "Exness source requires the local MT5 bridge. No other broker's prices are substituted."
+        : !supportedCategories.has(symCls) && !["recent", "watch"].includes(symCls)
       ? `No verified ${$("#symTabs [data-c='" + symCls + "']")?.textContent || ""} catalog is connected yet.`
       : q ? `No local match for “${q}”. Searching connected provider catalogs…` : "No instruments in this view yet.";
     host.appendChild(empty);
@@ -2023,7 +2065,7 @@ function paintSymSearch(q = "") {
   });
   $("#symCount").textContent = rows.length
     ? `${rows.length} instrument${rows.length === 1 ? "" : "s"}`
-    : "No instruments in this view";
+    : symSource === "all" ? "No instruments in this view" : "No results from this source";
   $$("#symList [data-add]").forEach(
     (b) =>
       (b.onclick = (e) => {
@@ -2048,6 +2090,8 @@ let catalogSearchCategory = "";
 function loadProviderCatalog(query, category, offset = 0) {
   if (catalogSearchTimer) clearTimeout(catalogSearchTimer);
   const serial = ++catalogSearchSerial;
+  if (symSource !== "all" && !["binance", "exness_mt5"].includes(symSource)) return;
+  if (symSource === "exness_mt5" && !window.THEONEPERCENT_LOCAL_MT5) return;
   const localMarkets = {
     Forex: "forex", "Crypto CFD": "crypto_cfd", "Commodity CFD": "commodity_cfd",
     "Index CFD": "index_cfd", "Stock CFD": "stock_cfd", "Other CFD": "other_cfd",
@@ -2059,11 +2103,11 @@ function loadProviderCatalog(query, category, offset = 0) {
   catalogSearchTimer = setTimeout(async () => {
     try {
       const page = await Feed.searchCatalog(query, 50, offset, market);
-      if (serial !== catalogSearchSerial || query !== $("#symSearch").value.trim().toLowerCase() || category !== symCls) return;
+      if (serial !== catalogSearchSerial || query !== $("#symSearch").value.trim().toLowerCase() || category !== symCls || symSource !== $("#symSourceFilter").value) return;
       const rows = page.data.filter((record) =>
         (record.provider === "binance" && record.venue === "BINANCE_SPOT") ||
         (window.THEONEPERCENT_LOCAL_MT5 && record.provider === "exness_mt5")
-      );
+      ).filter((record) => symSource === "all" || record.provider === symSource);
       const host = $("#symList");
       rows.forEach((record) => {
         const rawCode = String(record.symbol || "").toUpperCase();
@@ -2118,12 +2162,12 @@ function loadProviderCatalog(query, category, offset = 0) {
       if (page.catalog_status === "partial_fallback") {
         const notice = document.createElement("div");
         notice.className = "empty provider-catalog-warning";
-        notice.textContent = page.catalog_warning;
+        notice.textContent = "Provider catalog is temporarily unavailable. Showing verified local matches only.";
         host.appendChild(notice);
       } else if (page.catalog_status === "unavailable") {
         const notice = document.createElement("div");
         notice.className = "empty provider-catalog-warning";
-        notice.textContent = "Local Exness MT5 catalog unavailable. " + (page.catalog_error || "Open the Exness MT5 terminal and restart the local bridge.");
+        notice.textContent = "Provider catalog is temporarily unavailable. Local instrument references remain available.";
         host.appendChild(notice);
       }
       catalogSearchOffset = offset + page.data.length;
@@ -2146,8 +2190,9 @@ function loadProviderCatalog(query, category, offset = 0) {
     } catch (error) {
       if (serial === catalogSearchSerial) {
         const notice = document.createElement("div");
-        notice.className = "empty";
-        notice.textContent = (window.THEONEPERCENT_LOCAL_MT5 ? "Local Exness MT5 catalog unavailable. " : "Binance provider catalog unavailable. ") + error.message;
+        notice.className = "empty provider-catalog-warning";
+        const providerName = symSource === "exness_mt5" ? "Exness MT5" : symSource === "binance" ? "Binance" : "Connected provider";
+        notice.textContent = `${providerName} catalog is temporarily unreachable. Local results remain available; no substitute prices were loaded.`;
         $("#symList").appendChild(notice);
       }
     }
@@ -3740,9 +3785,21 @@ $("#symBtn").onclick = () => {
 };
 $("#symSearch").oninput = (e) => {
   symSel = 0;
+  if (!$("#symBrokerDirectory").hidden) toggleBrokerDirectory(false);
   paintSymSearch(e.target.value);
 };
 $("#symSearch").onkeydown = symKeys;
+$("#symSourceFilter").onchange = (e) => {
+  symSource = e.target.value;
+  symSel = 0;
+  if (!$("#symBrokerDirectory").hidden) toggleBrokerDirectory(false);
+  paintSymSearch($("#symSearch").value);
+};
+$("#symBrokerDirectoryBtn").onclick = () => {
+  const open = $("#symBrokerDirectory").hidden;
+  if (open) renderBrokerDirectory();
+  toggleBrokerDirectory(open);
+};
 $("#indBtn").onclick = () => {
   show("#indModal");
   paintInd(($("#indSearch").value = ""));

@@ -555,22 +555,42 @@
           </div>
           <button class="x" data-close aria-label="Close">✕</button>
         </div>
-        <div class="search symbol-search-input">
-          <label class="sr-only" for="symSearch">Search symbols</label
-          ><svg class="symbol-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input
-            id="symSearch"
-            placeholder="Symbol, ISIN, or description..."
-            autocomplete="off"
-            aria-describedby="symCount"
-          />
+        <div class="symbol-search-controls">
+          <div class="search symbol-search-input">
+            <label class="sr-only" for="symSearch">Search symbols</label
+            ><svg class="symbol-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input
+              id="symSearch"
+              placeholder="Symbol, ISIN, or description..."
+              autocomplete="off"
+              aria-describedby="symCount"
+            />
+          </div>
+          <label class="symbol-source-filter">
+            <span class="sr-only">Filter instruments by source</span>
+            <select id="symSourceFilter" aria-label="All sources">
+              <option value="all">All sources</option>
+              <option value="binance">Binance · spot</option>
+              <option value="exness_mt5">Exness · local MT5</option>
+              <option value="oanda">OANDA · not connected</option>
+              <option value="fxcm">FXCM · not connected</option>
+              <option value="forexcom">FOREX.com · not connected</option>
+              <option value="pepperstone">Pepperstone · not connected</option>
+              <option value="deriv">Deriv · not connected</option>
+            </select>
+          </label>
         </div>
-        <div
-          class="stabs"
-          id="symTabs"
-          role="tablist"
-          aria-label="Asset class"
-        ></div>
-        <div class="sheet-b"><div id="symList" role="listbox" aria-label="Instruments"></div></div>
+        <div class="symbol-search-tabbar">
+          <div class="stabs" id="symTabs" role="tablist" aria-label="Asset class"></div>
+          <button id="symBrokerDirectoryBtn" class="broker-directory-trigger" type="button" aria-pressed="false">Recommended brokers</button>
+        </div>
+        <section id="symBrokerDirectory" class="symbol-broker-directory" aria-label="Broker directory" hidden>
+          <div class="broker-directory-heading">
+            <b>Broker directory</b>
+            <span>Official sites only. TheOnePercent is not affiliated with these brokers; verify local eligibility, fees, and terms.</span>
+          </div>
+          <div id="symBrokerCards" class="broker-directory-grid"></div>
+        </section>
+        <div class="sheet-b" id="symResultsPane"><div id="symList" role="listbox" aria-label="Instruments"></div></div>
         <div class="sheet-f"><span id="symCount" class="hint"></span><span class="symbol-search-keys">↑ ↓ to navigate · Enter to select · Esc to close</span></div>
       </div>
     </div>
