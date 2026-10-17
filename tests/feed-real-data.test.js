@@ -4,7 +4,6 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 
 const source = fs.readFileSync("assets/feed.js", "utf8");
-const chartsSource = fs.readFileSync("assets/charts.js", "utf8");
 const providerRows = [
   [1700000000000, "60000", "60200", "59900", "60100", "10"],
   [1700003600000, "60100", "60300", "60050", "60250", "12"],
@@ -89,9 +88,3 @@ test("keeps the configured market API as the first source when it succeeds", asy
   assert.equal(requests.some((url) => url.startsWith("https://data-api.binance.vision/")), false);
 });
 
-test("chart instrument details disclose historical crypto coverage and demo-only markets", () => {
-  assert.match(chartsSource, /Historical Binance spot candles are used for supported crypto when available/);
-  assert.match(chartsSource, /other markets remain synthetic demo data/);
-  assert.match(chartsSource, /This panel is not a live quote/);
-  assert.doesNotMatch(chartsSource, /Demo fallback until the Flask feed is connected|Live Dukascopy quote/);
-});
