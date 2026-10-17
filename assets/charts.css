@@ -3871,120 +3871,76 @@ body[data-page="charts"] .dwin { display:none !important; }
 body[data-page="charts"] .leg { max-width:min(330px, 55%); }
 body[data-page="charts"] .leg .leg-row { max-width:100%; }
 
-/* Source-aware instrument picker. Values are deliberately omitted here: the
-   catalog is reference data, and this view must not imply a quote or live feed. */
-body[data-page="charts"] #symModal .sheet {
-  width: min(900px, 96vw);
-  max-height: min(760px, 90vh);
-  display: flex;
-  flex-direction: column;
-  border-radius: 8px;
+/* Compact, source-aware TradingView-inspired instrument picker. */
+body[data-page="charts"] #symModal .sheet { display:flex; flex-direction:column; width:min(660px,calc(100vw - 24px)); max-height:min(580px,calc(100dvh - 28px)); border:1px solid var(--line-strong); border-radius:9px; background:var(--surface); box-shadow:0 22px 70px rgba(0,0,0,.32); }
+body[data-page="charts"] #symModal .sheet-h { flex:0 0 auto; justify-content:space-between; min-height:52px; padding:0 16px; border-bottom:0; }
+body[data-page="charts"] #symModal .sheet-h b { color:var(--ink); font-size:16px; font-weight:700; letter-spacing:-.015em; }
+body[data-page="charts"] #symModal .sh-sub { display:none; }
+body[data-page="charts"] #symModal .x { display:grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:5px; color:var(--muted); font-size:15px; }
+body[data-page="charts"] #symModal .x:hover { color:var(--ink); background:var(--surface-2); }
+body[data-page="charts"] #symModal .symbol-search-input { position:relative; display:flex; align-items:center; flex:0 0 auto; min-height:40px; margin:0 16px 12px; padding:0 11px; border:1px solid var(--line-strong); border-radius:7px; background:var(--paper); transition:border-color .14s,box-shadow .14s; }
+body[data-page="charts"] #symModal .symbol-search-input:focus-within { border-color:#2962ff; box-shadow:0 0 0 1px #2962ff; }
+body[data-page="charts"] #symModal .symbol-search-icon { width:16px; height:16px; flex:0 0 auto; color:var(--faint); }
+body[data-page="charts"] #symModal .symbol-search-input input { width:100%; min-width:0; min-height:38px; padding:0 0 0 9px; border:0; outline:0; background:transparent; color:var(--ink); font:inherit; font-size:13px; box-shadow:none; }
+body[data-page="charts"] #symModal .symbol-search-input input::placeholder { color:var(--faint); opacity:1; }
+body[data-page="charts"] #symModal .stabs { display:flex; flex:0 0 auto; flex-wrap:nowrap; gap:5px; padding:0 14px 11px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--line); }
+body[data-page="charts"] #symModal .stabs::-webkit-scrollbar { display:none; }
+body[data-page="charts"] #symModal .stab { flex:0 0 auto; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--muted); font-size:10.5px; font-weight:600; line-height:1.35; cursor:pointer; }
+body[data-page="charts"] #symModal .stab:hover:not(.unsupported) { border-color:var(--line-strong); color:var(--ink); }
+body[data-page="charts"] #symModal .stab.on { border-color:#131722; background:#131722; color:#fff; box-shadow:none; }
+body[data-page="charts"] #symModal .stab.unsupported { opacity:.44; cursor:not-allowed; }
+[data-theme="dark"] body[data-page="charts"] #symModal .stab.on { border-color:#e0e3eb; background:#e0e3eb; color:#131722; }
+body[data-page="charts"] #symModal .stab:focus-visible, body[data-page="charts"] #symModal .x:focus-visible, body[data-page="charts"] #symList .sr-r button:focus-visible { outline:2px solid #2962ff; outline-offset:2px; }
+body[data-page="charts"] #symModal .sheet-b { flex:1 1 auto; min-height:120px; height:auto; max-height:none; padding:4px 8px; overflow:auto; overscroll-behavior:contain; }
+body[data-page="charts"] #symList .sr { display:flex; align-items:center; gap:10px; min-height:40px; height:40px; padding:0 8px; border:0; border-radius:4px; background:transparent; color:var(--ink); cursor:pointer; }
+body[data-page="charts"] #symList .sr + .sr { border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent); }
+body[data-page="charts"] #symList .sr:hover { background:var(--surface-2); }
+body[data-page="charts"] #symList .sr.cur { background:color-mix(in srgb,#2962ff 10%,var(--surface)); box-shadow:inset 2px 0 #2962ff; }
+body[data-page="charts"] #symList .sr-main { display:flex; align-items:center; flex:1 1 auto; gap:9px; min-width:0; }
+body[data-page="charts"] #symList .symbol-avatar { display:flex; align-items:center; justify-content:center; position:relative; flex:0 0 22px; width:22px; height:22px; overflow:hidden; border:1px solid var(--line); border-radius:50%; background:var(--surface-2); color:var(--ink); font-size:10px; font-weight:700; line-height:1; }
+body[data-page="charts"] #symList .symbol-avatar-pair { overflow:visible; border:0; background:transparent; }
+body[data-page="charts"] #symList .symbol-avatar-pair span { display:grid; place-items:center; position:absolute; top:2px; width:16px; height:16px; overflow:hidden; border:1px solid var(--surface); border-radius:50%; background:var(--surface-2); font-size:11px; }
+body[data-page="charts"] #symList .symbol-avatar-pair span:first-child { left:0; z-index:1; }
+body[data-page="charts"] #symList .symbol-avatar-pair span:last-child { right:0; }
+body[data-page="charts"] #symList .symbol-avatar-crypto { background:#f7931a; color:#fff; border-color:transparent; font-size:14px; }
+body[data-page="charts"] #symList .symbol-avatar-metal { background:#b9892f; color:#fff; border-color:transparent; font-size:9px; }
+body[data-page="charts"] #symList .sr-copy { display:flex; align-items:baseline; gap:8px; min-width:0; overflow:hidden; }
+body[data-page="charts"] #symList .sr-n { display:inline-flex; flex:0 0 auto; margin:0; font-size:11.5px; letter-spacing:.015em; }
+body[data-page="charts"] #symList .sr-n strong { font-weight:700; font-variant-numeric:tabular-nums; }
+body[data-page="charts"] #symList .sr-d { display:block; min-width:0; margin:0; overflow:hidden; color:var(--muted); font-size:11px; font-weight:400; text-overflow:ellipsis; white-space:nowrap; }
+body[data-page="charts"] #symList .sr-market { flex:0 1 84px; overflow:hidden; color:var(--muted); font-size:10px; text-overflow:ellipsis; text-transform:lowercase; white-space:nowrap; }
+body[data-page="charts"] #symList .sr-source { display:inline-flex; align-items:center; flex:0 0 126px; min-width:0; overflow:hidden; color:var(--muted); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+body[data-page="charts"] #symList .sr-source::before { content:""; flex:0 0 6px; width:6px; height:6px; margin-right:6px; border-radius:50%; background:#89909f; }
+body[data-page="charts"] #symList .sr-source[data-source="binance"]::before { background:#f0b90b; }
+body[data-page="charts"] #symList .sr-source[data-source="exness_mt5"]::before { background:#1a9c75; }
+body[data-page="charts"] #symList .sr-access { display:grid; place-items:center; flex:0 0 12px; width:12px; height:18px; }
+body[data-page="charts"] #symList .sr-access > span { width:6px; height:6px; border-radius:50%; background:#89909f; }
+body[data-page="charts"] #symList .sr-access.available > span { background:#2eaa72; }
+body[data-page="charts"] #symList .sr-r { display:flex; flex:0 0 24px; align-items:center; justify-content:center; gap:0; }
+body[data-page="charts"] #symList .sr-r button { display:grid; place-items:center; width:24px; height:24px; padding:0; border:0; border-radius:4px; background:transparent; color:var(--faint); font-size:16px; line-height:1; cursor:pointer; }
+body[data-page="charts"] #symList .sr-r button:hover { color:#d9a514; background:var(--surface-2); }
+body[data-page="charts"] #symList .sr-r button.is-favorite { color:#d9a514; }
+body[data-page="charts"] #symList .sr-r button:disabled { cursor:not-allowed; opacity:.4; }
+body[data-page="charts"] #symList .source-conflict { cursor:not-allowed; opacity:.62; }
+body[data-page="charts"] #symList .source-conflict:hover { background:transparent; }
+body[data-page="charts"] #symList .empty { padding:18px 10px; color:var(--muted); font-size:11px; }
+body[data-page="charts"] #symModal .sheet-f { display:flex; flex:0 0 auto; align-items:center; justify-content:space-between; gap:12px; min-height:36px; margin:0; padding:7px 15px; border-top:1px solid var(--line); color:var(--faint); font-size:10px; }
+body[data-page="charts"] #symModal .symbol-search-keys { color:var(--muted); white-space:nowrap; }
+@media (max-width:620px) {
+  body[data-page="charts"] #symModal .sheet { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); border-radius:8px; }
+  body[data-page="charts"] #symModal .sheet-h { min-height:48px; padding:0 12px; }
+  body[data-page="charts"] #symModal .symbol-search-input { margin:0 12px 10px; }
+  body[data-page="charts"] #symModal .stabs { padding:0 10px 9px; }
+  body[data-page="charts"] #symList .sr { gap:7px; padding:0 5px; }
+  body[data-page="charts"] #symList .sr-market { display:none; }
+  body[data-page="charts"] #symList .sr-source { flex:0 1 106px; }
+  body[data-page="charts"] #symList .sr-copy { gap:5px; }
+  body[data-page="charts"] #symList .sr-d { font-size:10px; }
+  body[data-page="charts"] #symModal .sheet-f { align-items:flex-start; flex-direction:column; gap:2px; padding:6px 12px; }
 }
-body[data-page="charts"] #symModal .sheet-h { padding: 14px 18px; }
-body[data-page="charts"] #symModal .sheet-h b { font-size: 15px; letter-spacing: -.01em; }
-body[data-page="charts"] #symModal .sh-sub { margin-top: 4px; font-size: 11px; }
-body[data-page="charts"] #symModal .search {
-  margin: 14px 16px 12px;
-  padding: 0;
-  background: var(--term-raised, var(--paper));
-  border: 1px solid var(--term-line-strong, var(--line-strong));
-  border-radius: 5px;
-}
-body[data-page="charts"] #symModal .search input {
-  display: block;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 12px;
-  color: var(--term-text, var(--text));
-  background: transparent;
-  border: 0;
-  outline: 0;
-  font: inherit;
-  font-size: 13px;
-}
-body[data-page="charts"] #symModal .search:focus-within { border-color: var(--term-accent, var(--accent)); }
-body[data-page="charts"] #symModal .stabs {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  gap: 3px;
-  padding: 0 16px 10px;
-}
-body[data-page="charts"] #symModal .stab {
-  flex: 0 0 auto;
-  border: 0;
-  border-radius: 4px;
-  padding: 7px 10px;
-  color: var(--term-muted, var(--muted));
-  font-size: 11px;
-  font-weight: 500;
-}
-body[data-page="charts"] #symModal .stab.on {
-  color: var(--term-text, var(--text));
-  background: var(--term-hover, var(--brand-soft));
-  box-shadow: inset 0 -2px var(--term-accent, var(--accent));
-}
-body[data-page="charts"] #symModal .stab.unsupported { opacity: .42; cursor: not-allowed; }
-body[data-page="charts"] .sym-columns {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(115px, .7fr) minmax(170px, 1fr) minmax(120px, .7fr) 28px;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 18px;
-  border-top: 1px solid var(--term-line, var(--line));
-  border-bottom: 1px solid var(--term-line, var(--line));
-  color: var(--term-muted, var(--muted));
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-}
-body[data-page="charts"] #symModal .sheet-b {
-  flex: 1 1 auto;
-  min-height: 210px;
-  height: auto;
-  max-height: none;
-  padding: 4px 8px;
-  overflow: auto;
-}
-body[data-page="charts"] #symList .sr {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(115px, .7fr) minmax(170px, 1fr) minmax(120px, .7fr) 28px;
-  gap: 14px;
-  min-height: 52px;
-  padding: 7px 10px;
-  border-radius: 4px;
-  border-bottom: 1px solid color-mix(in srgb, var(--term-line, var(--line)) 72%, transparent);
-}
-body[data-page="charts"] #symList .sr:hover { background: var(--term-hover, var(--surface-2)); }
-body[data-page="charts"] #symList .sr.cur { background: color-mix(in srgb, var(--term-accent, var(--accent)) 13%, transparent); box-shadow: inset 2px 0 var(--term-accent, var(--accent)); }
-body[data-page="charts"] #symList .sr-main { min-width: 0; }
-body[data-page="charts"] #symList .sr-n { font-size: 12px; }
-body[data-page="charts"] #symList .sr-n strong { font-weight: 600; }
-body[data-page="charts"] #symList .sr-d { margin-top: 3px; color: var(--term-muted, var(--muted)); }
-body[data-page="charts"] #symList .sr-market,
-body[data-page="charts"] #symList .sr-source,
-body[data-page="charts"] #symList .sr-access {
-  overflow: hidden;
-  color: var(--term-muted, var(--muted));
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-body[data-page="charts"] #symList .sr-access { color: var(--term-text, var(--text)); }
-body[data-page="charts"] #symList .sr-r { justify-content: center; gap: 0; }
-body[data-page="charts"] #symModal .sheet-f { border-top: 1px solid var(--term-line, var(--line)); padding: 9px 17px; }
-body[data-page="charts"] #symList .source-conflict { cursor: not-allowed; opacity: .62; }
-body[data-page="charts"] #symList .source-conflict:hover { background: transparent; }
-body[data-page="charts"] #symList .sr-r button:disabled { cursor: not-allowed; }
-body[data-page="charts"] #symList .provider-catalog-warning { color: var(--term-muted, var(--muted)); }
-@media (max-width: 820px) {
-  body[data-page="charts"] #symModal .sheet { width: min(620px, 96vw); }
-  body[data-page="charts"] .sym-columns { display: none; }
-  body[data-page="charts"] #symList .sr { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 9px 10px; }
-  body[data-page="charts"] #symList .sr-main { grid-column: 1; grid-row: 1; }
-  body[data-page="charts"] #symList .sr-market { grid-column: 1; grid-row: 2; }
-  body[data-page="charts"] #symList .sr-source { grid-column: 1; grid-row: 3; }
-  body[data-page="charts"] #symList .sr-access { grid-column: 2; grid-row: 2 / span 2; text-align: right; }
-  body[data-page="charts"] #symList .sr-r { grid-column: 2; grid-row: 1; }
+@media (max-width:390px) {
+  body[data-page="charts"] #symList .sr { gap:5px; }
+  body[data-page="charts"] #symList .symbol-avatar { flex-basis:20px; width:20px; height:20px; }
+  body[data-page="charts"] #symList .sr-source { flex-basis:82px; font-size:9px; }
+  body[data-page="charts"] #symList .sr-access { display:none; }
 }

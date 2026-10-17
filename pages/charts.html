@@ -551,32 +551,27 @@
       <div class="sheet">
         <div class="sheet-h">
           <div>
-            <b>Find an instrument</b>
-            <div class="sh-sub">Search supported markets and compare verified data sources.</div>
+            <b>Symbol search</b>
           </div>
           <button class="x" data-close aria-label="Close">✕</button>
         </div>
-        <div class="search">
+        <div class="search symbol-search-input">
           <label class="sr-only" for="symSearch">Search symbols</label
-          ><input
+          ><svg class="symbol-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input
             id="symSearch"
-            placeholder="Search symbol, name, market, or source…"
+            placeholder="Symbol, ISIN, or description..."
             autocomplete="off"
             aria-describedby="symCount"
           />
         </div>
-        <!-- Browsing by asset class matters as much as searching: nobody
-             types DE40 from memory. Recent and Watchlist only appear once
-             there is something in them. -->
         <div
           class="stabs"
           id="symTabs"
           role="tablist"
           aria-label="Asset class"
         ></div>
-        <div class="sym-columns" aria-hidden="true"><span>Instrument</span><span>Market</span><span>Source</span><span>Availability</span><span></span></div>
         <div class="sheet-b"><div id="symList" role="listbox" aria-label="Instruments"></div></div>
-        <div class="sheet-f"><span id="symCount" class="hint"></span></div>
+        <div class="sheet-f"><span id="symCount" class="hint"></span><span class="symbol-search-keys">↑ ↓ to navigate · Enter to select · Esc to close</span></div>
       </div>
     </div>
 
