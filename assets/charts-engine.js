@@ -3265,12 +3265,15 @@ class Chart {
       state.look.quoteBadge === false
     )
       return "";
-    const half = (S.spread * S.tick) / 2;
+    const quote = Feed.quote(this.cfg.sym);
+    if (!quote || !Number.isFinite(quote.bid) || !Number.isFinite(quote.ask) || quote.bid <= 0 || quote.ask < quote.bid)
+      return "";
+    const spreadTicks = (quote.ask - quote.bid) / (S.tick || 1);
     return (
       `<div class="leg-q">` +
-      `<span class="qb-s" title="Bid — what you sell at">${fmt(b.c - half, this.cfg.sym)}<i>sell</i></span>` +
-      `<span class="qb-m" title="The spread on ${S.venue}, half either side of the last close">${S.spread.toFixed(1)}<i>${S.tickName}</i></span>` +
-      `<span class="qb-b" title="Ask — what you buy at">${fmt(b.c + half, this.cfg.sym)}<i>buy</i></span>` +
+      `<span class="qb-s" title="Bid — what you sell at">${fmt(quote.bid, this.cfg.sym)}<i>sell</i></span>` +
+      `<span class="qb-m" title="Current bid/ask spread">${spreadTicks.toFixed(1)}<i>${S.tickName}</i></span>` +
+      `<span class="qb-b" title="Ask — what you buy at">${fmt(quote.ask, this.cfg.sym)}<i>buy</i></span>` +
       `</div>`
     );
   }
@@ -3281,10 +3284,16 @@ class Chart {
       this.bdg.innerHTML = "";
       return;
     }
+    const historical = Feed.isHistorical(this.cfg.sym, this.cfg.iv);
+    const feedBadge = historical
+      ? `<span class="bdg">Spot historical</span>`
+      : Feed.isLive(this.cfg.sym)
+        ? `<span class="bdg live">Quote connected</span>`
+        : `<span class="bdg">Demo fallback</span>`;
     this.bdg.innerHTML =
       (R.on
         ? `<span class="bdg rep">Replay ${R.blind ? "· blind" : ""}</span>`
-        : `<span class="bdg live">${Feed.isLive(this.cfg.sym) ? "Live · Dukascopy" : "Demo fallback"}</span>`) +
+        : feedBadge) +
       (marks
         ? `<span class="bdg">${marks} drawing${marks > 1 ? "s" : ""}</span>`
         : "") +

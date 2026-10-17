@@ -4,6 +4,8 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 
 const source = fs.readFileSync("assets/feed.js", "utf8");
+const chartSource = fs.readFileSync("assets/charts.js", "utf8");
+const engineSource = fs.readFileSync("assets/charts-engine.js", "utf8");
 const providerRows = [
   [1700000000000, "60000", "60200", "59900", "60100", "10"],
   [1700003600000, "60100", "60300", "60050", "60250", "12"],
@@ -86,5 +88,15 @@ test("keeps the configured market API as the first source when it succeeds", asy
   assert.equal(feed.isHistorical("BTCUSD", "1H"), true);
   assert.deepEqual(feed.history("BTCUSD", "1H").map((bar) => bar.c), [60100, 60250, 60350]);
   assert.equal(requests.some((url) => url.startsWith("https://data-api.binance.vision/")), false);
+});
+
+test("chart labels distinguish historical spot data and never synthesize bid/ask quotes", () => {
+  assert.match(engineSource, /Feed\.isHistorical\(this\.cfg\.sym, this\.cfg\.iv\)/);
+  assert.match(engineSource, /Spot historical/);
+  assert.match(engineSource, /Number\.isFinite\(quote\.bid\).*Number\.isFinite\(quote\.ask\)/s);
+  assert.doesNotMatch(engineSource, /Live · Dukascopy/);
+  assert.match(chartSource, /other markets remain synthetic demo data/);
+  assert.match(chartSource, /This panel is not a live quote/);
+  assert.doesNotMatch(chartSource, /Demo fallback until the Flask feed is connected/);
 });
 

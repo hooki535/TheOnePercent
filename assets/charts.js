@@ -1195,7 +1195,7 @@ function specHTML(sym, S) {
           `<div class="sc-sr"${t ? ` title="${t}"` : ""}><span>${k}</span><b class="mono">${v}</b></div>`,
       )
       .join("")}
-    <p class="sc-sn">Read from the same instrument table as the position panel and calculators. ${Feed.isLive(S.symbol) ? "Live Dukascopy quote." : "Demo fallback until the Flask feed is connected."}</p>
+    <p class="sc-sn">Read from the same instrument table as the position panel and calculators. Historical Binance spot candles are used for supported crypto when available; other markets remain synthetic demo data. This panel is not a live quote.</p>
   </div>`;
 }
 
