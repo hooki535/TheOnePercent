@@ -692,9 +692,19 @@ body[data-page="charts"] #symList .sr-source { display: inline-flex; align-items
 body[data-page="charts"] #symList .sr-source::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: #89909f; }
 body[data-page="charts"] #symList .sr-source[data-source="binance"]::before { background: #f0b90b; }
 body[data-page="charts"] #symList .sr-source[data-source="exness_mt5"]::before { background: #1a9c75; }
-body[data-page="charts"] #symList .sr-access { display: grid; flex: 0 0 10px; place-items: center; }
-body[data-page="charts"] #symList .sr-access > span { width: 6px; height: 6px; border-radius: 50%; background: #89909f; }
-body[data-page="charts"] #symList .sr-access.available > span { background: #2eaa72; }
+body[data-page="charts"] #symList .sr-access { display: flex; align-items: center; justify-content: flex-start; flex: 0 0 86px; gap: 5px; min-width: 0; overflow: hidden; font-size: 9px; white-space: nowrap; }
+body[data-page="charts"] #symList .sr-access > .sr-status-dot { flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: #89909f; }
+body[data-page="charts"] #symList .sr-access > .sr-access-label { width: auto; height: auto; overflow: hidden; border-radius: 0; background: transparent; color: #737987; text-overflow: ellipsis; }
+[data-theme="dark"] body[data-page="charts"] #symList .sr-access > .sr-access-label { color: #a3a7b0; }
+body[data-page="charts"] #symList .sr-access.available > .sr-status-dot { background: #2eaa72; }
+body[data-page="charts"] #symList .broker-source-note { padding: 8px 8px 5px; border-top: 1px solid #e0e3eb; color: #707583; font-size: 9px; font-weight: 600; letter-spacing: .01em; }
+[data-theme="dark"] body[data-page="charts"] #symList .broker-source-note { border-color: #2a2e39; color: #9ca0aa; }
+body[data-page="charts"] #symList .broker-unavailable-row { cursor: not-allowed; }
+body[data-page="charts"] #symList .sr-source[data-source="oanda"]::before { background: #c73e4d; }
+body[data-page="charts"] #symList .sr-source[data-source="fxcm"]::before { background: #54a56c; }
+body[data-page="charts"] #symList .sr-source[data-source="forexcom"]::before { background: #2455ae; }
+body[data-page="charts"] #symList .sr-source[data-source="pepperstone"]::before { background: #cf7540; }
+body[data-page="charts"] #symList .sr-source[data-source="deriv"]::before { background: #e15561; }
 body[data-page="charts"] #symList .sr-r { display: flex; flex: 0 0 24px; justify-content: center; }
 body[data-page="charts"] #symList .sr-r button { display: grid; width: 24px; height: 24px; place-items: center; border: 0; border-radius: 4px; font-size: 16px; }
 body[data-page="charts"] #symList .sr-r button:hover,
