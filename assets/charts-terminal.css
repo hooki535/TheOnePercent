@@ -784,6 +784,8 @@ body[data-page="charts"] .rfly {
   position: fixed !important;
   z-index: 1000;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   min-width: 294px;
   padding: 0 5px 5px;
   overflow-x: hidden;
@@ -791,6 +793,47 @@ body[data-page="charts"] .rfly {
   border-radius: 5px !important;
   background: var(--term-surface) !important;
   box-shadow: 0 12px 32px rgb(0 0 0 / 36%), 0 2px 7px rgb(0 0 0 / 18%);
+}
+body[data-page="charts"] .fly-search {
+  display: flex;
+  flex: 0 0 34px;
+  align-items: center;
+  gap: 7px;
+  margin: 7px 4px 4px;
+  padding: 0 9px;
+  border: 1px solid var(--term-line);
+  border-radius: 4px;
+  color: var(--term-muted);
+  background: var(--term-bg);
+}
+body[data-page="charts"] .fly-search:focus-within {
+  border-color: var(--term-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--term-accent) 25%, transparent);
+}
+body[data-page="charts"] .fly-search > span { font-size: 18px; line-height: 1; }
+body[data-page="charts"] .fly-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--term-text);
+  background: transparent;
+  font: 11px "IBM Plex Sans", sans-serif;
+}
+body[data-page="charts"] .fly-search input::placeholder { color: var(--term-muted); }
+body[data-page="charts"] .fly-results {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+body[data-page="charts"] .fly-w[hidden],
+body[data-page="charts"] .fly-s[hidden],
+body[data-page="charts"] .fly-empty[hidden] { display: none !important; }
+body[data-page="charts"] .fly-empty {
+  padding: 22px 10px;
+  color: var(--term-muted);
+  text-align: center;
+  font-size: 11px;
 }
 body[data-page="charts"] .fly-h {
   position: sticky;
@@ -881,10 +924,16 @@ body[data-page="charts"] .fly-f {
   color: var(--term-muted);
   font-size: 10px;
 }
+body[data-page="charts"] .rfav[draggable="true"] { cursor: grab; }
+body[data-page="charts"] .rfav[draggable="true"] { touch-action: none; }
+body[data-page="charts"] .rfav[draggable="true"]:active { cursor: grabbing; }
+body[data-page="charts"] .rfav.dragging { opacity: .42; }
+body[data-page="charts"] .rfav:focus-visible { outline: 2px solid var(--term-accent); outline-offset: 1px; }
 @media (max-width: 900px) {
   body[data-page="charts"] .crail { flex-basis: 42px; width: auto; padding: 3px 6px; gap: 3px; }
   body[data-page="charts"] .rgrp { flex-basis: 34px; }
   body[data-page="charts"] .rfly { min-width: 0; width: auto; }
+  body[data-page="charts"] .fly-results { max-height: calc(56vh - 86px); }
 }
 @media (max-width: 420px) {
   body[data-page="charts"] .rfly { padding-inline: 4px; }

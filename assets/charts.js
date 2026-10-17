@@ -1396,6 +1396,7 @@ function paintObjects() {
           const o = c.drw.find((x) => x.id === el.dataset.o);
           if (!o) return;
           const a = b.dataset.a;
+          if (a === "eye" || a === "lock") pushUndo();
           if (a === "eye") o.hidden = !o.hidden;
           if (a === "lock") o.locked = !o.locked;
           if (a === "del") {
@@ -2347,29 +2348,32 @@ const DRAW_COLORS = [
 let drawEdit = null; /* {chart, obj} */
 
 function editDrawing(chart, obj) {
-  drawEdit = { chart, obj };
+  drawEdit = { chart, obj, historyPushed: false };
   obj.style = Object.assign({}, DRAW_STYLE_DEFAULTS, obj.style || {});
   paintDrawSettings();
   show("#drawModal");
+}
+function ensureDrawEditUndo() {
+  if (!drawEdit || drawEdit.historyPushed) return;
+  pushUndo();
+  drawEdit.historyPushed = true;
 }
 function paintDrawSettings() {
   if (!drawEdit) return;
   const { obj: o, chart: c } = drawEdit,
     st = o.style;
   const name = DRAW[o.t] ? DRAW[o.t].name : o.t;
-  const isShape = ["rect", "channel", "text", "prange"].includes(o.t);
-  const isLine = [
-    "trend",
-    "ray",
-    "xline",
-    "arrow",
-    "hline",
-    "vline",
-    "channel",
-    "fib",
-    "fibext",
-    "measure",
-    "rect",
+  const fibDefaults = o.t === "fibchannel"
+    ? [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.618]
+    : o.t === "fibfan"
+      ? [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
+      : FIBS;
+  const isShape = [
+    "rect", "channel", "ellipse", "triangle", "callout", "gannbox",
+    "regression", "fibchannel", "fibfan", "brush", "highlighter", "text", "prange",
+  ].includes(o.t);
+  const isLine = ![
+    "text", "flag", "prange", "drange", "dprange", "position", "shortpos",
   ].includes(o.t);
   const canExtend = ["trend", "arrow"].includes(o.t);
   const canLabel = ["hline", "trend", "ray", "xline"].includes(o.t);
@@ -2408,6 +2412,11 @@ function paintDrawSettings() {
           ? `<div class="set-r"><span>Fill opacity</span>
         <span class="sw-row"><input type="range" min="0" max="60" step="2" data-k="fill" value="${st.fill}" />
         <b class="mono" style="width:30px;text-align:right">${st.fill}%</b></span></div>`
+          : ""
+      }
+      ${
+        ["fib", "fibext", "fibchannel", "fibfan"].includes(o.t)
+          ? `<div class="set-r"><span>Fibonacci levels</span><input type="text" data-k="levels" value="${drawingLevelsFor(o, fibDefaults).join(", ")}" aria-label="Comma-separated Fibonacci levels" placeholder="0, 0.236, 0.5, 0.618, 1" style="width:220px" /></div><small class="muted">Comma-separated ratios; legacy drawings keep the default levels.</small>`
           : ""
       }
     </div>
@@ -2454,7 +2463,20 @@ function paintDrawSettings() {
     const k = el.dataset.k;
     const handler = () => {
       if (k === "text") {
+        ensureDrawEditUndo();
         o.text = el.value;
+        draw();
+        return;
+      }
+      if (k === "levels") {
+        const parts = el.value.split(",").map((part) => part.trim());
+        const parsed = parts.filter(Boolean).map(Number);
+        const valid = parts.length > 0 && parsed.length === parts.length && parsed.every(Number.isFinite);
+        const normalized = valid ? normalizeDrawingLevels(parsed) : [];
+        el.setAttribute("aria-invalid", !normalized.length);
+        if (!normalized.length) return;
+        ensureDrawEditUndo();
+        o.levels = normalized;
         draw();
         return;
       }
@@ -2466,15 +2488,16 @@ function paintDrawSettings() {
         el.type === "range",
       );
     };
-    el.oninput = handler;
+    if (k !== "levels") el.oninput = handler;
     el.onchange = handler;
   });
   $$("#drawBody [data-t]").forEach(
-    (b) => (b.onclick = () => setStyle(b.dataset.t, !st[b.dataset.t])),
+    (b) => (b.onclick = () => { ensureDrawEditUndo(); setStyle(b.dataset.t, !st[b.dataset.t]); }),
   );
   $$("#drawBody [data-o]").forEach(
     (b) =>
       (b.onclick = () => {
+        ensureDrawEditUndo();
         o[b.dataset.o] = !o[b.dataset.o];
         paintDrawSettings();
         paintObjects();
@@ -2484,6 +2507,7 @@ function paintDrawSettings() {
 }
 function setStyle(k, v, quiet) {
   if (!drawEdit) return;
+  ensureDrawEditUndo();
   drawEdit.obj.style[k] = v;
   if (k === "color") state.drawColor = v;
   draw();
@@ -2499,8 +2523,13 @@ $("#drawApplyType").onclick = () => {
   if (!drawEdit) return;
   const { obj: o, chart: c } = drawEdit,
     n = c.drw.filter((x) => x.t === o.t).length;
+  ensureDrawEditUndo();
   c.drw.forEach((x) => {
-    if (x.t === o.t) x.style = Object.assign({}, o.style);
+    if (x.t === o.t) {
+      x.style = Object.assign({}, o.style);
+      if (Array.isArray(o.levels)) x.levels = o.levels.slice();
+      else delete x.levels;
+    }
   });
   draw();
   toast(

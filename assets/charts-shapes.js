@@ -81,6 +81,7 @@ Object.assign(DRAW, {
 /* Shapes whose hit area is their bounding box rather than a line. The
    engine's `nearest()` consults this instead of its old hard-coded list. */
 const SHAPE_BOXY = new Set([
+  "channel",
   "ellipse",
   "gannbox",
   "fibcircle",
@@ -95,6 +96,9 @@ const SHAPE_BOXY = new Set([
 /* Freehand tools collect points as the pointer moves instead of taking a
    fixed number of clicks. */
 const SHAPE_FREE = new Set(["brush", "highlighter"]);
+const SHAPE_PATH_HIT = new Set([
+  "brush", "highlighter", "triangle", "abcd", "xabcd", "elliott", "headshoulders",
+]);
 
 /* ── helpers ───────────────────────────────────────────────────── */
 
@@ -111,6 +115,56 @@ const GANN_RATIOS = [
 ];
 const FIB_TIME = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55];
 const FIB_LEVELS = [0.236, 0.382, 0.5, 0.618, 0.786, 1];
+const DRAWING_FIB_DEFAULTS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618];
+
+/* Optional per-object levels extend the existing serialized drawing format;
+   legacy drawings without `levels` keep the original defaults. */
+function normalizeDrawingLevels(values) {
+  if (!Array.isArray(values)) return [];
+  const out = [];
+  values.forEach((value) => {
+    const n = typeof value === "number" ? value : Number(String(value).trim());
+    if (!Number.isFinite(n) || n < -10 || n > 10) return;
+    const rounded = Math.round(n * 10000) / 10000;
+    if (!out.some((existing) => existing === rounded)) out.push(rounded);
+  });
+  return out.slice(0, 30);
+}
+
+function drawingLevelsFor(obj, fallback) {
+  const levels = normalizeDrawingLevels(obj && obj.levels);
+  return levels.length ? levels : (Array.isArray(fallback) ? fallback : DRAWING_FIB_DEFAULTS).slice();
+}
+
+function drawingPathHitDistance(points, x, y, closed = false, filled = false) {
+  if (!Array.isArray(points) || !points.length) return Infinity;
+  if (points.length === 1) return Math.hypot(x - points[0].x, y - points[0].y);
+  if (filled && closed) {
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const a = points[i], b = points[j];
+      if ((a.y > y) !== (b.y > y) && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    if (inside) return 0;
+  }
+  let best = Infinity;
+  const count = points.length - 1 + (closed ? 1 : 0);
+  for (let i = 0; i < count; i++) {
+    const a = points[i % points.length], b = points[(i + 1) % points.length];
+    const dx = b.x - a.x, dy = b.y - a.y, len2 = dx * dx + dy * dy;
+    const t = len2 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / len2)) : 0;
+    best = Math.min(best, Math.hypot(x - (a.x + t * dx), y - (a.y + t * dy)));
+  }
+  return best;
+}
+
+function drawingEllipseHitDistance(x1, y1, x2, y2, x, y) {
+  const rx = Math.abs(x2 - x1) / 2, ry = Math.abs(y2 - y1) / 2;
+  if (rx < 1 || ry < 1) return Math.hypot(x - (x1 + x2) / 2, y - (y1 + y2) / 2);
+  const nx = (x - (x1 + x2) / 2) / rx, ny = (y - (y1 + y2) / 2) / ry;
+  const radial = Math.hypot(nx, ny);
+  return radial <= 1 ? 0 : (radial - 1) * Math.min(rx, ry);
+}
 
 function shapeLabel(c, x, y, text, bg, fg, align) {
   c.save();
@@ -440,7 +494,7 @@ const SHAPES = {
     if (!P[2]) return;
     const off = P[2].y - P[1].y;
     c.font = '9.5px "IBM Plex Mono",monospace';
-    [0].concat(FIB_LEVELS, [1.618]).forEach((l) => {
+    drawingLevelsFor(o, [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.618]).forEach((l) => {
       const dy = off * l;
       const first = l === 0 || l === 1;
       c.save();
@@ -493,7 +547,7 @@ const SHAPES = {
     c.fillStyle = H.col;
     c.fillRect(x0, y0, dx, dy);
     c.restore();
-    FIB_LEVELS.concat([0]).forEach((l) => {
+    drawingLevelsFor(o, [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]).forEach((l) => {
       c.save();
       c.globalAlpha = (H.ghost ? 0.6 : 1) * (l === 0 || l === 1 ? 1 : 0.7);
       c.setLineDash(l === 0 || l === 1 ? [] : dashOf(o, [5, 4]));
@@ -960,6 +1014,9 @@ const SHAPES = {
    generalised. Each entry is a list of [time fraction, price fraction]
    from the first anchor to the second, for points 2..n. */
 const SEED = {
+  /* The third Fibonacci extension anchor is distinct from the second so the
+     initial drawing is editable and does not collapse onto the 1.0 level. */
+  fibext: [[0.55, 0.55]],
   channel: [[1, 1.35]],
   flatchannel: [[1, 1]],
   fibchannel: [[1, 1.35]],

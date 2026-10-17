@@ -1466,7 +1466,7 @@ class Chart {
         }
         this.drw.push(o);
         state.selObj = o.id;
-        setTool("cursor");
+        if (typeof keepToolAfterPlacement !== "function" || !keepToolAfterPlacement(state.tool)) setTool("cursor");
         paintObjects();
         draw();
         toast(
@@ -1581,6 +1581,7 @@ class Chart {
             DRAW[o.t].name + " drawn",
             "Freehand keeps every point, so it moves with the bars it was drawn over.",
           );
+          if (typeof keepToolAfterPlacement !== "function" || !keepToolAfterPlacement(o.t)) setTool("cursor");
         }
         this.drag = null;
         draw();
@@ -1614,7 +1615,7 @@ class Chart {
                 : "Snapped to the nearest OHLC — magnet is on. Drag it, or use the Objects tab.",
             );
           }
-          if (o.t !== "measure") setTool("cursor");
+          if (typeof keepToolAfterPlacement !== "function" ? o.t !== "measure" : !keepToolAfterPlacement(o.t)) setTool("cursor");
         }
         this.pending = null;
       }
@@ -1807,7 +1808,19 @@ class Chart {
       let d = Infinity;
       if (o.t === "hline") d = Math.abs(this.y(o.pts[0].p) - p.y);
       else if (o.t === "vline") d = Math.abs(this.x(o.pts[0].i) - p.x);
-      else if (
+      else if (o.t === "ellipse" && typeof drawingEllipseHitDistance === "function") {
+        const x1 = this.x(o.pts[0].i),
+          x2 = this.x(o.pts[1].i),
+          y1 = this.y(o.pts[0].p),
+          y2 = this.y(o.pts[1].p);
+        d = drawingEllipseHitDistance(x1, y1, x2, y2, p.x, p.y);
+      } else if (
+        (typeof SHAPE_PATH_HIT !== "undefined" && SHAPE_PATH_HIT.has(o.t)) &&
+        typeof drawingPathHitDistance === "function"
+      ) {
+        const points = o.pts.map((q) => ({ x: this.x(q.i), y: this.y(q.p) }));
+        d = drawingPathHitDistance(points, p.x, p.y, o.t === "triangle", o.t === "triangle");
+      } else if (
         o.t === "rect" ||
         o.t === "prange" ||
         o.t === "fib" ||
@@ -2825,7 +2838,7 @@ class Chart {
       const anchor = o.t === "fibext" && o.pts[2] ? o.pts[2].p : null;
       const x1 = Math.min(P[0].x, P[1].x),
         x2 = pw - 46;
-      FIBS.forEach((l) => {
+      (typeof drawingLevelsFor === "function" ? drawingLevelsFor(o, FIBS) : FIBS).forEach((l) => {
         const p = anchor != null ? anchor + (b - a) * l : a + (b - a) * l,
           y = this.y(p);
         c.strokeStyle = l === 0 || l === 1 ? "rgba(159,176,206,.8)" : col;

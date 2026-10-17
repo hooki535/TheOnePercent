@@ -74,6 +74,7 @@ const ICON = {
   replayhere: "M4 3v12l10-6z",
 
   magnet: "M4 3v6a5 5 0 0010 0V3h-3v6a2 2 0 01-4 0V3z",
+  keep: "M3 9a6 6 0 0110.5-4L16 7M16 3v4h-4M15 9a6 6 0 01-10.5 4L2 11m0 4v-4h4",
   trades: "M2 14l4-5 3 2 4-6 3 3",
   lock: "M4 8h10v7H4zM6 8V5.5a3 3 0 016 0V8",
   hide: "M1 9s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5zM9 7a2 2 0 100 4 2 2 0 000-4",
@@ -216,7 +217,9 @@ const railPick = {
   measure: "measure",
   trade: "position",
 };
+const railDefaultPick = { ...railPick };
 let railOpen = null;
+let keepDrawingMode = false;
 
 /* ── favourites ─────────────────────────────────────────────────
    Forty tools in eight groups means the two or three a trader actually uses
@@ -230,15 +233,33 @@ let railOpen = null;
 let railFavs = [];
 
 function loadFavs() {
-  const s = Store.settings.get().chartsFavTools;
+  const settings = Store.settings.get() || {};
+  const s = settings.chartsFavTools;
   /* Filter against the rail itself: a tool renamed or dropped between
      releases should vanish from the favourites rather than render a button
      that sets a tool the engine cannot draw. */
   railFavs = Array.isArray(s) ? s.filter(isRailTool) : [];
+  const picks = settings.chartsLastToolByGroup;
+  Object.keys(railDefaultPick).forEach((group) => {
+    const id = picks && picks[group];
+    const belongs = group === "cursors" ? !!CURSOR_TOOLS[id] : groupOf(id)?.id === group;
+    if (id && isRailTool(id) && belongs)
+      railPick[group] = id;
+  });
+  keepDrawingMode = settings.chartsKeepDrawing === true;
+  state.keepDrawingMode = keepDrawingMode;
 }
 
 function saveFavs() {
   Store.settings.patch({ chartsFavTools: railFavs.slice() });
+}
+
+function saveRailPicks() {
+  Store.settings.patch({ chartsLastToolByGroup: { ...railPick } });
+}
+
+function keepToolAfterPlacement(tool) {
+  return keepDrawingMode || tool === "measure";
 }
 
 function isRailTool(id) {
@@ -265,6 +286,16 @@ function toggleFav(id) {
       ? "The rail keeps it in its group."
       : "It now has its own button at the top of the rail.",
   );
+}
+
+function reorderFavorite(fromId, toId) {
+  const from = railFavs.indexOf(fromId), to = railFavs.indexOf(toId);
+  if (from < 0 || to < 0 || from === to) return false;
+  const [id] = railFavs.splice(from, 1);
+  railFavs.splice(to, 0, id);
+  saveFavs();
+  renderRail();
+  return true;
 }
 
 function groupOf(tool) {
@@ -314,8 +345,8 @@ function railHTML() {
         ? state.tool === "eraser"
         : state.tool === "cursor" && cursorMode() === id
       : state.tool === id;
-    return `<button class="rtool rfav ${on ? "on" : ""}" data-pick-fav="${id}"
-      aria-label="${toolName(id)} — favourite" aria-pressed="${on}">
+    return `<button class="rtool rfav ${on ? "on" : ""}" data-pick-fav="${id}" draggable="true"
+      aria-label="${toolName(id)} — favourite. Drag to reorder; Alt+Arrow keys also move it." aria-pressed="${on}" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="Drag to reorder · Alt+↑/↓ to move">
       ${svgIcon(id)}
       <span class="tip">${toolName(id)}${toolKey(id) ? `<kbd>${toolKey(id)}</kbd>` : ""} — favourite</span>
     </button>`;
@@ -333,6 +364,7 @@ function railHTML() {
       "Magnet — snap to OHLC<kbd>Alt M</kbd>",
       "magnet",
     ) +
+    toggle("keepDrawingMode", "Stay in drawing mode", "Stay in drawing mode — place several drawings", "keep") +
     toggle("trades", "Trade layer", "Your trades as a chart layer", "trades") +
     `<button class="rtool" data-lockall aria-label="Lock every drawing">${svgIcon("lock")}<span class="tip">Lock every drawing on this chart</span></button>` +
     `<button class="rtool" data-hideall aria-label="Hide every drawing">${svgIcon("hide")}<span class="tip">Hide every drawing — they stay saved</span></button>` +
@@ -373,14 +405,18 @@ function flyoutHTML() {
   };
   return `<div class="rfly" id="rfly" role="menu" aria-label="${g.name}" data-tool-group="${g.id}">
     <div class="fly-h"><span>${g.name}</span><button class="fly-close" type="button" data-fly-close aria-label="Close ${g.name.toLowerCase()} tools" title="Close tools (Esc)">${svgIcon("close")}</button></div>
+    <label class="fly-search"><span aria-hidden="true">⌕</span><input type="search" data-tool-search placeholder="Search ${g.name.toLowerCase()}" autocomplete="off" aria-label="Search ${g.name.toLowerCase()}" /></label>
+    <div class="fly-results">
     ${g.sections
       .map(
         (s) =>
-          (s.label ? `<div class="fly-s">${s.label}</div>` : "") +
-          s.tools.map(row).join(""),
+          (s.label ? `<div class="fly-s" data-section-label>${s.label}</div>` : "") +
+          s.tools.map((id) => row(id).replace('<div class="fly-w">', `<div class="fly-w" data-tool-name="${toolName(id).toLowerCase()}">`)).join(""),
       )
       .join("")}
-    <div class="fly-f">Escape closes. The rail button repeats whatever you pick here, and a star gives a tool its own button at the top of the rail.</div>
+    <div class="fly-empty" data-tool-empty hidden>No matching tools</div>
+    </div>
+    <div class="fly-f">Type to find a tool · ↑ ↓ navigate · Enter select · Esc close · a star adds it to favourites.</div>
   </div>`;
 }
 
@@ -402,6 +438,7 @@ function pickTool(id) {
     if (g) railPick[g.id] = id;
     state.tool = id;
   }
+  saveRailPicks();
   railOpen = null;
   renderRail();
   draw();
@@ -462,7 +499,7 @@ function wireRail() {
       e.stopPropagation();
       railOpen = railOpen === b.dataset.grpOpen ? null : b.dataset.grpOpen;
       renderRail();
-      if (railOpen) document.querySelector("#rfly [data-fly]")?.focus();
+      if (railOpen) document.querySelector("#rfly [data-tool-search]")?.focus();
     };
   });
   $$r("[data-fly-close]").forEach((b) => {
@@ -478,6 +515,92 @@ function wireRail() {
   });
   $$r("[data-pick-fav]").forEach((b) => {
     b.onclick = () => pickTool(b.dataset.pickFav);
+  });
+  const search = document.querySelector("#rfly [data-tool-search]");
+  if (search) {
+    search.oninput = () => {
+      const q = search.value.trim().toLowerCase();
+      const rows = Array.from(document.querySelectorAll("#rfly .fly-w"));
+      rows.forEach((row) => {
+        row.hidden = !!q && !row.dataset.toolName.includes(q);
+      });
+      document.querySelectorAll("#rfly [data-section-label]").forEach((label) => {
+        let next = label.nextElementSibling;
+        let show = false;
+        while (next && !next.matches("[data-section-label]")) {
+          if (!next.hidden) show = true;
+          next = next.nextElementSibling;
+        }
+        label.hidden = !show;
+      });
+      const shown = rows.some((row) => !row.hidden);
+      const empty = document.querySelector("#rfly [data-tool-empty]");
+      if (empty) empty.hidden = shown;
+    };
+  }
+  let draggedFavorite = null;
+  $$r("[data-pick-fav]").forEach((b) => {
+    b.ondragstart = (e) => {
+      draggedFavorite = b.dataset.pickFav;
+      e.dataTransfer?.setData("text/plain", draggedFavorite);
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+      b.classList.add("dragging");
+    };
+    b.ondragend = () => b.classList.remove("dragging");
+    b.ondragover = (e) => e.preventDefault();
+    b.ondrop = (e) => {
+      e.preventDefault();
+      reorderFavorite(draggedFavorite || e.dataTransfer?.getData("text/plain"), b.dataset.pickFav);
+    };
+    b.onkeydown = (e) => {
+      if (!(e.altKey && ["ArrowUp", "ArrowDown"].includes(e.key))) return;
+      const from = railFavs.indexOf(b.dataset.pickFav);
+      const to = from + (e.key === "ArrowUp" ? -1 : 1);
+      if (to < 0 || to >= railFavs.length) return;
+      e.preventDefault();
+      const [id] = railFavs.splice(from, 1);
+      railFavs.splice(to, 0, id);
+      saveFavs();
+      renderRail();
+      document.querySelector(`#crail [data-pick-fav="${id}"]`)?.focus();
+    };
+    let touchDrag = null, suppressClick = false;
+    const originalClick = b.onclick;
+    b.onclick = () => {
+      if (suppressClick) { suppressClick = false; return; }
+      originalClick();
+    };
+    b.onpointerdown = (e) => {
+      if (e.pointerType !== "touch") return;
+      touchDrag = { id: b.dataset.pickFav, pointerId: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+      b.setPointerCapture?.(e.pointerId);
+    };
+    b.onpointermove = (e) => {
+      if (!touchDrag || touchDrag.pointerId !== e.pointerId) return;
+      if (Math.hypot(e.clientX - touchDrag.x, e.clientY - touchDrag.y) > 10) {
+        touchDrag.moved = true;
+        e.preventDefault();
+      }
+    };
+    b.onpointerup = (e) => {
+      if (!touchDrag || touchDrag.pointerId !== e.pointerId) return;
+      const drag = touchDrag;
+      touchDrag = null;
+      if (!drag.moved) return;
+      suppressClick = true;
+      const horizontal = window.innerWidth <= 900;
+      const coordinate = horizontal ? e.clientX : e.clientY;
+      const candidates = Array.from(document.querySelectorAll("#crail [data-pick-fav]"));
+      const target = candidates.reduce((best, item) => {
+        const rect = item.getBoundingClientRect();
+        const centre = horizontal ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
+        const delta = Math.abs(centre - coordinate);
+        return !best || delta < best.delta ? { id: item.dataset.pickFav, delta } : best;
+      }, null);
+      if (target) reorderFavorite(drag.id, target.id);
+      setTimeout(() => { suppressClick = false; }, 0);
+    };
+    b.onpointercancel = () => { touchDrag = null; };
   });
   $$r("[data-fav]").forEach((el) => {
     const go = (e) => {
@@ -496,11 +619,21 @@ function wireRail() {
     b.onclick = () => {
       const k = b.dataset.toggle;
       state[k] = !state[k];
+      if (k === "keepDrawingMode") {
+        keepDrawingMode = state[k];
+        Store.settings.patch({ chartsKeepDrawing: keepDrawingMode });
+      }
       toast(
-        k === "magnet"
+        k === "keepDrawingMode"
+          ? `Stay in drawing mode ${keepDrawingMode ? "on" : "off"}`
+          : k === "magnet"
           ? `Magnet ${state.magnet ? "on" : "off"}`
           : `Trade layer ${state.trades ? "shown" : "hidden"}`,
-        k === "magnet"
+        k === "keepDrawingMode"
+          ? keepDrawingMode
+            ? "The current drawing tool stays selected after each placement."
+            : "The chart returns to the cursor after each placement."
+          : k === "magnet"
           ? "Drawings snap to the nearest open, high, low or close."
           : "Reconciled fills from your journal, drawn where they happened.",
       );
@@ -581,14 +714,24 @@ document.addEventListener("keydown", (e) => {
     document.querySelector(`#crail [data-grp-open="${group}"]`)?.focus();
     return;
   }
-  if ((e.key === "ArrowDown" || e.key === "ArrowUp") && railOpen && e.target.closest && e.target.closest("#rfly")) {
-    const items = Array.from(document.querySelectorAll("#rfly [data-fly]"));
+  if (railOpen && e.target.closest && e.target.closest("#rfly") && ["ArrowDown", "ArrowUp"].includes(e.key)) {
+    const items = Array.from(document.querySelectorAll("#rfly [data-fly]"))
+      .filter((item) => !item.closest(".fly-w")?.hidden);
     if (!items.length) return;
     const current = items.indexOf(document.activeElement);
     const step = e.key === "ArrowDown" ? 1 : -1;
     const next = current < 0 ? (step > 0 ? 0 : items.length - 1) : (current + step + items.length) % items.length;
     e.preventDefault();
     items[next].focus();
+    return;
+  }
+  if (e.key === "Enter" && railOpen && e.target.matches && e.target.matches("[data-tool-search]")) {
+    const first = Array.from(document.querySelectorAll("#rfly [data-fly]"))
+      .find((item) => !item.closest(".fly-w")?.hidden);
+    if (first) {
+      e.preventDefault();
+      pickTool(first.dataset.fly);
+    }
   }
 });
 
