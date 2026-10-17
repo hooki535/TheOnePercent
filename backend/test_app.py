@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from app import app, cache
+from app import BASE_URL, app, cache
 
 client = TestClient(app)
 
@@ -16,6 +16,9 @@ class MarketDataContractTests(unittest.TestCase):
         response = client.get("/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
+
+    def test_uses_binance_public_market_data_endpoint(self):
+        self.assertEqual(BASE_URL, "https://data-api.binance.vision/api/v3")
 
     def test_rejects_unsupported_instrument(self):
         response = client.get("/api/candles/ES1!/1H")

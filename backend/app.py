@@ -24,7 +24,9 @@ INTERVALS = {"1m": "1m", "3m": "3m", "5m": "5m", "15m": "15m",
              "30m": "30m", "1H": "1h", "2H": "2h", "4H": "4h",
              "6H": "6h", "8H": "8h", "12H": "12h", "1D": "1d",
              "3D": "3d", "1W": "1w", "1M": "1M"}
-BASE_URL = "https://api.binance.com/api/v3"
+# Binance's data-only public endpoint is intended for public market data and
+# remains available in regions where the general API host is restricted.
+BASE_URL = "https://data-api.binance.vision/api/v3"
 cache = {}
 CACHE_SECONDS = 30
 
