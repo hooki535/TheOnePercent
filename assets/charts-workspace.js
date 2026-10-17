@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   const KEY = "top.chartWorkspace.v1";
-  const defaults = { panel: false, notes: false, tools: true, dock: true, ranges: true, badge: true, theme: "light" };
+  const defaults = { panel: window.innerWidth > 900, notes: false, tools: true, ranges: true, badge: true };
   let prefs;
   try { prefs = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || "{}")); }
   catch (_) { prefs = Object.assign({}, defaults); }
@@ -16,14 +16,10 @@
     body.classList.toggle("workspace-panel-open", !!prefs.panel);
     body.classList.toggle("chart-notes-open", !!prefs.notes);
     body.classList.toggle("workspace-no-tools", !prefs.tools);
-    body.classList.toggle("workspace-no-dock", !prefs.dock);
     body.classList.toggle("workspace-no-ranges", !prefs.ranges);
     body.classList.toggle("workspace-no-badge", !prefs.badge);
     fields.forEach(el => { el.checked = !!prefs[el.dataset.workspacePref]; });
     const panel = $("workspacePanelToggle"), notes = $("workspaceNotesToggle");
-  $("workspaceSettingsMore")?.addEventListener("click", () => $("workspaceSettingsOpen")?.click());
-  $("workspaceFullscreenMore")?.addEventListener("click", () => $("workspaceFullscreen")?.click());
-  $("workspaceNotesMore")?.addEventListener("click", () => $("workspaceNotesToggle")?.click());
     if (panel) { panel.setAttribute("aria-expanded", String(!!prefs.panel)); panel.classList.toggle("workspace-open", !!prefs.panel); }
     if (notes) { notes.setAttribute("aria-expanded", String(!!prefs.notes)); notes.classList.toggle("workspace-open", !!prefs.notes); }
     try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (_) {}
@@ -32,9 +28,6 @@
   fields.forEach(el => el.addEventListener("change", () => { prefs[el.dataset.workspacePref] = el.checked; apply(); }));
   const panel = $("workspacePanelToggle"), notes = $("workspaceNotesToggle");
   if (panel) panel.addEventListener("click", () => { prefs.panel = !prefs.panel; apply(); });
-  document.querySelectorAll(".dock-btn[data-tab]").forEach(button => button.addEventListener("click", () => {
-    if (!prefs.panel) { prefs.panel = true; apply(); }
-  }));
   if (notes) notes.addEventListener("click", () => { prefs.notes = !prefs.notes; apply(); });
   const open = $("workspaceSettingsOpen");
   const close = $("workspaceSettingsClose");
@@ -71,9 +64,9 @@
     $("setBtn")?.click();
   });
   const presets = {
-    clean: { panel: false, notes: false, tools: false, dock: false, ranges: false, badge: true },
-    analysis: { panel: true, notes: false, tools: true, dock: true, ranges: true, badge: true },
-    trading: { panel: true, notes: true, tools: true, dock: true, ranges: true, badge: true }
+    clean: { panel: false, notes: false, tools: false, ranges: false, badge: true },
+    analysis: { panel: true, notes: false, tools: true, ranges: true, badge: true },
+    trading: { panel: true, notes: true, tools: true, ranges: true, badge: true }
   };
   settings.querySelectorAll("[data-workspace-preset]").forEach(button => {
     button.addEventListener("click", () => {

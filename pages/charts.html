@@ -166,9 +166,6 @@
               Focus mode <span>F</span>
             </button>
             <button class="mi" id="setBtn">Chart settings</button>
-            <button class="mi" id="workspaceSettingsMore">Workspace settings</button>
-            <button class="mi" id="workspaceFullscreenMore">Full screen</button>
-            <button class="mi" id="workspaceNotesMore">Journal notes</button>
             <div class="mh">App</div>
             <button class="mi" id="paletteBtn">
               Command palette<span>Ctrl K</span>
@@ -456,27 +453,7 @@
           <div id="al" class="al"></div>
         </div>
       </aside>
-      <nav class="chart-dock" aria-label="Chart workspace tools">
-        <button class="dock-btn" data-tab="position" title="Position">P</button>
-        <button class="dock-btn" data-tab="watchlist" title="Watchlist">W</button>
-        <button class="dock-btn active" data-tab="objects" title="Objects and layers">O</button>
-        <button class="dock-btn" data-tab="data" title="Crosshair data">D</button>
-        <button class="dock-btn" data-tab="journal" title="Journal">J</button>
-        <button class="dock-btn" data-tab="alerts" title="Alerts">A</button>
-        <span class="dock-rule"></span>
-        
-      </nav>
     </main>
-
-    <nav class="chart-bottom" aria-label="Chart quick actions">
-      <button data-open="indBtn">Studies</button>
-      <button data-open="alertBtn">Alert</button>
-      <button data-open="replayBtn">Replay</button>
-      <button data-open="wsBtn">Save workspace</button>
-      <span class="bottom-spacer"></span>
-      <span class="bottom-status">Read-only charting workspace</span>
-      <button data-open="fsBtn">Focus</button>
-    </nav>
 
     <div class="replaybar" id="replaybar" hidden>
       <button class="btn sm" id="rbPlay">▶ Play</button>
@@ -743,7 +720,6 @@
           <label><input type="checkbox" data-workspace-pref="panel"> Right-side workspace panel</label>
           <label><input type="checkbox" data-workspace-pref="notes"> Journal notes editor</label>
           <label><input type="checkbox" data-workspace-pref="tools"> Drawing toolbar</label>
-          <label><input type="checkbox" data-workspace-pref="dock"> Right-side quick-access dock</label>
           <label><input type="checkbox" data-workspace-pref="ranges"> Bottom date-range shortcuts</label>
           <label><input type="checkbox" data-workspace-pref="badge"> Market-data source badge</label>
         </div>
