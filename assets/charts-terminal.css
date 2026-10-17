@@ -752,3 +752,141 @@ body[data-page="charts"] #symModal .sheet-f { display: flex; justify-content: sp
   body[data-page="charts"] #symList .sr-access { display: none; }
   body[data-page="charts"] #symList .sr-copy { gap: 4px; }
 }
+
+/* Drawing tools: compact terminal rail with a full, readable tool palette.
+   The flyout is portalled by charts-rail.js so it can overlap the canvas
+   without being clipped by the rail's scroll container. */
+body[data-page="charts"] .crail {
+  flex-basis: 44px;
+  width: 44px;
+  gap: 3px;
+  padding: 7px 5px;
+}
+body[data-page="charts"] .rgrp,
+body[data-page="charts"] .rgrp .rtool,
+body[data-page="charts"] .rtool {
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+}
+body[data-page="charts"] .rtool svg { width: 19px; height: 19px; }
+body[data-page="charts"] .rgrp { flex: 0 0 34px; }
+body[data-page="charts"] .rcaret {
+  right: -2px;
+  bottom: -2px;
+  width: 11px;
+  height: 11px;
+  color: var(--term-muted);
+}
+body[data-page="charts"] .rgrp:hover .rcaret,
+body[data-page="charts"] .rcaret[aria-expanded="true"] { color: var(--term-text); }
+body[data-page="charts"] .rfly {
+  position: fixed !important;
+  z-index: 1000;
+  box-sizing: border-box;
+  min-width: 294px;
+  padding: 0 5px 5px;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  border-radius: 5px !important;
+  background: var(--term-surface) !important;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 36%), 0 2px 7px rgb(0 0 0 / 18%);
+}
+body[data-page="charts"] .fly-h {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 37px;
+  padding: 0 5px 0 9px;
+  border-bottom: 1px solid var(--term-line);
+  background: var(--term-surface);
+  color: var(--term-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+body[data-page="charts"] .fly-close {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--term-muted);
+}
+body[data-page="charts"] .fly-close svg { width: 14px; height: 14px; }
+body[data-page="charts"] .fly-close:hover,
+body[data-page="charts"] .fly-close:focus-visible { background: var(--term-hover); color: var(--term-text); }
+body[data-page="charts"] .fly-s {
+  margin: 4px 2px 2px;
+  padding: 9px 7px 4px;
+  border-top: 1px solid var(--term-line);
+  color: var(--term-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+body[data-page="charts"] .fly-h + .fly-s { padding-top: 7px; border-top: 0; }
+body[data-page="charts"] .fly-w { gap: 2px; }
+body[data-page="charts"] .fly-r {
+  min-height: 34px;
+  padding: 4px 7px;
+  gap: 10px;
+  border-radius: 4px;
+  color: var(--term-text);
+  font-size: 12px;
+  transition: background-color .12s ease, color .12s ease;
+}
+body[data-page="charts"] .fly-i {
+  width: 21px;
+  height: 21px;
+  flex-basis: 21px;
+  color: var(--term-muted);
+}
+body[data-page="charts"] .fly-i svg { width: 18px; height: 18px; }
+body[data-page="charts"] .fly-r:hover { background: var(--term-hover); color: var(--term-text); }
+body[data-page="charts"] .fly-r.on {
+  background: var(--term-accent-soft);
+  color: var(--term-accent);
+  box-shadow: inset 2px 0 var(--term-accent);
+}
+body[data-page="charts"] .fly-r.on .fly-i { color: var(--term-accent); }
+body[data-page="charts"] .fly-r:focus-visible,
+body[data-page="charts"] .fly-close:focus-visible,
+body[data-page="charts"] .fly-star:focus-visible {
+  outline: 2px solid var(--term-accent);
+  outline-offset: -1px;
+}
+body[data-page="charts"] .fly-r kbd {
+  padding: 2px 5px;
+  border: 1px solid var(--term-line-strong);
+  border-radius: 3px;
+  color: var(--term-muted);
+  font: 10px/1.2 "IBM Plex Mono", monospace;
+}
+body[data-page="charts"] .fly-star {
+  flex-basis: 25px;
+  height: 28px;
+  font-size: 15px;
+}
+body[data-page="charts"] .fly-star:hover { background: var(--term-hover); color: #f0b90b; }
+body[data-page="charts"] .fly-star.on { color: #f0b90b; }
+body[data-page="charts"] .fly-f {
+  margin-top: 5px;
+  padding: 8px 8px 3px;
+  border-top: 1px solid var(--term-line);
+  color: var(--term-muted);
+  font-size: 10px;
+}
+@media (max-width: 900px) {
+  body[data-page="charts"] .crail { flex-basis: 42px; width: auto; padding: 3px 6px; gap: 3px; }
+  body[data-page="charts"] .rgrp { flex-basis: 34px; }
+  body[data-page="charts"] .rfly { min-width: 0; width: auto; }
+}
+@media (max-width: 420px) {
+  body[data-page="charts"] .rfly { padding-inline: 4px; }
+  body[data-page="charts"] .fly-r { min-height: 36px; font-size: 12px; }
+}

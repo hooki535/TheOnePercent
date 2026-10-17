@@ -79,6 +79,7 @@ const ICON = {
   hide: "M1 9s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5zM9 7a2 2 0 100 4 2 2 0 000-4",
   trash: "M4 5h10l-1 10H5zM7 5V3h4v2",
   zoomrect: "M2.5 4.5h9v7h-9zM11 11l5 5M6 8h3M7.5 6.5v3",
+  close: "M4 4l10 10M14 4L4 14",
 };
 
 /* ── groups ──────────────────────────────────────────────────────
@@ -296,7 +297,7 @@ function railHTML() {
         <span class="tip">${toolName(pick)}${toolKey(pick) ? `<kbd>${toolKey(pick)}</kbd>` : ""}</span>
       </button>
       <button class="rcaret" data-grp-open="${g.id}" aria-label="More ${g.name.toLowerCase()}"
-        aria-expanded="${railOpen === g.id}"><svg viewBox="0 0 6 6" aria-hidden="true"><path d="M6 0v6H0z" fill="currentColor"/></svg></button>
+        aria-haspopup="menu" aria-expanded="${railOpen === g.id}"><svg viewBox="0 0 6 6" aria-hidden="true"><path d="M6 0v6H0z" fill="currentColor"/></svg></button>
     </div>`;
   };
 
@@ -344,7 +345,6 @@ function flyoutHTML() {
   if (!railOpen) return "";
   const g = RAIL.find((x) => x.id === railOpen);
   if (!g) return "";
-  const idx = RAIL.indexOf(g);
   const row = (id) => {
     const on =
       g.id === "cursors"
@@ -371,8 +371,8 @@ function flyoutHTML() {
         title="${fav ? "Remove from favourites" : "Add to favourites — gives it its own rail button"}">${fav ? "★" : "☆"}</span>
     </div>`;
   };
-  return `<div class="rfly" id="rfly" role="menu" aria-label="${g.name}" style="--fly-top:${idx * 34}px">
-    <div class="fly-h">${g.name}</div>
+  return `<div class="rfly" id="rfly" role="menu" aria-label="${g.name}" data-tool-group="${g.id}">
+    <div class="fly-h"><span>${g.name}</span><button class="fly-close" type="button" data-fly-close aria-label="Close ${g.name.toLowerCase()} tools" title="Close tools (Esc)">${svgIcon("close")}</button></div>
     ${g.sections
       .map(
         (s) =>
@@ -410,8 +410,37 @@ function pickTool(id) {
 function renderRail() {
   const el = document.querySelector("#crail");
   if (!el) return;
+  const oldFlyout = document.getElementById("rfly");
+  if (oldFlyout && oldFlyout.parentNode) oldFlyout.parentNode.removeChild(oldFlyout);
   el.innerHTML = railHTML();
+  const flyout = el.querySelector("#rfly");
+  if (flyout) {
+    document.body.appendChild(flyout);
+    positionRailFlyout(flyout);
+  }
   wireRail();
+}
+
+/* Flyouts live on body so the scrollable rail cannot clip them. The selected
+   group stays level with its rail icon on desktop and opens above the
+   horizontal tool strip on compact screens. */
+function positionRailFlyout(flyout) {
+  const rail = document.querySelector("#crail");
+  const group = rail && rail.querySelector(`[data-grp-open="${railOpen}"]`);
+  if (!rail || !group || !flyout) return;
+  const railRect = rail.getBoundingClientRect();
+  const groupRect = group.getBoundingClientRect();
+  const compact = window.innerWidth <= 900;
+  flyout.style.position = "fixed";
+  flyout.style.left = compact ? "8px" : `${Math.round(railRect.right)}px`;
+  flyout.style.right = compact ? "8px" : "auto";
+  flyout.style.width = compact ? "auto" : "294px";
+  flyout.style.bottom = compact ? `${Math.max(8, window.innerHeight - railRect.top + 8)}px` : "auto";
+  const maxTop = Math.max(8, window.innerHeight - flyout.offsetHeight - 8);
+  flyout.style.top = compact ? "auto" : `${Math.max(8, Math.min(groupRect.top, maxTop))}px`;
+  flyout.style.maxHeight = compact
+    ? `min(56vh, ${Math.max(180, railRect.top - 24)}px)`
+    : "min(72vh, 620px)";
 }
 
 /* charts.js and the command palette both call setTool(); keep that name. */
@@ -420,7 +449,10 @@ function setTool(t) {
 }
 
 function wireRail() {
-  const $$r = (s) => Array.from(document.querySelectorAll("#crail " + s));
+  const $$r = (s) =>
+    Array.from(document.querySelectorAll("#crail " + s)).concat(
+      Array.from(document.querySelectorAll("#rfly " + s)),
+    );
 
   $$r("[data-grp-main]").forEach((b) => {
     b.onclick = () => pickTool(b.dataset.pick);
@@ -430,6 +462,15 @@ function wireRail() {
       e.stopPropagation();
       railOpen = railOpen === b.dataset.grpOpen ? null : b.dataset.grpOpen;
       renderRail();
+      if (railOpen) document.querySelector("#rfly [data-fly]")?.focus();
+    };
+  });
+  $$r("[data-fly-close]").forEach((b) => {
+    b.onclick = () => {
+      const group = railOpen;
+      railOpen = null;
+      renderRail();
+      document.querySelector(`#crail [data-grp-open="${group}"]`)?.focus();
     };
   });
   $$r("[data-fly]").forEach((b) => {
@@ -534,9 +575,26 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && railOpen) {
+    const group = railOpen;
     railOpen = null;
     renderRail();
+    document.querySelector(`#crail [data-grp-open="${group}"]`)?.focus();
+    return;
   }
+  if ((e.key === "ArrowDown" || e.key === "ArrowUp") && railOpen && e.target.closest && e.target.closest("#rfly")) {
+    const items = Array.from(document.querySelectorAll("#rfly [data-fly]"));
+    if (!items.length) return;
+    const current = items.indexOf(document.activeElement);
+    const step = e.key === "ArrowDown" ? 1 : -1;
+    const next = current < 0 ? (step > 0 ? 0 : items.length - 1) : (current + step + items.length) % items.length;
+    e.preventDefault();
+    items[next].focus();
+  }
+});
+
+window.addEventListener("resize", () => {
+  const flyout = document.getElementById("rfly");
+  if (flyout && railOpen) positionRailFlyout(flyout);
 });
 
 /* ── audit ──────────────────────────────────────────────────────
