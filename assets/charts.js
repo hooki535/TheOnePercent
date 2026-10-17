@@ -1870,22 +1870,27 @@ function pushRecent(k) {
 
 function paintSymSearch(q = "") {
   const s = q.trim().toLowerCase();
-  const classes = [...new Set(Object.values(SYMBOLS).map((S) => S.cls))].sort();
+  const classOrder = ["Forex", "Crypto", "Commodities", "Indices", "Futures", "Crypto CFD", "Commodity CFD", "Index CFD", "Stock CFD", "Other CFD"];
+  const classes = [...new Set(Object.values(SYMBOLS).map((S) => S.cls))];
   const recents = recentList().filter((k) => SYMBOLS[k]);
   const tabs = [["all", "All"]]
     .concat(recents.length ? [["recent", "Recent"]] : [])
     .concat(state.watch.length ? [["watch", "Watchlist"]] : [])
-    .concat(classes.map((c) => [c, c]));
+    .concat(classOrder.filter((c) => classes.includes(c)).map((c) => [c, c]))
+    .concat([["stocks", "Stocks"], ["funds", "ETFs"], ["bonds", "Bonds"], ["economy", "Economy"], ["options", "Options"]]);
   if (!tabs.some(([v]) => v === symCls)) symCls = "all";
   $("#symTabs").innerHTML = tabs
     .map(
-      ([v, n]) =>
-        `<button class="stab ${symCls === v ? "on" : ""}" data-c="${v}" role="tab" aria-selected="${symCls === v}">${n}</button>`,
+      ([v, n]) => {
+        const unsupported = ["stocks", "funds", "bonds", "economy", "options"].includes(v);
+        return `<button class="stab ${symCls === v ? "on" : ""} ${unsupported ? "unsupported" : ""}" data-c="${v}" role="tab" aria-selected="${symCls === v}" ${unsupported ? 'aria-disabled="true" title="No verified provider catalog is connected for this market yet"' : ""}>${n}</button>`;
+      },
     )
     .join("");
   $$("#symTabs .stab").forEach(
     (b) =>
       (b.onclick = () => {
+        if (["stocks", "funds", "bonds", "economy", "options"].includes(b.dataset.c)) return;
         symCls = b.dataset.c;
         symSel = 0;
         paintSymSearch($("#symSearch").value);
@@ -1895,9 +1900,10 @@ function paintSymSearch(q = "") {
   /* A class tab narrows the list; typing searches across everything, because
      a ticker you can spell is a stronger signal than a tab you last clicked. */
   let rows = Object.entries(SYMBOLS);
+  if (["stocks", "funds", "bonds", "economy", "options"].includes(symCls)) rows = [];
   if (s)
     rows = rows.filter(([k, S]) =>
-      (k + S.name + S.cls).toLowerCase().includes(s),
+      (k + S.name + S.cls + S.venue + S.providerSymbol + (S.provider || "")).toLowerCase().includes(s),
     );
   else if (symCls === "recent")
     rows = recents.map((k) => [k, SYMBOLS[k]]);
@@ -1922,21 +1928,41 @@ function paintSymSearch(q = "") {
   symRows = rows.map(([k]) => k);
   symSel = Math.max(0, Math.min(symSel, symRows.length - 1));
 
-  $("#symList").innerHTML =
-    rows
-      .map(([k, S], i) => {
-        const d = getSeries(k, "15m"),
-          last = d.length ? d[d.length - 1].c : null,
-          prev = d.length >= 25 ? d[d.length - 25].c : null,
-          ch = Number.isFinite(last) && Number.isFinite(prev) ? ((last - prev) / prev) * 100 : null;
-        return `<div class="sr ${i === symSel ? "cur" : ""}" data-s="${k}" data-i="${i}" ${i === symSel ? 'aria-selected="true"' : ""}>
-      <div><div class="sr-n">${k}<span class="sr-cls">${S.cls}</span></div><div class="sr-d">${S.name} · ${S.venue}</div></div>
-      <div class="sr-r"><span class="mono">${Number.isFinite(last) ? last.toFixed(S.digits) : "—"}</span>
-        <span class="${Number.isFinite(ch) ? ch >= 0 ? "up" : "dn" : "hint"} mono">${Number.isFinite(ch) ? (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(2) + "%" : Feed.isDemoMode() ? "Demo" : "Unavailable"}</span>
-        <button data-add="${k}" title="Add to watchlist">${state.watch.includes(k) ? "★" : "☆"}</button></div></div>`;
-      })
-      .join("") || `<div class="empty">No instrument matches “${q}”.</div>`;
+  const host = $("#symList");
+  host.replaceChildren();
+  rows.forEach(([k, S], i) => {
+    const row = document.createElement("div");
+    row.className = `sr ${i === symSel ? "cur" : ""}`;
+    row.dataset.s = k;
+    row.dataset.i = String(i);
+    row.setAttribute("role", "option");
+    row.setAttribute("aria-selected", i === symSel ? "true" : "false");
+    const left = document.createElement("div"); left.className = "sr-main";
+    const title = document.createElement("div"); title.className = "sr-n";
+    const code = document.createElement("strong"); code.textContent = k; title.appendChild(code);
+    const description = document.createElement("div"); description.className = "sr-d";
+    description.textContent = [S.name || k, S.base && S.quote ? `${S.base}/${S.quote}` : "", S.venue || ""]
+      .filter(Boolean).join(" · "); left.append(title, description);
+    const market = document.createElement("span"); market.className = "sr-market"; market.textContent = S.cls || "Market";
+    const source = document.createElement("span"); source.className = "sr-source";
+    source.textContent = S.provider === "binance" ? "Binance · spot" : S.provider === "exness_mt5" ? "Exness · local MT5" : "TheOnePercent · reference";
+    const access = document.createElement("span"); access.className = "sr-access";
+    access.textContent = S.provider ? "Historical only" : Feed.isDemoMode() ? "Demo mode" : "No feed connected";
+    const actions = document.createElement("div"); actions.className = "sr-r";
+    const star = document.createElement("button"); star.type = "button"; star.dataset.add = k;
+    star.title = state.watch.includes(k) ? "Remove from watchlist" : "Add to watchlist";
+    star.setAttribute("aria-label", star.title); star.textContent = state.watch.includes(k) ? "★" : "☆";
+    actions.appendChild(star); row.append(left, market, source, access, actions); host.appendChild(row);
+  });
+  if (!rows.length) {
+    const empty = document.createElement("div"); empty.className = "empty";
+    empty.textContent = ["stocks", "funds", "bonds", "economy", "options"].includes(symCls)
+      ? `No verified ${$("#symTabs [data-c='" + symCls + "']")?.textContent || ""} catalog is connected yet.`
+      : q ? `No local match for “${q}”. Searching connected provider catalogs…` : "No instruments in this view yet.";
+    host.appendChild(empty);
+  }
   $$("#symList .sr").forEach((el) => {
+    if (el.getAttribute("aria-disabled") === "true") return;
     el.onmouseenter = () => {
       const i = +el.dataset.i;
       if (i === symSel) return;
@@ -1950,8 +1976,8 @@ function paintSymSearch(q = "") {
     };
   });
   $("#symCount").textContent = rows.length
-    ? `${rows.length} instrument${rows.length === 1 ? "" : "s"} · ↑↓ to move, Enter to open`
-    : "";
+    ? `${rows.length} instrument${rows.length === 1 ? "" : "s"} in this view · connected provider results below · ↑↓ and Enter to open`
+    : "No verified listings in this view · provider results appear after search";
   $$("#symList [data-add]").forEach(
     (b) =>
       (b.onclick = (e) => {
@@ -1987,42 +2013,68 @@ function loadProviderCatalog(query, category, offset = 0) {
   catalogSearchTimer = setTimeout(async () => {
     try {
       const page = await Feed.searchCatalog(query, 50, offset, market);
-      if (serial !== catalogSearchSerial || query !== $("#symSearch").value.trim().toLowerCase() || (category === "Crypto") !== (symCls === "Crypto")) return;
+      if (serial !== catalogSearchSerial || query !== $("#symSearch").value.trim().toLowerCase() || category !== symCls) return;
       const rows = page.data.filter((record) =>
         (record.provider === "binance" && record.venue === "BINANCE_SPOT") ||
         (window.THEONEPERCENT_LOCAL_MT5 && record.provider === "exness_mt5")
       );
       const host = $("#symList");
       rows.forEach((record) => {
-        const shaped = Feed.registerCatalogInstrument(record);
-        if (!shaped) return;
-        SYMBOLS[shaped.symbol] = shaped;
-        if (!symRows.includes(shaped.symbol)) symRows.push(shaped.symbol);
-        if (Array.from(host.querySelectorAll(".sr")).some((row) => row.dataset.s === shaped.symbol)) return;
+        const rawCode = String(record.symbol || "").toUpperCase();
+        if (!rawCode) return;
+        const existing = SYMBOLS[rawCode];
+        const conflict = !!existing && existing.provider !== record.provider;
+        const shaped = conflict ? null : Feed.registerCatalogInstrument(record);
+        if (!conflict && !shaped) return;
+        if (!conflict) {
+          SYMBOLS[shaped.symbol] = shaped;
+          if (!symRows.includes(shaped.symbol)) symRows.push(shaped.symbol);
+        }
+        if (Array.from(host.querySelectorAll(".provider-row")).some((row) => row.dataset.providerSymbol === rawCode && row.dataset.provider === record.provider)) return;
         const row = document.createElement("div");
-        row.className = "sr provider-row";
-        row.dataset.providerSymbol = shaped.symbol;
-        row.dataset.i = String(symRows.indexOf(shaped.symbol));
-        const localBroker = shaped.provider === "exness_mt5";
-        row.innerHTML = `<div><div class="sr-n"><span class="provider-symbol"></span><span class="sr-cls"></span></div><div class="sr-d provider-detail"></div></div><div class="sr-r"><span class="hint">Historical candles</span><button data-provider-add="" title="Add to watchlist">☆</button></div>`;
-        row.querySelector(".provider-symbol").textContent = shaped.symbol;
-        row.querySelector(".sr-cls").textContent = localBroker ? shaped.market : "Crypto spot";
-        row.querySelector(".provider-detail").textContent = localBroker
-          ? `${shaped.name} · ${shaped.venue} · quote ${shaped.quote || "unavailable"} · local MT5 candles`
-          : `${shaped.name} · Binance · quote ${shaped.quote} · historical candles`;
-        const add = row.querySelector("[data-provider-add]");
-        add.dataset.providerAdd = shaped.symbol;
-        add.textContent = state.watch.includes(shaped.symbol) ? "★" : "☆";
+        row.className = `sr provider-row ${conflict ? "source-conflict" : ""}`;
+        row.dataset.providerSymbol = rawCode;
+        row.dataset.provider = record.provider;
+        row.dataset.i = String(conflict ? "" : symRows.indexOf(shaped.symbol));
+        if (!conflict) row.dataset.s = shaped.symbol;
+        row.setAttribute("role", "option");
+        row.setAttribute("aria-selected", "false");
+        const main = document.createElement("div"); main.className = "sr-main";
+        const title = document.createElement("div"); title.className = "sr-n";
+        const symbolLabel = document.createElement("strong"); symbolLabel.textContent = rawCode; title.appendChild(symbolLabel);
+        const detail = document.createElement("div"); detail.className = "sr-d";
+        detail.textContent = String(record.name || record.description || rawCode); main.append(title, detail);
+        const marketLabel = document.createElement("span"); marketLabel.className = "sr-market";
+        marketLabel.textContent = record.market === "crypto_spot" ? "Crypto spot" : String(record.market || "Broker instrument").replaceAll("_", " ");
+        const sourceLabel = document.createElement("span"); sourceLabel.className = "sr-source";
+        sourceLabel.textContent = record.provider === "exness_mt5" ? `Exness · ${record.venue || "local MT5"}` : "Binance · spot";
+        const accessLabel = document.createElement("span"); accessLabel.className = "sr-access";
+        accessLabel.textContent = conflict ? "Source conflicts with saved chart identity" : "Historical only";
+        const actions = document.createElement("div"); actions.className = "sr-r";
+        const add = document.createElement("button"); add.type = "button";
+        add.dataset.providerAdd = rawCode; add.dataset.provider = record.provider;
+        add.title = state.watch.includes(rawCode) ? "Remove from watchlist" : "Add to watchlist";
+        add.setAttribute("aria-label", add.title); add.textContent = state.watch.includes(rawCode) ? "★" : "☆";
+        if (conflict) { row.setAttribute("aria-disabled", "true"); add.disabled = true; }
+        actions.appendChild(add); row.append(main, marketLabel, sourceLabel, accessLabel, actions);
         row.onclick = (event) => {
-          if (event.target.closest("[data-provider-add]")) return;
+          if (event.target.closest("[data-provider-add]") || conflict) return;
+          Feed.registerCatalogInstrument(record, true);
           chooseSymbol(shaped.symbol);
         };
+        row.onmouseenter = () => {
+          if (conflict) return;
+          $$("#symList .sr.cur").forEach((item) => item.classList.remove("cur"));
+          row.classList.add("cur");
+          symSel = Number(row.dataset.i);
+        };
         add.onclick = (event) => {
+          if (conflict) return;
           event.stopPropagation();
           Feed.registerCatalogInstrument(record, true);
-          state.watch = state.watch.includes(shaped.symbol)
-            ? state.watch.filter((item) => item !== shaped.symbol)
-            : state.watch.concat(shaped.symbol);
+          state.watch = state.watch.includes(rawCode)
+            ? state.watch.filter((item) => item !== rawCode)
+            : state.watch.concat(rawCode);
           saveWatch();
           paintSymSearch($("#symSearch").value);
           paintWatchlist();
@@ -2097,10 +2149,11 @@ function symKeys(e) {
     symSel =
       (symSel + (e.key === "ArrowDown" ? 1 : -1) + symRows.length) %
       symRows.length;
-    $$("#symList .sr").forEach((el) =>
-      el.classList.toggle("cur", +el.dataset.i === symSel),
-    );
-    const cur = $("#symList .sr.cur");
+    $$("#symList .sr").forEach((el) => {
+      const disabled = el.getAttribute("aria-disabled") === "true";
+      el.classList.toggle("cur", !disabled && Number(el.dataset.i) === symSel);
+    });
+    const cur = $("#symList .sr.cur:not([aria-disabled='true'])");
     if (cur) cur.scrollIntoView({ block: "nearest" });
   } else if (e.key === "Enter" && symRows[symSel]) {
     e.preventDefault();

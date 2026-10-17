@@ -551,11 +551,8 @@
       <div class="sheet">
         <div class="sheet-h">
           <div>
-            <b>Symbol search</b>
-            <div class="sh-sub">
-              Forex including the shilling pairs, metals, indices, futures and
-              crypto.
-            </div>
+            <b>Find an instrument</b>
+            <div class="sh-sub">Search supported markets and compare verified data sources.</div>
           </div>
           <button class="x" data-close aria-label="Close">✕</button>
         </div>
@@ -563,7 +560,7 @@
           <label class="sr-only" for="symSearch">Search symbols</label
           ><input
             id="symSearch"
-            placeholder="EURUSD, XAUUSD, USDUGX…"
+            placeholder="Search symbol, name, market, or source…"
             autocomplete="off"
             aria-describedby="symCount"
           />
@@ -577,7 +574,8 @@
           role="tablist"
           aria-label="Asset class"
         ></div>
-        <div class="sheet-b"><div id="symList"></div></div>
+        <div class="sym-columns" aria-hidden="true"><span>Instrument</span><span>Market</span><span>Source</span><span>Availability</span><span></span></div>
+        <div class="sheet-b"><div id="symList" role="listbox" aria-label="Instruments"></div></div>
         <div class="sheet-f"><span id="symCount" class="hint"></span></div>
       </div>
     </div>
