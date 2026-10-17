@@ -31,6 +31,7 @@ window.Feed = (() => {
   // GitHub Pages has no /api backend; leave demo mode explicit until configured.
   const LIVE_API = typeof window !== "undefined" && typeof window.THEONEPERCENT_MARKET_API === "string"
     ? window.THEONEPERCENT_MARKET_API.trim().replace(/\/$/, "") : "";
+  const LOCAL_MT5_MODE = typeof window !== "undefined" && window.THEONEPERCENT_LOCAL_MT5 === true;
   const API_ENABLED = /^https:\/\/[^/]+/i.test(LIVE_API) ||
     (typeof location !== "undefined" && location.protocol === "http:" && /^http:\/\/localhost(?::\d+)?$/i.test(LIVE_API));
   const failedKeys = new Map();
@@ -331,6 +332,40 @@ window.Feed = (() => {
     { provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot", symbol: "SOLUSDT", provider_symbol: "SOLUSDT", base_asset: "SOL", quote_asset: "USDT", availability: "historical_only", search_aliases: ["solana"] },
   ];
   function registerCatalogInstrument(record, persist = false) {
+    if (record && record.provider === "exness_mt5") {
+      if (!LOCAL_MT5_MODE || !record.symbol || record.symbol !== record.provider_symbol ||
+          !record.venue || record.availability !== "historical_only") return null;
+      const mt5Code = String(record.symbol).toUpperCase();
+      const marketNames = {
+        forex: "Forex", crypto_cfd: "Crypto CFD", commodity_cfd: "Commodity CFD",
+        index_cfd: "Index CFD", stock_cfd: "Stock CFD", other_cfd: "Other CFD",
+      };
+      const mt5Digits = Math.max(0, Math.min(14, Number(record.digits) || 0));
+      const mt5Tick = Number(record.price_tick);
+      catalogInstruments[mt5Code] = {
+        symbol: mt5Code, name: String(record.name || record.description || mt5Code),
+        market: marketNames[record.market] || "Broker CFD", cls: marketNames[record.market] || "Broker CFD",
+        base: record.base_asset || null, quote: record.quote_asset || null,
+        px: null, digits: mt5Digits, tick: Number.isFinite(mt5Tick) && mt5Tick > 0 ? mt5Tick : null,
+        tickName: "price units", contract: null, unitValue: null, unit: null,
+        step: null, vol: null, spread: null, costTicks: null,
+        session: "Broker session", venue: `${record.exchange || "Exness"} · ${record.venue}`,
+        instrument: null, provider: "exness_mt5", providerSymbol: String(record.provider_symbol),
+        availability: "historical_only", localOnly: true, catalogRecord: record,
+      };
+      if (persist && window.Store && Store.settings) {
+        const saved = Store.settings.get().chartsCatalogSymbols || [];
+        Store.settings.patch({
+          chartsCatalogSymbols: saved.filter((item) => item.symbol !== mt5Code || item.provider !== "exness_mt5")
+            .concat({ provider: "exness_mt5", venue: record.venue, exchange: record.exchange || "Exness",
+              market: record.market, symbol: mt5Code, provider_symbol: String(record.provider_symbol),
+              name: record.name || record.description || mt5Code, base_asset: record.base_asset || null,
+              quote_asset: record.quote_asset || null, digits: mt5Digits, price_tick: record.price_tick,
+              availability: "historical_only" }).slice(-500),
+        });
+      }
+      return catalogInstruments[mt5Code];
+    }
     if (!record || record.provider !== "binance" || record.venue !== "BINANCE_SPOT" ||
         record.market !== "crypto_spot" || record.availability !== "historical_only" ||
         !record.symbol || record.symbol !== record.provider_symbol ||
@@ -374,6 +409,10 @@ window.Feed = (() => {
       if (!body || !Array.isArray(body.data)) throw new Error("Unrecognized instrument catalog response");
       return body;
     } catch (error) {
+      if (LOCAL_MT5_MODE) {
+        return { data: [], total: 0, has_more: false, catalog_status: "unavailable",
+          catalog_error: error && error.message ? error.message : "Local Exness MT5 catalog unavailable" };
+      }
       const needle = String(query || "").trim().toLowerCase();
       const matches = KNOWN_BINANCE_SPOT.filter((record) => {
         if (market && market !== record.market) return false;
@@ -395,6 +434,9 @@ window.Feed = (() => {
   function symbol(sym) {
     const inst = I.find(sym);
     const listed = catalogInstruments[String(sym || "").toUpperCase()];
+    /* MT5 chart symbols retain exact broker identity. Static instrument sizing
+       defaults are intentionally not borrowed for broker CFDs. */
+    if (listed && listed.provider === "exness_mt5") return listed;
     if (!inst) return listed || null;
     const d = MARKET_DEFAULTS[inst.market] || MARKET_DEFAULTS.Forex;
     const m = Object.assign({}, d, META[metaKey(sym)] || {});
@@ -510,6 +552,25 @@ window.Feed = (() => {
     }).then((body) => validateHistoricalBody(body, sym));
   }
 
+  function fetchLocalMt5Candles(sym, iv) {
+    const selected = catalogInstruments[String(sym || "").toUpperCase()];
+    const providerSymbol = selected && selected.provider === "exness_mt5" ? selected.providerSymbol : String(sym);
+    const url = LIVE_API + "/api/candles?symbol=" + encodeURIComponent(providerSymbol) + "&interval=" + encodeURIComponent(iv) + "&limit=" + BARS;
+    return fetch(url, { cache: "no-store" }).then((res) => {
+      if (!res.ok) throw new Error(res.status === 404 ? "Symbol is not available in the connected Exness MT5 terminal" : "Local Exness MT5 bridge returned " + res.status);
+      return res.json();
+    }).then((body) => {
+      if (!body || body.provider !== "exness_mt5" || body.symbol !== providerSymbol ||
+          body.market !== "broker_cfd" || !body.source || !Array.isArray(body.candles))
+        throw new Error("Unrecognized Exness MT5 candle response");
+      const bars = toBars(body.candles);
+      if (!bars.length || bars.some((b, i) => b.o <= 0 || b.h < Math.max(b.o, b.c) ||
+          b.l > Math.min(b.o, b.c) || b.l <= 0 || b.h < b.l || (i > 0 && b.t <= bars[i - 1].t)))
+        throw new Error("Exness MT5 returned invalid OHLC data");
+      return { body, bars };
+    });
+  }
+
   function fetchPublicBinanceCandles(sym, iv) {
     const symbol = String(sym).toUpperCase();
     if (!BACKEND_SYMBOLS.has(symbol) && !catalogInstruments[symbol]) throw new Error("No exact Binance spot mapping for " + symbol);
@@ -544,18 +605,26 @@ window.Feed = (() => {
     const failed = failedKeys.get(key);
     if (failed && failed.until > Date.now()) return;
     if (failed) failedKeys.delete(key);
-    if (!API_ENABLED || (!BACKEND_SYMBOLS.has(String(sym).toUpperCase()) && !catalogInstruments[String(sym).toUpperCase()]) || !BACKEND_INTERVALS.has(iv) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
+    const code = String(sym).toUpperCase();
+    const listed = catalogInstruments[code];
+    const knownBinance = BACKEND_SYMBOLS.has(code) || (listed && listed.provider === "binance");
+    const knownLocal = LOCAL_MT5_MODE && String(sym || "").length > 0 && String(sym).length <= 64;
+    if (!API_ENABLED || (!knownBinance && !knownLocal) || !BACKEND_INTERVALS.has(iv) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
     loading.add(key);
-    fetchBackendCandles(sym, iv)
-      .catch((backendError) => fetchPublicBinanceCandles(sym, iv).catch((publicError) => {
-        publicError.retryAfterMs = Math.max(publicError.retryAfterMs || 0, backendError.retryAfterMs || 0);
-        throw publicError;
-      }))
+    const request = LOCAL_MT5_MODE
+      ? fetchLocalMt5Candles(sym, iv)
+      : fetchBackendCandles(sym, iv).catch((backendError) => fetchPublicBinanceCandles(sym, iv).catch((publicError) => {
+          publicError.retryAfterMs = Math.max(publicError.retryAfterMs || 0, backendError.retryAfterMs || 0);
+          throw publicError;
+        }));
+    request
       .then(({ body, bars }) => {
         cache[key] = bars;
         realKeys.add(key);
         delete failureReasons[key];
-        historicalSources[key] = "Binance spot (" + body.provider_symbol + ")";
+        historicalSources[key] = body.provider === "exness_mt5"
+          ? body.source + " · " + body.provider_symbol
+          : "Binance spot (" + body.provider_symbol + ")";
         notify();
       })
       .catch((error) => {
@@ -794,8 +863,9 @@ window.Feed = (() => {
     const failed = failedKeys.has(key);
     const exactSuggestion = EXACT_BINANCE_SPOT_ALIASES[sym];
     const unavailable = !demoMode && !historical && !live;
-    const label = historical ? "Spot historical · " + source : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : failed ? "Unavailable · Binance request failed" : exactSuggestion ? "Unavailable · try " + exactSuggestion : unavailable ? "Unavailable · no real feed" : "No chart data";
-    const title = historical ? "Historical OHLC: " + source + ". Not a live quote or futures feed." : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : failed ? "Binance candle request failed. The chart will retry after the provider cooldown. " + (failureReasons[key] || "") : exactSuggestion ? "No exact Binance spot mapping for " + sym + ". The supported spot symbol is " + exactSuggestion + " and its quote currency is USDT." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
+    const localHistorical = historical && source.startsWith("Exness MT5");
+    const label = historical ? (localHistorical ? "Broker historical · " : "Spot historical · ") + source : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : failed ? "Unavailable · provider request failed" : exactSuggestion ? "Unavailable · try " + exactSuggestion : unavailable ? "Unavailable · no real feed" : "No chart data";
+    const title = historical ? "Historical OHLC: " + source + (localHistorical ? ". Broker CFD candles from your local MT5 terminal; tick volume is not exchange volume." : ". Not a live quote or futures feed.") : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : failed ? (LOCAL_MT5_MODE ? "Local Exness MT5 history unavailable. " : "Market-data request failed. ") + (failureReasons[key] || "") : exactSuggestion ? "No exact Binance spot mapping for " + sym + ". The supported spot symbol is " + exactSuggestion + " and its quote currency is USDT." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
     return '<span class="feed-badge' + (live ? ' live' : '') + (demoMode ? ' demo' : '') + (o.compact ? ' compact' : '') +
       '" title="' + title.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '">' +
       '<i aria-hidden="true"></i>' + label + '</span>';
@@ -808,7 +878,7 @@ window.Feed = (() => {
   }
 
   function pollLive() {
-    if (!API_ENABLED || !window.fetch) return;
+    if (LOCAL_MT5_MODE || !API_ENABLED || !window.fetch) return;
     fetch(LIVE_API + "/api/quotes", { cache: "no-store" })
       .then((res) => res.ok ? res.json() : {})
       .then((quotes) => {
@@ -817,7 +887,7 @@ window.Feed = (() => {
       })
       .catch(() => {});
   }
-  if (API_ENABLED) {
+  if (API_ENABLED && !LOCAL_MT5_MODE) {
     pollLive();
     setInterval(pollLive, 5000);
   }

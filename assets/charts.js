@@ -1976,13 +1976,22 @@ let catalogSearchCategory = "";
 function loadProviderCatalog(query, category, offset = 0) {
   if (catalogSearchTimer) clearTimeout(catalogSearchTimer);
   const serial = ++catalogSearchSerial;
-  const market = category === "Crypto" ? "crypto_spot" : "";
-  if (!query && !market) return;
+  const localMarkets = {
+    Forex: "forex", "Crypto CFD": "crypto_cfd", "Commodity CFD": "commodity_cfd",
+    "Index CFD": "index_cfd", "Stock CFD": "stock_cfd", "Other CFD": "other_cfd",
+  };
+  const market = window.THEONEPERCENT_LOCAL_MT5
+    ? (localMarkets[category] || "")
+    : (category === "Crypto" ? "crypto_spot" : "");
+  if (!query && !market && !window.THEONEPERCENT_LOCAL_MT5) return;
   catalogSearchTimer = setTimeout(async () => {
     try {
       const page = await Feed.searchCatalog(query, 50, offset, market);
       if (serial !== catalogSearchSerial || query !== $("#symSearch").value.trim().toLowerCase() || (category === "Crypto") !== (symCls === "Crypto")) return;
-      const rows = page.data.filter((record) => record.provider === "binance" && record.venue === "BINANCE_SPOT");
+      const rows = page.data.filter((record) =>
+        (record.provider === "binance" && record.venue === "BINANCE_SPOT") ||
+        (window.THEONEPERCENT_LOCAL_MT5 && record.provider === "exness_mt5")
+      );
       const host = $("#symList");
       rows.forEach((record) => {
         const shaped = Feed.registerCatalogInstrument(record);
@@ -1994,9 +2003,13 @@ function loadProviderCatalog(query, category, offset = 0) {
         row.className = "sr provider-row";
         row.dataset.providerSymbol = shaped.symbol;
         row.dataset.i = String(symRows.indexOf(shaped.symbol));
-        row.innerHTML = `<div><div class="sr-n"><span class="provider-symbol"></span><span class="sr-cls">Crypto spot</span></div><div class="sr-d provider-detail"></div></div><div class="sr-r"><span class="hint">Historical only</span><button data-provider-add="" title="Add to watchlist">☆</button></div>`;
+        const localBroker = shaped.provider === "exness_mt5";
+        row.innerHTML = `<div><div class="sr-n"><span class="provider-symbol"></span><span class="sr-cls"></span></div><div class="sr-d provider-detail"></div></div><div class="sr-r"><span class="hint">Historical candles</span><button data-provider-add="" title="Add to watchlist">☆</button></div>`;
         row.querySelector(".provider-symbol").textContent = shaped.symbol;
-        row.querySelector(".provider-detail").textContent = `${shaped.name} · Binance · quote ${shaped.quote} · historical candles`;
+        row.querySelector(".sr-cls").textContent = localBroker ? shaped.market : "Crypto spot";
+        row.querySelector(".provider-detail").textContent = localBroker
+          ? `${shaped.name} · ${shaped.venue} · quote ${shaped.quote || "unavailable"} · local MT5 candles`
+          : `${shaped.name} · Binance · quote ${shaped.quote} · historical candles`;
         const add = row.querySelector("[data-provider-add]");
         add.dataset.providerAdd = shaped.symbol;
         add.textContent = state.watch.includes(shaped.symbol) ? "★" : "☆";
@@ -2021,6 +2034,11 @@ function loadProviderCatalog(query, category, offset = 0) {
         notice.className = "empty provider-catalog-warning";
         notice.textContent = page.catalog_warning;
         host.appendChild(notice);
+      } else if (page.catalog_status === "unavailable") {
+        const notice = document.createElement("div");
+        notice.className = "empty provider-catalog-warning";
+        notice.textContent = "Local Exness MT5 catalog unavailable. " + (page.catalog_error || "Open the Exness MT5 terminal and restart the local bridge.");
+        host.appendChild(notice);
       }
       catalogSearchOffset = offset + page.data.length;
       catalogSearchQuery = query;
@@ -2036,12 +2054,14 @@ function loadProviderCatalog(query, category, offset = 0) {
       const count = $("#symCount");
       if (count && page.total) count.textContent += page.catalog_status === "partial_fallback"
         ? ` · ${page.total} known Binance spot symbol${page.total === 1 ? "" : "s"} shown`
-        : ` · ${page.total.toLocaleString()} Binance spot listings match`;
+        : window.THEONEPERCENT_LOCAL_MT5
+          ? ` · ${page.total.toLocaleString()} Exness MT5 instruments match`
+          : ` · ${page.total.toLocaleString()} Binance spot listings match`;
     } catch (error) {
       if (serial === catalogSearchSerial) {
         const notice = document.createElement("div");
         notice.className = "empty";
-        notice.textContent = "Binance provider catalog unavailable. " + error.message;
+        notice.textContent = (window.THEONEPERCENT_LOCAL_MT5 ? "Local Exness MT5 catalog unavailable. " : "Binance provider catalog unavailable. ") + error.message;
         $("#symList").appendChild(notice);
       }
     }
@@ -2050,6 +2070,13 @@ function loadProviderCatalog(query, category, offset = 0) {
 
 function chooseSymbol(k) {
   const dynamic = Feed.symbol(k);
+  if (dynamic && dynamic.provider === "exness_mt5") {
+    if (dynamic.catalogRecord) Feed.registerCatalogInstrument(dynamic.catalogRecord, true);
+    SYMBOLS[dynamic.symbol] = dynamic;
+    setSymbol(k);
+    hide("#symModal");
+    return;
+  }
   if (dynamic && dynamic.provider === "binance") {
     const record = {
       provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot", symbol: dynamic.symbol,
