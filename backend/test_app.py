@@ -208,7 +208,8 @@ class MarketDataContractTests(unittest.TestCase):
         response = client.get("/api/providers")
         self.assertEqual(response.status_code, 200)
         statuses = {row["provider"]: row for row in response.json()["data"]}
-        self.assertEqual(statuses["binance"]["status"], "historical_only")
+        self.assertEqual(statuses["binance"]["status"], "historical_and_streaming")
+        self.assertTrue(statuses["binance"]["streaming"])
         self.assertEqual(statuses["twelve_data"]["status"], "requires_access")
         self.assertEqual(statuses["databento"]["status"], "requires_access")
         self.assertEqual(statuses["broker"]["status"], "unavailable")

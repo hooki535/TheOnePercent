@@ -40,6 +40,9 @@ window.Feed = (() => {
   const liveQuotes = {};
   const realKeys = new Set();
   const historicalSources = Object.create(null);
+  const historicalStale = Object.create(null);
+  const streamStates = Object.create(null);
+  const streamSockets = new Map();
   const failureReasons = Object.create(null);
   const BINANCE_PUBLIC_API = "https://data-api.binance.vision/api/v3";
   const BINANCE_INTERVALS = {
@@ -621,6 +624,7 @@ window.Feed = (() => {
       .then(({ body, bars }) => {
         cache[key] = bars;
         realKeys.add(key);
+        historicalStale[key] = !!body.stale;
         delete failureReasons[key];
         historicalSources[key] = body.provider === "exness_mt5"
           ? body.source + " · " + body.provider_symbol
@@ -634,6 +638,158 @@ window.Feed = (() => {
         notify();
       })
       .finally(() => loading.delete(key));
+  }
+
+  function streamState(sym, iv) {
+    const key = String(sym || "").toUpperCase() + "|" + iv;
+    const current = streamStates[key];
+    if (!current) return null;
+    if (current.state === "connected" && current.lastMessageAt && Date.now() - current.lastMessageAt > 15000)
+      return Object.assign({}, current, { state: "stale" });
+    return current;
+  }
+
+  function mergeRealBars(key, bars) {
+    const merged = new Map((cache[key] || []).map((bar) => [bar.t, bar]));
+    bars.forEach((bar) => merged.set(bar.t, bar));
+    cache[key] = Array.from(merged.values()).sort((a, b) => a.t - b.t).slice(-BARS);
+    realKeys.add(key);
+  }
+
+  function applyStreamCandle(sym, iv, event) {
+    const symbol = String(sym || "").toUpperCase();
+    const key = symbol + "|" + iv;
+    if (!event || event.type !== "candle" || event.symbol !== symbol || event.provider_symbol !== symbol ||
+        event.source !== "Binance spot" || event.market !== "spot" || event.interval !== iv || !event.candle)
+      throw new Error("Unrecognized Binance stream event");
+    const bars = toBars([event.candle]);
+    if (bars.length !== 1 || bars[0].o <= 0 || bars[0].h < Math.max(bars[0].o, bars[0].c) ||
+        bars[0].l > Math.min(bars[0].o, bars[0].c) || bars[0].l <= 0 || bars[0].h < bars[0].l || bars[0].v < 0)
+      throw new Error("Binance stream returned invalid OHLC data");
+    mergeRealBars(key, bars);
+    historicalStale[key] = false;
+    historicalSources[key] = "Binance spot (" + symbol + ")";
+    streamStates[key] = Object.assign({}, streamStates[key], { state: "connected", lastMessageAt: Date.now(), gapBackfillFailed: false });
+    notify();
+  }
+
+  function backfillLatest(entry) {
+    const key = entry.symbol + "|" + entry.interval;
+    if (entry.backfillPromise) return entry.backfillPromise;
+    entry.backfillPromise = fetchBackendCandles(entry.symbol, entry.interval)
+      .catch((backendError) => fetchPublicBinanceCandles(entry.symbol, entry.interval).catch((publicError) => {
+        publicError.retryAfterMs = Math.max(publicError.retryAfterMs || 0, backendError.retryAfterMs || 0);
+        throw publicError;
+      }))
+      .then(({ bars }) => {
+        mergeRealBars(key, bars);
+        historicalStale[key] = false;
+        streamStates[key] = Object.assign({}, streamStates[key], { gapBackfillFailed: false });
+        delete failureReasons[key];
+        notify();
+      })
+      .catch((error) => {
+        streamStates[key] = Object.assign({}, streamStates[key], { gapBackfillFailed: true });
+        failureReasons[key] = error && error.message ? error.message : "Reconnect backfill failed";
+      })
+      .finally(() => {
+        entry.backfillPromise = null;
+        const pending = entry.pendingEvents.splice(0);
+        pending.forEach((event) => {
+          try { applyStreamCandle(entry.symbol, entry.interval, event); }
+          catch (_) { streamStates[key] = Object.assign({}, streamStates[key], { state: "error" }); }
+        });
+      });
+    return entry.backfillPromise;
+  }
+
+  function stopStream(key, entry) {
+    entry.stopped = true;
+    if (entry.retryTimer) clearTimeout(entry.retryTimer);
+    streamSockets.delete(key);
+    if (entry.socket && entry.socket.readyState < 2) entry.socket.close(1000, "Chart series no longer active");
+    streamStates[key] = { state: "disconnected" };
+  }
+
+  function connectStream(key, entry) {
+    if (entry.stopped || streamSockets.get(key) !== entry) return;
+    const socketUrl = LIVE_API.replace(/^https:/i, "wss:").replace(/^http:/i, "ws:") +
+      "/api/stream/" + encodeURIComponent(entry.symbol) + "/" + encodeURIComponent(entry.interval);
+    streamStates[key] = Object.assign({}, streamStates[key], { state: entry.everOpened ? "reconnecting" : "connecting" });
+    notify();
+    let socket;
+    try { socket = new window.WebSocket(socketUrl); }
+    catch (error) { scheduleReconnect(key, entry, error); return; }
+    entry.socket = socket;
+    socket.onopen = () => {
+      if (entry.stopped || streamSockets.get(key) !== entry) return socket.close();
+      const reconnect = entry.everOpened;
+      entry.everOpened = true;
+      entry.retryDelay = 1000;
+      streamStates[key] = Object.assign({}, streamStates[key], { state: "connecting", gapBackfillFailed: false });
+      if (reconnect) backfillLatest(entry);
+      notify();
+    };
+    socket.onmessage = (message) => {
+      if (entry.stopped || streamSockets.get(key) !== entry) return;
+      let event;
+      try { event = JSON.parse(message.data); }
+      catch (_) { return; }
+      if (event.type === "status") {
+        streamStates[key] = Object.assign({}, streamStates[key], { state: event.state });
+        notify();
+        return;
+      }
+      if (entry.backfillPromise) { entry.pendingEvents.push(event); return; }
+      try { applyStreamCandle(entry.symbol, entry.interval, event); }
+      catch (error) {
+        streamStates[key] = Object.assign({}, streamStates[key], { state: "error", gapBackfillFailed: true });
+        failureReasons[key] = error.message;
+        notify();
+      }
+    };
+    socket.onerror = () => {
+      if (entry.stopped) return;
+      streamStates[key] = Object.assign({}, streamStates[key], { state: "reconnecting" });
+      notify();
+    };
+    socket.onclose = () => {
+      if (!entry.stopped && streamSockets.get(key) === entry) scheduleReconnect(key, entry);
+    };
+  }
+
+  function scheduleReconnect(key, entry, error) {
+    if (entry.stopped || streamSockets.get(key) !== entry || entry.retryTimer) return;
+    streamStates[key] = Object.assign({}, streamStates[key], { state: "reconnecting" });
+    if (error) failureReasons[key] = error.message || "Market stream connection failed";
+    notify();
+    const delay = Math.min(entry.retryDelay, 30000);
+    entry.retryDelay = Math.min(entry.retryDelay * 2, 30000);
+    entry.retryTimer = setTimeout(() => {
+      entry.retryTimer = null;
+      connectStream(key, entry);
+    }, delay);
+  }
+
+  function watchSeries(series) {
+    const Socket = window.WebSocket;
+    if (!API_ENABLED || LOCAL_MT5_MODE || typeof Socket !== "function") return;
+    const desired = new Map();
+    (Array.isArray(series) ? series : []).forEach((item) => {
+      const symbol = String(item && (item.symbol || item.sym) || "").toUpperCase();
+      const interval = String(item && (item.interval || item.iv) || "");
+      const instrument = catalogInstruments[symbol];
+      const exactBinance = BACKEND_SYMBOLS.has(symbol) || (instrument && instrument.provider === "binance");
+      if (exactBinance && BACKEND_INTERVALS.has(interval)) desired.set(symbol + "|" + interval, { symbol, interval });
+    });
+    for (const [key, entry] of streamSockets) if (!desired.has(key)) stopStream(key, entry);
+    desired.forEach(({ symbol, interval }, key) => {
+      if (streamSockets.has(key)) return;
+      const entry = { symbol, interval, socket: null, retryTimer: null, retryDelay: 1000,
+        everOpened: false, stopped: false, backfillPromise: null, pendingEvents: [] };
+      streamSockets.set(key, entry);
+      connectStream(key, entry);
+    });
   }
 
   /* Bars are built backwards from a fixed anchor and then scaled so the
@@ -860,12 +1016,19 @@ window.Feed = (() => {
     const source = historical ? historicalSources[sym + "|" + interval] : "";
     const live = !!(sym && isLive(sym));
     const key = sym + "|" + interval;
+    const stream = sym && interval ? streamState(sym, interval) : null;
     const failed = failedKeys.has(key);
     const exactSuggestion = EXACT_BINANCE_SPOT_ALIASES[sym];
     const unavailable = !demoMode && !historical && !live;
     const localHistorical = historical && source.startsWith("Exness MT5");
-    const label = historical ? (localHistorical ? "Broker historical · " : "Spot historical · ") + source : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : failed ? "Unavailable · provider request failed" : exactSuggestion ? "Unavailable · try " + exactSuggestion : unavailable ? "Unavailable · no real feed" : "No chart data";
-    const title = historical ? "Historical OHLC: " + source + (localHistorical ? ". Broker CFD candles from your local MT5 terminal; tick volume is not exchange volume." : ". Not a live quote or futures feed.") : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : failed ? (LOCAL_MT5_MODE ? "Local Exness MT5 history unavailable. " : "Market-data request failed. ") + (failureReasons[key] || "") : exactSuggestion ? "No exact Binance spot mapping for " + sym + ". The supported spot symbol is " + exactSuggestion + " and its quote currency is USDT." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
+    const streamLabel = stream ? stream.state === "stale" ? " · stream stale · Binance spot" : stream.state === "connected" ? " · stream connected · Binance spot" : stream.state === "reconnecting" || stream.state === "connecting" ? " · stream " + stream.state : stream.state === "error" ? " · stream error · Binance spot" : "" : "";
+    const label = historical
+      ? historicalStale[key] ? "Stale historical · " + source : (localHistorical ? "Broker historical · " : "Spot historical · ") + source + streamLabel
+      : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : failed ? "Unavailable · " + (LOCAL_MT5_MODE ? "Exness MT5 request failed" : "Binance request failed") : exactSuggestion ? "Unavailable · try " + exactSuggestion : unavailable ? "Unavailable · no real feed" : "No chart data";
+    const title = historical
+      ? (historicalStale[key] ? "Stale historical OHLC: " : "Historical OHLC: ") + source + (localHistorical ? ". Broker CFD candles from your local MT5 terminal; tick volume is not exchange volume." : ". Not an executable quote or futures feed.") +
+        (stream ? ". Binance stream status: " + stream.state + (stream.gapBackfillFailed ? "; reconnect backfill failed, a candle gap may remain" : "") : ". No stream is connected.")
+      : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : failed ? (LOCAL_MT5_MODE ? "Local Exness MT5 history unavailable. " : "Market-data request failed. ") + (failureReasons[key] || "") : exactSuggestion ? "No exact Binance spot mapping for " + sym + ". The supported spot symbol is " + exactSuggestion + " and its quote currency is USDT." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
     return '<span class="feed-badge' + (live ? ' live' : '') + (demoMode ? ' demo' : '') + (o.compact ? ' compact' : '') +
       '" title="' + title.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '">' +
       '<i aria-hidden="true"></i>' + label + '</span>';
@@ -898,6 +1061,8 @@ window.Feed = (() => {
     API_ENABLED,
     isHistorical: (sym, iv) => realKeys.has(String(sym).toUpperCase() + "|" + iv),
     historicalSource: (sym, iv) => historicalSources[String(sym).toUpperCase() + "|" + iv] || null,
+    streamState,
+    watchSeries,
     searchCatalog,
     registerCatalogInstrument,
     isLive,

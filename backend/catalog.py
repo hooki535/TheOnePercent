@@ -98,8 +98,8 @@ class BinanceSpotCatalog:
                     "provider": "binance",
                     "provider_symbol": raw,
                     "availability": "historical_only",
-                    "access_reason": "Public spot candles; no executable quote or order access is provided.",
-                    "streaming": False,
+                    "access_reason": "Public exact-symbol spot candles and kline updates; no executable quote or order access is provided.",
+                    "streaming": True,
                     "price_tick": price_filter.get("tickSize"),
                     "quantity_step": lot_filter.get("stepSize"),
                     "min_quantity": lot_filter.get("minQty"),
@@ -200,8 +200,8 @@ def filter_page(rows, query="", market="", exchange="", limit=50, offset=0):
 def provider_status():
     twelve_ready = TwelveDataCatalog().enabled
     return [
-        {"provider": "binance", "market": "crypto_spot", "status": "historical_only",
-         "streaming": False, "access_reason": "Public spot candle REST access; no bid/ask or order execution."},
+        {"provider": "binance", "market": "crypto_spot", "status": "historical_and_streaming",
+         "streaming": True, "access_reason": "Public exact-symbol spot OHLC candles and kline stream adapter; active connection and freshness are reported per chart; no bid/ask or order execution."},
         {"provider": "twelve_data", "market": "stocks_forex_crypto_etfs_commodities", "status": "requires_access",
          "catalog_configured": twelve_ready, "streaming": False,
          "access_reason": "No candle adapter is activated. Catalog discovery requires a server-side API key; chart access also requires verified plan and exchange/display rights."},

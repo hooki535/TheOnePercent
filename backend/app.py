@@ -10,13 +10,15 @@ from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, HTTPException, Query, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 try:  # Supports both `uvicorn app:app` and `uvicorn backend.app:app`.
     from .catalog import binance_catalog, filter_page, provider_status, twelve_data_catalog
+    from .binance_stream import binance_streams
 except ImportError:  # pragma: no cover - exercised by the Render start command
     from catalog import binance_catalog, filter_page, provider_status, twelve_data_catalog
+    from binance_stream import binance_streams
 
 app = FastAPI(title="TheOnePercent Market Data API", version="0.1.0")
 origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "https://hooki535.github.io").split(",") if x.strip()]
@@ -200,6 +202,39 @@ def candles(symbol: str, interval: str, response: Response, limit: int = Query(5
     cache[key] = (time.monotonic(), result)
     response.headers["X-Market-Cache"] = "MISS"
     return result
+
+
+@app.websocket("/api/stream/{symbol}/{interval}")
+async def stream_candles(websocket: WebSocket, symbol: str, interval: str):
+    """Proxy official Binance Spot kline updates for supported exact symbols."""
+    requested = symbol.upper()
+    if interval not in INTERVALS or not requested.isalnum():
+        await websocket.close(code=1008, reason="Unsupported Binance Spot symbol or interval")
+        return
+    if requested not in SYMBOLS:
+        try:
+            rows, _ = binance_catalog.list()
+        except Exception:
+            await websocket.close(code=1013, reason="Binance spot catalog temporarily unavailable")
+            return
+        if not any(row.get("symbol") == requested for row in rows):
+            await websocket.close(code=1008, reason="Symbol is not an active Binance Spot instrument")
+            return
+    origin = websocket.headers.get("origin")
+    if origin and origin not in origins:
+        await websocket.close(code=1008, reason="Origin is not allowed")
+        return
+
+    await websocket.accept()
+    queue = await binance_streams.subscribe(requested, interval, INTERVALS[interval])
+    try:
+        while True:
+            event = await queue.get()
+            await websocket.send_json(event)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await binance_streams.unsubscribe(requested, interval, INTERVALS[interval], queue)
 
 
 @app.get("/api/quotes")
