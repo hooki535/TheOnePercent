@@ -43,10 +43,16 @@ window.Feed = (() => {
   const liveQuotes = {};
   const realKeys = new Set();
   const historicalSources = Object.create(null);
+  const BINANCE_PUBLIC_API = "https://data-api.binance.vision/api/v3";
+  const BINANCE_INTERVALS = {
+    "1m": "1m", "3m": "3m", "5m": "5m", "15m": "15m", "30m": "30m",
+    "1H": "1h", "2H": "2h", "4H": "4h", "6H": "6h", "8H": "8h", "12H": "12h",
+    "1D": "1d", "3D": "3d", "1W": "1w", "1M": "1M",
+  };
   const BACKEND_INTERVALS = new Set(["1m", "3m", "5m", "15m", "30m", "1H", "2H", "4H", "6H", "8H", "12H", "1D", "3D", "1W", "1M"]);
   const BACKEND_SYMBOLS = new Set(["BTCUSD", "BTCUSDT", "ETHUSD", "ETHUSDT", "SOLUSD", "SOLUSDT"]);
   const DEMO_NOTE =
-    "Historical Binance spot crypto candles when the configured API is available; otherwise synthetic demo candles. Forex, metals and futures are not connected.";
+    "Historical Binance spot crypto candles when the configured API or public Binance endpoint is available; otherwise synthetic demo candles. Forex, metals and futures are not connected.";
 
   /* The full ladder, grouped the way the interval menu groups it. A chart
      can ask for any of these; `build()` is generic in milliseconds. Ticks
@@ -397,20 +403,53 @@ window.Feed = (() => {
     })).filter((b) => [b.t, b.o, b.h, b.l, b.c].every(Number.isFinite));
   }
 
+  function validateHistoricalBody(body, sym) {
+    if (!body || body.market !== "spot" || body.source !== "Binance spot" || body.symbol !== String(sym).toUpperCase() || !body.provider_symbol || !Array.isArray(body.candles))
+      throw new Error("Unrecognized candle source");
+    const bars = toBars(body.candles);
+    if (!bars.length || bars.some((b, i) => b.o <= 0 || b.h < Math.max(b.o, b.c) || b.l > Math.min(b.o, b.c) || b.l <= 0 || b.h < b.l || (i > 0 && b.t <= bars[i - 1].t)))
+      throw new Error("Candle API returned invalid OHLC data");
+    return { body, bars };
+  }
+
+  function fetchBackendCandles(sym, iv) {
+    const url = LIVE_API + "/api/candles/" + encodeURIComponent(String(sym).toUpperCase()) + "/" + encodeURIComponent(iv) + "?limit=" + BARS;
+    return fetch(url, { cache: "no-store" }).then((res) => {
+      if (!res.ok) throw new Error("Candle API returned " + res.status);
+      return res.json();
+    }).then((body) => validateHistoricalBody(body, sym));
+  }
+
+  function fetchPublicBinanceCandles(sym, iv) {
+    const symbol = String(sym).toUpperCase();
+    const providerSymbol = symbol.endsWith("USDT") ? symbol : symbol.slice(0, -3) + "USDT";
+    const url = BINANCE_PUBLIC_API + "/klines?" + new URLSearchParams({
+      symbol: providerSymbol,
+      interval: BINANCE_INTERVALS[iv],
+      limit: String(BARS),
+    });
+    return fetch(url, { cache: "no-store" }).then((res) => {
+      if (!res.ok) throw new Error("Binance public candle API returned " + res.status);
+      return res.json();
+    }).then((rows) => {
+      if (!Array.isArray(rows)) throw new Error("Unrecognized Binance candle response");
+      const candles = rows.map((row) => ({
+        t: Number(row[0]) / 1000,
+        o: Number(row[1]), h: Number(row[2]), l: Number(row[3]), c: Number(row[4]), v: Number(row[5]),
+      }));
+      return validateHistoricalBody({
+        symbol, provider_symbol: providerSymbol, source: "Binance spot", market: "spot", interval: iv, candles,
+      }, sym);
+    });
+  }
+
   function loadHistory(sym, iv) {
     const key = String(sym).toUpperCase() + "|" + iv;
     if (!API_ENABLED || !BACKEND_SYMBOLS.has(String(sym).toUpperCase()) || !BACKEND_INTERVALS.has(iv) || failedKeys.has(key) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
     loading.add(key);
-    fetch(LIVE_API + "/api/candles/" + encodeURIComponent(String(sym).toUpperCase()) + "/" + encodeURIComponent(iv) + "?limit=" + BARS, { cache: "no-store" })
-      .then((res) => {
-        if (!res.ok) throw new Error("candle API returned " + res.status);
-        return res.json();
-      })
-      .then((body) => {
-        if (!body || body.market !== "spot" || body.source !== "Binance spot" || body.symbol !== String(sym).toUpperCase() || !body.provider_symbol || !Array.isArray(body.candles)) throw new Error("Unrecognized candle source");
-        const bars = toBars(body.candles);
-        if (!bars.length || bars.some((b, i) => b.o <= 0 || b.h < Math.max(b.o, b.c) || b.l > Math.min(b.o, b.c) || b.l <= 0 || b.h < b.l || (i > 0 && b.t <= bars[i - 1].t)))
-          throw new Error("candle API returned invalid OHLC data");
+    fetchBackendCandles(sym, iv)
+      .catch(() => fetchPublicBinanceCandles(sym, iv))
+      .then(({ body, bars }) => {
         cache[key] = bars;
         realKeys.add(key);
         historicalSources[key] = "Binance spot (" + body.provider_symbol + ")";
