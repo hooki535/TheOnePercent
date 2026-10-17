@@ -52,7 +52,10 @@ def provider_get(path):
             last_error = exc
             if exc.code == 429:
                 raise HTTPException(status_code=503, detail="Binance public market-data rate limit reached") from exc
-            if exc.code < 500 and exc.code != 451:
+            if exc.code in (403, 451):
+                logger.warning("Binance public market-data host denied access with HTTP %s; trying another official host", exc.code)
+                continue
+            if exc.code < 500:
                 raise HTTPException(status_code=503, detail="Binance rejected the market-data request") from exc
             logger.warning("Binance public market-data host failed with HTTP %s", exc.code)
         except (URLError, TimeoutError, ValueError) as exc:

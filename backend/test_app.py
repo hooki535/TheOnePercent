@@ -1,6 +1,8 @@
 """Contract tests for TheOnePercent's market-data API (no network needed)."""
 import unittest
-from unittest.mock import patch
+from io import BytesIO
+from urllib.error import HTTPError
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 from app import BASE_URL, app, cache
@@ -23,6 +25,32 @@ class MarketDataContractTests(unittest.TestCase):
 
     def test_uses_binance_public_market_data_endpoint(self):
         self.assertEqual(BASE_URL, "https://data-api.binance.vision/api/v3")
+
+    @patch("app.urlopen")
+    def test_candle_provider_retries_an_official_host_after_http_403(self, open_url):
+        response = MagicMock()
+        response.__enter__.return_value = BytesIO(b'{"symbols":[]}')
+        open_url.side_effect = [
+            HTTPError(BASE_URL + "/exchangeInfo", 403, "Forbidden", {}, None),
+            response,
+        ]
+        from app import provider_get
+        self.assertEqual(provider_get("/exchangeInfo"), {"symbols": []})
+        self.assertEqual(open_url.call_count, 2)
+        self.assertIn("data-api.binance.vision", open_url.call_args_list[0].args[0].full_url)
+        self.assertIn("api-gcp.binance.com", open_url.call_args_list[1].args[0].full_url)
+
+    @patch("catalog._get_json")
+    def test_catalog_retries_an_official_host_after_http_403(self, get_json):
+        get_json.side_effect = [
+            HTTPError("https://data-api.binance.vision/api/v3/exchangeInfo", 403, "Forbidden", {}, None),
+            {"symbols": []},
+        ]
+        from catalog import _get_binance_json
+        self.assertEqual(_get_binance_json("/exchangeInfo"), {"symbols": []})
+        self.assertEqual(get_json.call_count, 2)
+        self.assertIn("data-api.binance.vision", get_json.call_args_list[0].args[0])
+        self.assertIn("api-gcp.binance.com", get_json.call_args_list[1].args[0])
 
     def test_rejects_unsupported_instrument(self):
         response = client.get("/api/candles/ES1!/1H")

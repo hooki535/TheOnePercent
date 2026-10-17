@@ -42,7 +42,9 @@ def _get_binance_json(path: str):
             last = exc
             if exc.code == 429:
                 raise
-            if exc.code < 500 and exc.code != 451:
+            if exc.code in (403, 451):
+                continue
+            if exc.code < 500:
                 raise
         except (URLError, TimeoutError, ValueError) as exc:
             last = exc
