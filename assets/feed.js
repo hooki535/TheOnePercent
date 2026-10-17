@@ -33,12 +33,13 @@ window.Feed = (() => {
     ? window.THEONEPERCENT_MARKET_API.trim().replace(/\/$/, "") : "";
   const API_ENABLED = /^https:\/\/[^/]+/i.test(LIVE_API) ||
     (typeof location !== "undefined" && location.protocol === "http:" && /^http:\/\/localhost(?::\d+)?$/i.test(LIVE_API));
-  const failedKeys = new Set();
+  const failedKeys = new Map();
   const LIVE_MAX_AGE_MS = 30000;
   let demoMode = !!(window.Store && Store.settings && Store.settings.get().chartsDataMode === "demo");
   const liveQuotes = {};
   const realKeys = new Set();
   const historicalSources = Object.create(null);
+  const failureReasons = Object.create(null);
   const BINANCE_PUBLIC_API = "https://data-api.binance.vision/api/v3";
   const BINANCE_INTERVALS = {
     "1m": "1m", "3m": "3m", "5m": "5m", "15m": "15m", "30m": "30m",
@@ -47,6 +48,7 @@ window.Feed = (() => {
   };
   const BACKEND_INTERVALS = new Set(["1m", "3m", "5m", "15m", "30m", "1H", "2H", "4H", "6H", "8H", "12H", "1D", "3D", "1W", "1M"]);
   const BACKEND_SYMBOLS = new Set(["BTCUSDT", "ETHUSDT", "SOLUSDT"]);
+  const EXACT_BINANCE_SPOT_ALIASES = { BTCUSD: "BTCUSDT", ETHUSD: "ETHUSDT", SOLUSD: "SOLUSDT" };
   const DEMO_NOTE =
     "Only verified Binance spot crypto candles are available from the current provider. Other instruments remain unavailable unless Demo mode is explicitly enabled.";
 
@@ -320,6 +322,14 @@ window.Feed = (() => {
      what the measuring tool writes after a number. */
 
   const catalogInstruments = Object.create(null);
+  /* A short outage fallback for exact Binance spot identifiers already
+     supported by the candle adapter. This is deliberately not presented as
+     a complete exchange catalog, and it contains no prices. */
+  const KNOWN_BINANCE_SPOT = [
+    { provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot", symbol: "BTCUSDT", provider_symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT", availability: "historical_only", search_aliases: ["bitcoin"] },
+    { provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot", symbol: "ETHUSDT", provider_symbol: "ETHUSDT", base_asset: "ETH", quote_asset: "USDT", availability: "historical_only", search_aliases: ["ether", "ethereum"] },
+    { provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot", symbol: "SOLUSDT", provider_symbol: "SOLUSDT", base_asset: "SOL", quote_asset: "USDT", availability: "historical_only", search_aliases: ["solana"] },
+  ];
   function registerCatalogInstrument(record, persist = false) {
     if (!record || record.provider !== "binance" || record.venue !== "BINANCE_SPOT" ||
         record.market !== "crypto_spot" || record.availability !== "historical_only" ||
@@ -333,8 +343,8 @@ window.Feed = (() => {
       symbol: code, name: `${record.base_asset} / ${record.quote_asset}`,
       market: "Crypto", cls: "Crypto", base: record.base_asset, quote: record.quote_asset,
       px: null, digits: Math.min(14, digits), tick: Number.isFinite(tick) && tick > 0 ? tick : null,
-      tickName: record.quote_asset, contract: 1, unitValue: 1, unit: record.base_asset,
-      step: Number(record.quantity_step) || null, vol: null, spread: null, costTicks: null,
+      tickName: record.quote_asset, contract: null, unitValue: null, unit: record.base_asset,
+      step: null, vol: null, spread: null, costTicks: null,
       session: "24/7", venue: "Binance spot", instrument: null,
       provider: "binance", providerSymbol: code, availability: "historical_only",
     };
@@ -350,17 +360,36 @@ window.Feed = (() => {
     }
     return catalogInstruments[code];
   }
+  KNOWN_BINANCE_SPOT.forEach((record) => registerCatalogInstrument(record));
   if (window.Store && Store.settings)
     (Store.settings.get().chartsCatalogSymbols || []).forEach((record) => registerCatalogInstrument(record));
 
   async function searchCatalog(query = "", limit = 50, offset = 0, market = "") {
     if (!API_ENABLED || !window.fetch) return { data: [], total: 0, has_more: false };
     const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset), market });
-    const response = await fetch(LIVE_API + "/api/instruments?" + params.toString(), { cache: "no-store" });
-    if (!response.ok) throw new Error("Instrument catalog unavailable (" + response.status + ")");
-    const body = await response.json();
-    if (!body || !Array.isArray(body.data)) throw new Error("Unrecognized instrument catalog response");
-    return body;
+    try {
+      const response = await fetch(LIVE_API + "/api/instruments?" + params.toString(), { cache: "no-store" });
+      if (!response.ok) throw new Error("Instrument catalog unavailable (" + response.status + ")");
+      const body = await response.json();
+      if (!body || !Array.isArray(body.data)) throw new Error("Unrecognized instrument catalog response");
+      return body;
+    } catch (error) {
+      const needle = String(query || "").trim().toLowerCase();
+      const matches = KNOWN_BINANCE_SPOT.filter((record) => {
+        if (market && market !== record.market) return false;
+        if (!needle) return true;
+        return [record.symbol, record.base_asset, record.quote_asset, ...(record.search_aliases || [])]
+          .some((value) => String(value).toLowerCase().includes(needle));
+      });
+      return {
+        data: matches.slice(offset, offset + limit),
+        total: matches.length,
+        has_more: false,
+        catalog_status: "partial_fallback",
+        catalog_warning: "Binance catalog unavailable; showing only three known Binance spot symbols. This is not a complete catalog.",
+        catalog_error: error.message,
+      };
+    }
   }
 
   function symbol(sym) {
@@ -466,7 +495,17 @@ window.Feed = (() => {
   function fetchBackendCandles(sym, iv) {
     const url = LIVE_API + "/api/candles/" + encodeURIComponent(String(sym).toUpperCase()) + "/" + encodeURIComponent(iv) + "?limit=" + BARS;
     return fetch(url, { cache: "no-store" }).then((res) => {
-      if (!res.ok) throw new Error("Candle API returned " + res.status);
+      if (!res.ok) {
+        const error = new Error("Candle API returned " + res.status);
+        const headerDelay = Number(res.headers && res.headers.get && res.headers.get("Retry-After"));
+        if (Number.isFinite(headerDelay) && headerDelay > 0) error.retryAfterMs = headerDelay * 1000;
+        return Promise.resolve().then(() => typeof res.json === "function" ? res.json() : null).catch(() => null).then((body) => {
+          const detail = body && (body.detail || body.message);
+          const match = String(detail || "").match(/retry in\s+(\d+)\s+seconds/i);
+          if (!error.retryAfterMs && match) error.retryAfterMs = Number(match[1]) * 1000;
+          throw error;
+        });
+      }
       return res.json();
     }).then((body) => validateHistoricalBody(body, sym));
   }
@@ -481,7 +520,12 @@ window.Feed = (() => {
       limit: String(BARS),
     });
     return fetch(url, { cache: "no-store" }).then((res) => {
-      if (!res.ok) throw new Error("Binance public candle API returned " + res.status);
+      if (!res.ok) {
+        const error = new Error("Binance public candle API returned " + res.status);
+        const delay = Number(res.headers && res.headers.get && res.headers.get("Retry-After"));
+        if (Number.isFinite(delay) && delay > 0) error.retryAfterMs = delay * 1000;
+        throw error;
+      }
       return res.json();
     }).then((rows) => {
       if (!Array.isArray(rows)) throw new Error("Unrecognized Binance candle response");
@@ -497,18 +541,27 @@ window.Feed = (() => {
 
   function loadHistory(sym, iv) {
     const key = String(sym).toUpperCase() + "|" + iv;
-    if (!API_ENABLED || (!BACKEND_SYMBOLS.has(String(sym).toUpperCase()) && !catalogInstruments[String(sym).toUpperCase()]) || !BACKEND_INTERVALS.has(iv) || failedKeys.has(key) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
+    const failed = failedKeys.get(key);
+    if (failed && failed.until > Date.now()) return;
+    if (failed) failedKeys.delete(key);
+    if (!API_ENABLED || (!BACKEND_SYMBOLS.has(String(sym).toUpperCase()) && !catalogInstruments[String(sym).toUpperCase()]) || !BACKEND_INTERVALS.has(iv) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
     loading.add(key);
     fetchBackendCandles(sym, iv)
-      .catch(() => fetchPublicBinanceCandles(sym, iv))
+      .catch((backendError) => fetchPublicBinanceCandles(sym, iv).catch((publicError) => {
+        publicError.retryAfterMs = Math.max(publicError.retryAfterMs || 0, backendError.retryAfterMs || 0);
+        throw publicError;
+      }))
       .then(({ body, bars }) => {
         cache[key] = bars;
         realKeys.add(key);
+        delete failureReasons[key];
         historicalSources[key] = "Binance spot (" + body.provider_symbol + ")";
         notify();
       })
-      .catch(() => {
-        failedKeys.add(key); // Avoid retrying a failing provider on every redraw.
+      .catch((error) => {
+        const delay = Math.min(259200000, Math.max(60000, error.retryAfterMs || 0));
+        failedKeys.set(key, { until: Date.now() + delay });
+        failureReasons[key] = error && error.message ? error.message : "Provider request failed";
         notify();
       })
       .finally(() => loading.delete(key));
@@ -633,7 +686,6 @@ window.Feed = (() => {
       Object.keys(cache).forEach((key) => {
         const [sym, iv] = key.split("|");
         if (!realKeys.has(key)) {
-          failedKeys.delete(key);
           loadHistory(sym, iv);
         }
       });
@@ -738,9 +790,12 @@ window.Feed = (() => {
     const historical = sym && interval && realKeys.has(sym + "|" + interval);
     const source = historical ? historicalSources[sym + "|" + interval] : "";
     const live = !!(sym && isLive(sym));
+    const key = sym + "|" + interval;
+    const failed = failedKeys.has(key);
+    const exactSuggestion = EXACT_BINANCE_SPOT_ALIASES[sym];
     const unavailable = !demoMode && !historical && !live;
-    const label = historical ? "Spot historical · " + source : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : unavailable ? "Unavailable · no real feed" : "No chart data";
-    const title = historical ? "Historical OHLC: " + source + ". Not a live quote or futures feed." : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
+    const label = historical ? "Spot historical · " + source : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : failed ? "Unavailable · Binance request failed" : exactSuggestion ? "Unavailable · try " + exactSuggestion : unavailable ? "Unavailable · no real feed" : "No chart data";
+    const title = historical ? "Historical OHLC: " + source + ". Not a live quote or futures feed." : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : failed ? "Binance candle request failed. The chart will retry after the provider cooldown. " + (failureReasons[key] || "") : exactSuggestion ? "No exact Binance spot mapping for " + sym + ". The supported spot symbol is " + exactSuggestion + " and its quote currency is USDT." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
     return '<span class="feed-badge' + (live ? ' live' : '') + (demoMode ? ' demo' : '') + (o.compact ? ' compact' : '') +
       '" title="' + title.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '">' +
       '<i aria-hidden="true"></i>' + label + '</span>';

@@ -181,7 +181,7 @@ const state = {
     newChart("GBPJPY", "15m"),
     newChart("XAUUSD", "1H"),
     newChart("NAS100", "15m"),
-    newChart("BTCUSD", "1H"),
+    newChart("BTCUSDT", "1H"),
     newChart("DXY", "1H"),
   ],
   type: "candle",
@@ -257,7 +257,7 @@ const state = {
 
 const WATCH_DEFAULTS = {
   Forex: ["EURUSD", "GBPUSD", "USDJPY", "GBPJPY", "USDUGX", "USDKES"],
-  Crypto: ["BTCUSD", "ETHUSD", "SOLUSD"],
+  Crypto: ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
   Indices: ["US500", "US30", "NAS100", "DE40"],
   Commodities: ["XAUUSD", "XAGUSD"],
   Futures: ["NQ1!", "ES1!", "CL1!"],
@@ -390,6 +390,10 @@ function makePos(key, a, b, opts) {
     ),
     "",
   );
+  if (!SYMBOLS[sym] || !SYMBOLS[sym].instrument || !(SYMBOLS[sym].tick > 0) || !(SYMBOLS[sym].step > 0)) {
+    toast("Position sizing unavailable", "Verified instrument specifications are not available for this provider listing.");
+    return;
+  }
   let entry = a,
     stop = b;
   /* The short-position tool forces the direction instead of reading it off
@@ -523,6 +527,15 @@ function renderReadouts() {
   }
   const S = SYMBOLS[P.sym],
     c = P.calc;
+  if (!c) {
+    box.innerHTML = `<div class="ro"><span>Position sizing</span><b>Unavailable <em>Verified specifications are unavailable for ${esc(P.sym)}</em></b></div>` +
+      (R.guardrailBreaches.length ? '<div class="ro"><span>Confirmed guardrail breaches</span><b>' + esc(R.guardrailBreaches.map((b) => b.text).join("; ")) + '</b></div>' : "");
+    $("#warn").hidden = true;
+    $("#rpFill").style.width = "0%";
+    $("#rpVal").textContent = "Unavailable";
+    $("#coachBody").innerHTML = coachHTML(P);
+    return;
+  }
   box.innerHTML = `
     <div class="ro big"><span>Size</span><b>${c.size} ${S.unit}</b></div>
     <div class="ro"><span>Risk</span><b class="dn">${money(c.risk)} <em>${c.pct.toFixed(2)}% of balance</em></b></div>
@@ -555,10 +568,12 @@ function renderReadouts() {
   $("#coachBody").innerHTML = coachHTML(P);
 }
 function atrTicks(sym) {
+  const tick = SYMBOLS[sym] && SYMBOLS[sym].tick;
+  if (!(tick > 0)) return null;
   const c = charts[state.sel],
     d = c ? c.data : getSeries(sym, "15m");
   const r = d.slice(-14).reduce((a, b) => a + (b.h - b.l), 0) / 14;
-  return Math.max(1e-9, r / SYMBOLS[sym].tick);
+  return Math.max(1e-9, r / tick);
 }
 /* What this symbol has actually done in the journal. Returns null rather
    than a shrug of a number when the sample is too thin to mean anything —
@@ -596,6 +611,8 @@ function coachHTML(P) {
   if (!P)
     return `<div><i>·</i><span>Pick the position tool (<kbd>P</kbd>) and drag from your entry to your stop. Size, risk, R and the day budget appear here.</span></div>`;
   const c = P.calc;
+  if (!c && (!SYMBOLS[P.sym].instrument || !(SYMBOLS[P.sym].tick > 0)))
+    return `<div><i>·</i><span>Position risk is unavailable because verified instrument specifications are missing for ${esc(P.sym)}.</span></div>`;
   if (!c)
     return `<div><i>·</i><span>Entry and stop are at the same price, so there is no risk to size against. Drag the stop away from the entry.</span></div>`;
 
@@ -1972,6 +1989,7 @@ function loadProviderCatalog(query, category, offset = 0) {
         if (!shaped) return;
         SYMBOLS[shaped.symbol] = shaped;
         if (!symRows.includes(shaped.symbol)) symRows.push(shaped.symbol);
+        if (Array.from(host.querySelectorAll(".sr")).some((row) => row.dataset.s === shaped.symbol)) return;
         const row = document.createElement("div");
         row.className = "sr provider-row";
         row.dataset.providerSymbol = shaped.symbol;
@@ -1998,6 +2016,12 @@ function loadProviderCatalog(query, category, offset = 0) {
         };
         host.appendChild(row);
       });
+      if (page.catalog_status === "partial_fallback") {
+        const notice = document.createElement("div");
+        notice.className = "empty provider-catalog-warning";
+        notice.textContent = page.catalog_warning;
+        host.appendChild(notice);
+      }
       catalogSearchOffset = offset + page.data.length;
       catalogSearchQuery = query;
       catalogSearchCategory = category;
@@ -2010,7 +2034,9 @@ function loadProviderCatalog(query, category, offset = 0) {
         host.appendChild(more);
       }
       const count = $("#symCount");
-      if (count && page.total) count.textContent += ` · ${page.total.toLocaleString()} Binance spot listings match`;
+      if (count && page.total) count.textContent += page.catalog_status === "partial_fallback"
+        ? ` · ${page.total} known Binance spot symbol${page.total === 1 ? "" : "s"} shown`
+        : ` · ${page.total.toLocaleString()} Binance spot listings match`;
     } catch (error) {
       if (serial === catalogSearchSerial) {
         const notice = document.createElement("div");

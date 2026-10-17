@@ -2748,7 +2748,8 @@ class Chart {
         const pct = (dp / o.pts[0].p) * 100,
           ticks = Math.abs(dp) / SYMBOLS[S].tick;
         const mins = (bars * IV_MS[this.cfg.iv]) / 6e4;
-        const s = `${dp >= 0 ? "+" : "−"}${Math.abs(dp).toFixed(SYMBOLS[S].digits)}  ${ticks.toFixed(0)} ${SYMBOLS[S].tickName}  ${pct.toFixed(2)}%  ${bars} bars · ${fmtDur(mins)}`;
+        const unitMove = SYMBOLS[S].tick > 0 ? `  ${ticks.toFixed(0)} ${SYMBOLS[S].tickName}` : "";
+        const s = `${dp >= 0 ? "+" : "−"}${Math.abs(dp).toFixed(SYMBOLS[S].digits)}${unitMove}  ${pct.toFixed(2)}%  ${bars} bars · ${fmtDur(mins)}`;
         c.font = '10px "IBM Plex Mono",monospace';
         const w = c.measureText(s).width + 12,
           mx = (P[0].x + P[1].x) / 2,
@@ -2789,10 +2790,11 @@ class Chart {
       c.strokeStyle = dp >= 0 ? css("--up") : css("--dn");
       c.strokeRect(P[0].x, P[0].y, P[1].x - P[0].x, P[1].y - P[0].y);
       c.font = '10px "IBM Plex Mono",monospace';
+      const unitMove = SYMBOLS[S].tick > 0 ? ` · ${ticks.toFixed(0)} ${SYMBOLS[S].tickName}` : "";
       tag(
         Math.min(P[0].x, P[1].x),
         (P[0].y + P[1].y) / 2,
-        `${dp >= 0 ? "+" : "−"}${Math.abs(dp).toFixed(SYMBOLS[S].digits)} · ${ticks.toFixed(0)} ${SYMBOLS[S].tickName} · ${pct.toFixed(2)}%`,
+        `${dp >= 0 ? "+" : "−"}${Math.abs(dp).toFixed(SYMBOLS[S].digits)}${unitMove} · ${pct.toFixed(2)}%`,
         css("--surf2"),
         dp >= 0 ? css("--up") : css("--dn"),
       );
@@ -3352,7 +3354,7 @@ class Chart {
           ((b.c / prev.c - 1) * 100).toFixed(2) +
           "%",
       ],
-      ["Range", (Math.abs(b.h - b.l) / S.tick).toFixed(0) + " " + S.tickName],
+      ["Range", S.tick > 0 ? (Math.abs(b.h - b.l) / S.tick).toFixed(0) + " " + S.tickName : Math.abs(b.h - b.l).toFixed(S.digits) + " price units"],
       ["Volume", compact(b.v, true)],
     ];
     /* A line is usually already named after its study, so joining the two
