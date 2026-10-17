@@ -31,7 +31,7 @@
          what is drawn, what is measured, and the one button this screen
          exists for. Everything occasional lives behind More, because
          fourteen glyphs in a row is a search problem, not a toolbar. -->
-    <header class="ctoolbar" id="chartToolbar">
+    <header class="ctoolbar">
       <div class="ct-l toolbar-group toolbar-market" role="group" aria-label="Market controls">
         <button
           id="symBtn"
@@ -105,11 +105,6 @@
         <button id="alertBtn" class="tb-btn" title="New alert (A)">
           Alerts
         </button></div>
-      </div>
-
-      <div class="chart-view-switch" role="group" aria-label="Chart view">
-        <button id="customChartViewButton" type="button" aria-pressed="true">TheOnePercent Chart</button>
-        <button id="tradingViewChartButton" type="button" aria-pressed="false">TradingView Chart</button>
       </div>
 
       <span class="spacer"></span>
@@ -462,21 +457,6 @@
       </aside>
     </main>
 
-    <section id="tvChartView" class="tv-chart-view" hidden aria-label="TradingView-powered chart view">
-      <div class="tv-view-notice">
-        <div class="tv-view-copy">
-          <strong>Powered by TradingView</strong>
-          <span>This separate chart does not connect to TheOnePercent drawings, Journal, risk tools, or market-data backend. FX_IDC:EURUSD availability in Advanced Chart is unverified.</span>
-        </div>
-        <div class="tv-view-actions">
-          <span id="tvChartStatus" role="status" aria-live="polite">Select TradingView Chart to load the widget.</span>
-          <button id="tvChartRetry" type="button" hidden>Retry widget</button>
-          <button id="customChartReturn" type="button">Return to TheOnePercent Chart</button>
-        </div>
-      </div>
-      <div id="tvChartMount" class="tv-chart-mount" aria-label="TradingView chart embed"></div>
-    </section>
-
     <div class="replaybar" id="replaybar" hidden>
       <button class="btn sm" id="rbPlay">▶ Play</button>
       <button class="btn sm" id="rbBack">◀ Step</button>
@@ -791,7 +771,5 @@
     <script src="../assets/charts-rail.js"></script>
     <script src="../assets/charts.js"></script>
     <script src="../assets/charts-workspace.js"></script>
-    <script src="../assets/charts-tv-view.js"></script>
-
   </body>
 </html>
