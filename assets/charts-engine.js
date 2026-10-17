@@ -1,7 +1,8 @@
 /* ══════════════════════════════════════════════════════════════════
    TheOnePercent · Charts — engine
    Data, indicator library, drawing objects, canvas chart.
-   All data is synthetic and local. Read-only: no order is ever placed.
+   Provider candles are used only for verified exact symbols; synthetic data
+   is local and appears only in explicit Demo mode. Read-only: no orders.
    ══════════════════════════════════════════════════════════════════ */
 
 /* TheOnePercent — charts engine
@@ -1846,11 +1847,31 @@ class Chart {
   /* ── render ── */
   render() {
     this.measure();
-    this.scale();
     const c = this.ctx,
       W = this.W,
-      H = this.H,
-      pw = this.plotW,
+      H = this.H;
+    const data = this.data;
+    c.clearRect(0, 0, W, H);
+    if (!data.length) {
+      this.el.classList.add("data-unavailable");
+      this.leg.innerHTML = "";
+      this.dw.innerHTML = "";
+      if (/^#[0-9a-f]{6}$/i.test(state.look.background || "")) {
+        c.fillStyle = state.look.background;
+        c.fillRect(0, 0, W, H);
+      }
+      c.fillStyle = css("--txt2");
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.font = '600 14px "IBM Plex Sans",sans-serif';
+      c.fillText("No real candle history available", W / 2, H / 2 - 12);
+      c.font = '12px "IBM Plex Sans",sans-serif';
+      c.fillText("Choose a supported real instrument or explicitly enable Demo mode.", W / 2, H / 2 + 12);
+      return;
+    }
+    this.el.classList.remove("data-unavailable");
+    this.scale();
+    const pw = this.plotW,
       pr = this.panes.price,
       S = SYMBOLS[this.cfg.sym];
     const { d, i0, i1, n } = this.bars(),
@@ -1864,7 +1885,6 @@ class Chart {
     const txt3 = css("--txt2"),
       line = css("--line"),
       grid = css("--grid");
-    c.clearRect(0, 0, W, H);
     if (/^#[0-9a-f]{6}$/i.test(state.look.background || "")) {
       c.fillStyle = state.look.background;
       c.fillRect(0, 0, W, H);
@@ -3289,7 +3309,9 @@ class Chart {
       ? `<span class="bdg">Spot historical</span>`
       : Feed.isLive(this.cfg.sym)
         ? `<span class="bdg live">Quote connected</span>`
-        : `<span class="bdg">Demo fallback</span>`;
+        : Feed.isDemoMode()
+          ? `<span class="bdg">Demo candles</span>`
+          : `<span class="bdg">Unavailable</span>`;
     this.bdg.innerHTML =
       (R.on
         ? `<span class="bdg rep">Replay ${R.blind ? "· blind" : ""}</span>`

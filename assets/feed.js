@@ -7,18 +7,14 @@
    charts screen ends up quoting 157.18 while the calculator quotes
    157.42 for the same pair on the same afternoon.
 
-   The data is synthetic. It is deterministic, not random: the same
-   symbol and interval always produce the same candles, so a level you
-   drew on Tuesday is still there on Thursday and a screenshot in the
-   journal still matches the chart it came from. Seeding off the symbol
-   name rather than the clock is what buys that.
+   Synthetic candles are deterministic but are only generated after the
+   user explicitly enables Demo mode. Provider failures leave no fabricated
+   prices on screen.
 
-   The series is also anchored: the last close is pulled to the price in
-   `instruments.js`, so the candles agree with the number the sizing
-   maths uses. Instruments owns price, pip, contract and unitValue.
-   This module owns only the things a chart needs and money does not —
-   how violently a symbol moves, what it costs to cross the spread, and
-   which session it belongs to.
+   Demo candles are anchored to the local instrument reference values.
+   Provider candles retain their exact source symbol and venue. Instrument
+   sizing remains owned by `instruments.js`; this module reports whether
+   chart history and quote data are genuinely available.
 
    When a real feed arrives, `history`, `quote` and `subscribe` are the
    three functions that change. Everything above them keeps working.
@@ -29,9 +25,8 @@ window.Feed = (() => {
 
   const I = window.Instruments;
 
-  /* Every screen that shows a price renders the badge — see `Feed.badge()`.
-     The Flask build can replace a cached demo series with verified candles. */
-  const DEMO = true;
+  /* Synthetic candles require an explicit user choice. A provider failure
+     leaves the chart unavailable instead of substituting generated prices. */
   // Configure an HTTPS OHLC backend via window.THEONEPERCENT_MARKET_API before feed.js loads.
   // GitHub Pages has no /api backend; leave demo mode explicit until configured.
   const LIVE_API = typeof window !== "undefined" && typeof window.THEONEPERCENT_MARKET_API === "string"
@@ -40,6 +35,7 @@ window.Feed = (() => {
     (typeof location !== "undefined" && location.protocol === "http:" && /^http:\/\/localhost(?::\d+)?$/i.test(LIVE_API));
   const failedKeys = new Set();
   const LIVE_MAX_AGE_MS = 30000;
+  let demoMode = !!(window.Store && Store.settings && Store.settings.get().chartsDataMode === "demo");
   const liveQuotes = {};
   const realKeys = new Set();
   const historicalSources = Object.create(null);
@@ -50,9 +46,9 @@ window.Feed = (() => {
     "1D": "1d", "3D": "3d", "1W": "1w", "1M": "1M",
   };
   const BACKEND_INTERVALS = new Set(["1m", "3m", "5m", "15m", "30m", "1H", "2H", "4H", "6H", "8H", "12H", "1D", "3D", "1W", "1M"]);
-  const BACKEND_SYMBOLS = new Set(["BTCUSD", "BTCUSDT", "ETHUSD", "ETHUSDT", "SOLUSD", "SOLUSDT"]);
+  const BACKEND_SYMBOLS = new Set(["BTCUSDT", "ETHUSDT", "SOLUSDT"]);
   const DEMO_NOTE =
-    "Historical Binance spot crypto candles when the configured API or public Binance endpoint is available; otherwise synthetic demo candles. Forex, metals and futures are not connected.";
+    "Only verified Binance spot crypto candles are available from the current provider. Other instruments remain unavailable unless Demo mode is explicitly enabled.";
 
   /* The full ladder, grouped the way the interval menu groups it. A chart
      can ask for any of these; `build()` is generic in milliseconds. Ticks
@@ -323,9 +319,54 @@ window.Feed = (() => {
      and metals, coins on crypto, contracts on an index — and `tickName` is
      what the measuring tool writes after a number. */
 
+  const catalogInstruments = Object.create(null);
+  function registerCatalogInstrument(record, persist = false) {
+    if (!record || record.provider !== "binance" || record.venue !== "BINANCE_SPOT" ||
+        record.market !== "crypto_spot" || record.availability !== "historical_only" ||
+        !record.symbol || record.symbol !== record.provider_symbol ||
+        !record.base_asset || !record.quote_asset) return null;
+    const code = String(record.symbol).toUpperCase();
+    const tick = Number(record.price_tick);
+    const digits = Number.isFinite(tick) && tick > 0 && String(tick).includes(".")
+      ? String(tick).split(".")[1].replace(/0+$/, "").length : 2;
+    catalogInstruments[code] = {
+      symbol: code, name: `${record.base_asset} / ${record.quote_asset}`,
+      market: "Crypto", cls: "Crypto", base: record.base_asset, quote: record.quote_asset,
+      px: null, digits: Math.min(14, digits), tick: Number.isFinite(tick) && tick > 0 ? tick : null,
+      tickName: record.quote_asset, contract: 1, unitValue: 1, unit: record.base_asset,
+      step: Number(record.quantity_step) || null, vol: null, spread: null, costTicks: null,
+      session: "24/7", venue: "Binance spot", instrument: null,
+      provider: "binance", providerSymbol: code, availability: "historical_only",
+    };
+    if (persist && window.Store && Store.settings) {
+      const saved = Store.settings.get().chartsCatalogSymbols || [];
+      const next = saved.filter((item) => item.symbol !== code).concat({
+        provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot", symbol: code,
+        provider_symbol: code, base_asset: record.base_asset, quote_asset: record.quote_asset,
+        availability: "historical_only", price_tick: record.price_tick,
+        quantity_step: record.quantity_step,
+      }).slice(-500);
+      Store.settings.patch({ chartsCatalogSymbols: next });
+    }
+    return catalogInstruments[code];
+  }
+  if (window.Store && Store.settings)
+    (Store.settings.get().chartsCatalogSymbols || []).forEach((record) => registerCatalogInstrument(record));
+
+  async function searchCatalog(query = "", limit = 50, offset = 0, market = "") {
+    if (!API_ENABLED || !window.fetch) return { data: [], total: 0, has_more: false };
+    const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset), market });
+    const response = await fetch(LIVE_API + "/api/instruments?" + params.toString(), { cache: "no-store" });
+    if (!response.ok) throw new Error("Instrument catalog unavailable (" + response.status + ")");
+    const body = await response.json();
+    if (!body || !Array.isArray(body.data)) throw new Error("Unrecognized instrument catalog response");
+    return body;
+  }
+
   function symbol(sym) {
     const inst = I.find(sym);
-    if (!inst) return null;
+    const listed = catalogInstruments[String(sym || "").toUpperCase()];
+    if (!inst) return listed || null;
     const d = MARKET_DEFAULTS[inst.market] || MARKET_DEFAULTS.Forex;
     const m = Object.assign({}, d, META[metaKey(sym)] || {});
 
@@ -336,7 +377,7 @@ window.Feed = (() => {
     const tickName =
       inst.market === "Forex" || inst.market === "Commodities" ? "pips" : "pts";
 
-    return {
+    const local = {
       symbol: inst.symbol,
       name: inst.name,
       market: inst.market,
@@ -358,10 +399,20 @@ window.Feed = (() => {
       venue: m.venue,
       instrument: inst,
     };
+    /* When the exact same text is a supported provider symbol, retain local
+       sizing metadata but use the provider's actual venue and quote asset. */
+    return listed ? Object.assign({}, local, listed, {
+      symbol: inst.symbol,
+      instrument: inst,
+      px: inst.price,
+      vol: m.vol,
+      provider: listed.provider,
+      providerSymbol: listed.providerSymbol,
+    }) : local;
   }
 
   function list() {
-    return I.INSTRUMENTS.map((i) => symbol(i.symbol)).filter(Boolean);
+    return I.INSTRUMENTS.map((i) => symbol(i.symbol)).filter(Boolean).concat(Object.values(catalogInstruments));
   }
 
   /* ---------------------------------------------------------- generator */
@@ -422,7 +473,8 @@ window.Feed = (() => {
 
   function fetchPublicBinanceCandles(sym, iv) {
     const symbol = String(sym).toUpperCase();
-    const providerSymbol = symbol.endsWith("USDT") ? symbol : symbol.slice(0, -3) + "USDT";
+    if (!BACKEND_SYMBOLS.has(symbol) && !catalogInstruments[symbol]) throw new Error("No exact Binance spot mapping for " + symbol);
+    const providerSymbol = symbol;
     const url = BINANCE_PUBLIC_API + "/klines?" + new URLSearchParams({
       symbol: providerSymbol,
       interval: BINANCE_INTERVALS[iv],
@@ -445,7 +497,7 @@ window.Feed = (() => {
 
   function loadHistory(sym, iv) {
     const key = String(sym).toUpperCase() + "|" + iv;
-    if (!API_ENABLED || !BACKEND_SYMBOLS.has(String(sym).toUpperCase()) || !BACKEND_INTERVALS.has(iv) || failedKeys.has(key) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
+    if (!API_ENABLED || (!BACKEND_SYMBOLS.has(String(sym).toUpperCase()) && !catalogInstruments[String(sym).toUpperCase()]) || !BACKEND_INTERVALS.has(iv) || failedKeys.has(key) || realKeys.has(key) || loading.has(key) || !window.fetch) return;
     loading.add(key);
     fetchBackendCandles(sym, iv)
       .catch(() => fetchPublicBinanceCandles(sym, iv))
@@ -457,7 +509,7 @@ window.Feed = (() => {
       })
       .catch(() => {
         failedKeys.add(key); // Avoid retrying a failing provider on every redraw.
-        /* The deterministic series remains visible and is labeled below. */
+        notify();
       })
       .finally(() => loading.delete(key));
   }
@@ -468,7 +520,7 @@ window.Feed = (() => {
      has been squeezed that hard is no longer showing its own structure. */
   function build(sym, iv) {
     const S = symbol(sym);
-    if (!S || !IV_MS[iv]) return [];
+    if (!S || !IV_MS[iv] || !Number.isFinite(S.px) || !Number.isFinite(S.vol)) return [];
 
     const r = rng(hash(sym + iv));
     const ms = IV_MS[iv];
@@ -566,9 +618,28 @@ window.Feed = (() => {
 
   function history(sym, iv) {
     const key = String(sym).toUpperCase() + "|" + iv;
-    if (!cache[key]) cache[key] = build(sym, iv);
+    if (!cache[key]) cache[key] = realKeys.has(key) ? cache[key] : demoMode ? build(sym, iv) : [];
     loadHistory(sym, iv);
     return cache[key];
+  }
+
+  function setDemoMode(enabled) {
+    demoMode = !!enabled;
+    if (window.Store && Store.settings) Store.settings.patch({ chartsDataMode: demoMode ? "demo" : "real" });
+    Object.keys(cache).forEach((key) => {
+      if (!realKeys.has(key)) cache[key] = demoMode ? build(key.split("|")[0], key.slice(key.indexOf("|") + 1)) : [];
+    });
+    if (!demoMode) {
+      Object.keys(cache).forEach((key) => {
+        const [sym, iv] = key.split("|");
+        if (!realKeys.has(key)) {
+          failedKeys.delete(key);
+          loadHistory(sym, iv);
+        }
+      });
+    }
+    notify();
+    return demoMode;
   }
 
   function last(sym) {
@@ -667,9 +738,12 @@ window.Feed = (() => {
     const historical = sym && interval && realKeys.has(sym + "|" + interval);
     const source = historical ? historicalSources[sym + "|" + interval] : "";
     const live = !!(sym && isLive(sym));
-    return '<span class="feed-badge' + (live ? ' live' : '') + (o.compact ? ' compact' : '') +
-      '" title="' + (historical ? "Historical OHLC: " + source + ". Not a live quote or futures feed." : live ? "Recent quote received; historical chart candles may still be demo." : "Synthetic demonstration data; not actual market prices.") + '">' +
-      '<i aria-hidden="true"></i>' + (historical ? "Spot historical · " + source : live ? "Quote connected · chart may be demo" : "Demo candles") + '</span>';
+    const unavailable = !demoMode && !historical && !live;
+    const label = historical ? "Spot historical · " + source : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : unavailable ? "Unavailable · no real feed" : "No chart data";
+    const title = historical ? "Historical OHLC: " + source + ". Not a live quote or futures feed." : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
+    return '<span class="feed-badge' + (live ? ' live' : '') + (demoMode ? ' demo' : '') + (o.compact ? ' compact' : '') +
+      '" title="' + title.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '">' +
+      '<i aria-hidden="true"></i>' + label + '</span>';
   }
 
   function isLive(sym) {
@@ -694,11 +768,13 @@ window.Feed = (() => {
   }
 
   return {
-    DEMO,
+    get DEMO() { return demoMode; },
     LIVE_API,
     API_ENABLED,
     isHistorical: (sym, iv) => realKeys.has(String(sym).toUpperCase() + "|" + iv),
     historicalSource: (sym, iv) => historicalSources[String(sym).toUpperCase() + "|" + iv] || null,
+    searchCatalog,
+    registerCatalogInstrument,
     isLive,
     DEMO_NOTE,
     INTERVALS,
@@ -710,6 +786,8 @@ window.Feed = (() => {
     list,
     history,
     loadHistory,
+    setDemoMode,
+    isDemoMode: () => demoMode,
     last,
     quote,
     spark,

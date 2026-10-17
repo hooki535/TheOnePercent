@@ -150,6 +150,9 @@ body[data-page="charts"] .ctoolbar #journalBtn {
 }
 body[data-page="charts"] .ctoolbar #journalBtn:hover { filter: brightness(1.08); }
 body[data-page="charts"] .ctoolbar #feedBadge { display: inline-flex !important; font-size: 9px; }
+body[data-page="charts"] .cw.data-unavailable canvas { pointer-events: none; }
+body[data-page="charts"] #dataModeToggle { min-height: 28px; padding: 4px 7px; font-size: 10px; white-space: nowrap; }
+body[data-page="charts"] .wr-unavailable { color: var(--ink-3); font-size: 9px; white-space: nowrap; }
 body[data-page="charts"] .ctoolbar .risk-pill { display: none !important; }
 body[data-page="charts"] #moreMenu #themeBtn { display: none !important; }
 

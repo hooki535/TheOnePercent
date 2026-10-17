@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from app import BASE_URL, app, cache
+from catalog import binance_catalog, stable_instrument_id
 
 client = TestClient(app)
 
@@ -11,6 +12,9 @@ client = TestClient(app)
 class MarketDataContractTests(unittest.TestCase):
     def setUp(self):
         cache.clear()
+        binance_catalog._rows = None
+        binance_catalog._updated = 0.0
+        binance_catalog._updated_at = None
 
     def test_health(self):
         response = client.get("/health")
@@ -24,22 +28,28 @@ class MarketDataContractTests(unittest.TestCase):
         response = client.get("/api/candles/ES1!/1H")
         self.assertEqual(response.status_code, 422)
 
+    @patch("app.binance_catalog.list", return_value=([], 0.0))
+    def test_rejects_symbol_that_is_not_in_the_binance_catalog(self, catalog):
+        self.assertEqual(client.get("/api/candles/NOTAREALPAIR/1H").status_code, 422)
+        catalog.assert_called_once_with()
+
     def test_rejects_unsupported_interval(self):
-        response = client.get("/api/candles/BTCUSD/1s")
+        response = client.get("/api/candles/BTCUSDT/1s")
         self.assertEqual(response.status_code, 422)
 
     def test_rejects_excessive_limit(self):
-        response = client.get("/api/candles/BTCUSD/1H?limit=1001")
+        response = client.get("/api/candles/BTCUSDT/1H?limit=1001")
         self.assertEqual(response.status_code, 422)
 
     @patch("app.provider_get")
     def test_spot_candles_preserve_provenance_and_seconds(self, provider):
         provider.return_value = [[1720000000000, "60000", "60500", "59000", "60100", "12.5"]]
-        response = client.get("/api/candles/BTCUSD/1H?limit=1")
+        response = client.get("/api/candles/BTCUSDT/1H?limit=1")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["source"], "Binance spot")
         self.assertEqual(data["market"], "spot")
+        self.assertEqual(data["symbol"], "BTCUSDT")
         self.assertEqual(data["provider_symbol"], "BTCUSDT")
         self.assertEqual(data["candles"][0]["t"], 1720000000)
         self.assertEqual(data["candles"][0]["c"], 60100.0)
@@ -47,37 +57,47 @@ class MarketDataContractTests(unittest.TestCase):
     @patch("app.provider_get")
     def test_rejects_invalid_provider_candle(self, provider):
         provider.return_value = [[1720000000000, "60000", "59000", "61000", "60100", "1"]]
-        self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=1").status_code, 502)
+        self.assertEqual(client.get("/api/candles/BTCUSDT/1H?limit=1").status_code, 502)
 
     @patch("app.provider_get")
-    def test_aliases_keep_correct_symbols_in_cache(self, provider):
+    def test_exact_provider_symbol_keeps_correct_cache_identity(self, provider):
         provider.return_value = [[1720000000000, "60000", "60500", "59000", "60100", "12.5"]]
-        usd = client.get("/api/candles/BTCUSD/1H?limit=1").json()
         usdt = client.get("/api/candles/BTCUSDT/1H?limit=1").json()
-        self.assertEqual(usd["symbol"], "BTCUSD")
         self.assertEqual(usdt["symbol"], "BTCUSDT")
-        self.assertEqual(provider.call_count, 2)
+        self.assertEqual(provider.call_count, 1)
+
+    @patch("app.provider_get")
+    @patch("app.binance_catalog.list", return_value=([{"symbol": "DOGEUSDT"}], 0.0))
+    def test_catalog_discovered_pairs_use_their_exact_provider_symbol(self, catalog, provider):
+        provider.return_value = [[1720000000000, "0.10", "0.11", "0.09", "0.105", "120"]]
+        response = client.get("/api/candles/DOGEUSDT/1H?limit=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["symbol"], "DOGEUSDT")
+        self.assertEqual(response.json()["provider_symbol"], "DOGEUSDT")
+        self.assertEqual(response.json()["candles"][0]["c"], 0.105)
+        catalog.assert_called_once_with()
+        provider.assert_called_once()
 
     @patch("app.provider_get")
     def test_rejects_provider_error_object(self, provider):
         provider.return_value = {"code": -1121, "msg": "Invalid symbol"}
-        self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=1").status_code, 502)
+        self.assertEqual(client.get("/api/candles/BTCUSDT/1H?limit=1").status_code, 502)
 
     @patch("app.provider_get")
     def test_rejects_nonfinite_or_out_of_order_candles(self, provider):
         provider.return_value = [[1720000000000, "nan", "60500", "59000", "60100", "12.5"]]
-        self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=1").status_code, 502)
+        self.assertEqual(client.get("/api/candles/BTCUSDT/1H?limit=1").status_code, 502)
         provider.return_value = [
             [1720000000000, "60000", "60500", "59000", "60100", "12.5"],
             [1719990000000, "60000", "60500", "59000", "60100", "12.5"],
         ]
-        self.assertEqual(client.get("/api/candles/BTCUSD/1H?limit=2").status_code, 502)
+        self.assertEqual(client.get("/api/candles/BTCUSDT/1H?limit=2").status_code, 502)
 
     @patch("app.provider_get")
     def test_cache_headers_and_repeated_requests(self, provider):
         provider.return_value = [[1720000000000, "60000", "60500", "59000", "60100", "12.5"]]
-        first = client.get("/api/candles/BTCUSD/1H?limit=1")
-        second = client.get("/api/candles/BTCUSD/1H?limit=1")
+        first = client.get("/api/candles/BTCUSDT/1H?limit=1")
+        second = client.get("/api/candles/BTCUSDT/1H?limit=1")
         self.assertEqual(first.headers["x-market-cache"], "MISS")
         self.assertEqual(second.headers["x-market-cache"], "HIT")
         self.assertEqual(second.headers["cache-control"], "public, max-age=15")
@@ -85,6 +105,56 @@ class MarketDataContractTests(unittest.TestCase):
 
     def test_quotes_are_not_fabricated(self):
         self.assertEqual(client.get("/api/quotes").json(), {})
+
+    @patch("catalog._get_json")
+    def test_full_binance_spot_catalog_is_searchable_and_paginated(self, get_json):
+        get_json.return_value = {"symbols": [
+            {"symbol": "BTCUSDT", "status": "TRADING", "isSpotTradingAllowed": True,
+             "baseAsset": "BTC", "quoteAsset": "USDT", "filters": [
+                 {"filterType": "PRICE_FILTER", "tickSize": "0.01"},
+                 {"filterType": "LOT_SIZE", "stepSize": "0.00001", "minQty": "0.00001"}]},
+            {"symbol": "ETHBTC", "status": "TRADING", "isSpotTradingAllowed": True,
+             "baseAsset": "ETH", "quoteAsset": "BTC", "filters": []},
+            {"symbol": "OLDUSDT", "status": "BREAK", "isSpotTradingAllowed": True,
+             "baseAsset": "OLD", "quoteAsset": "USDT", "filters": []},
+        ]}
+        response = client.get("/api/instruments?q=btc&limit=1")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["total"], 2)
+        self.assertTrue(data["has_more"])
+        row = data["data"][0]
+        self.assertEqual(row["symbol"], "BTCUSDT")
+        self.assertEqual(row["quote_asset"], "USDT")
+        self.assertEqual(row["provider_symbol"], "BTCUSDT")
+        self.assertEqual(row["availability"], "historical_only")
+        self.assertEqual(row["price_tick"], "0.01")
+        self.assertNotEqual(row["instrument_id"], stable_instrument_id("BINANCE_SPOT", "ETHBTC"))
+        get_json.assert_called_once_with("https://data-api.binance.vision/api/v3/exchangeInfo")
+
+    @patch("catalog._get_json")
+    def test_catalog_excludes_nontrading_and_spot_disabled_symbols(self, get_json):
+        get_json.return_value = {"symbols": [
+            {"symbol": "TESTUSDT", "status": "TRADING", "isSpotTradingAllowed": False,
+             "baseAsset": "TEST", "quoteAsset": "USDT", "filters": []},
+        ]}
+        data = client.get("/api/instruments?limit=100").json()
+        self.assertEqual(data["total"], 0)
+
+    def test_provider_status_does_not_claim_unconfigured_providers(self):
+        response = client.get("/api/providers")
+        self.assertEqual(response.status_code, 200)
+        statuses = {row["provider"]: row for row in response.json()["data"]}
+        self.assertEqual(statuses["binance"]["status"], "historical_only")
+        self.assertEqual(statuses["twelve_data"]["status"], "requires_access")
+        self.assertEqual(statuses["databento"]["status"], "requires_access")
+        self.assertEqual(statuses["broker"]["status"], "unavailable")
+
+    @patch.dict("os.environ", {"TWELVE_DATA_EXTERNAL_DISPLAY_APPROVED": "true"}, clear=True)
+    def test_twelve_data_needs_server_side_key_even_if_rights_flag_is_set(self):
+        response = client.get("/api/providers")
+        statuses = {row["provider"]: row for row in response.json()["data"]}
+        self.assertEqual(statuses["twelve_data"]["status"], "requires_access")
 
 
 if __name__ == "__main__":

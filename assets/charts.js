@@ -300,7 +300,7 @@ function syncSettings() {
   R.guardrailBreaches = g.breaches || [];
 
   const saved = Array.isArray(s.chartsWatch)
-    ? s.chartsWatch.filter((x) => Instruments.find(x))
+    ? s.chartsWatch.filter((x) => Instruments.find(x) || Feed.symbol(x))
     : null;
   state.watch = saved && saved.length ? saved : seedWatch();
   if (typeof s.chartsUtc === "boolean") state.look.utc = s.chartsUtc;
@@ -1015,6 +1015,16 @@ function paintSymbol() {
     r.classList.toggle("on", r.dataset.sym === c.sym),
   );
 }
+function paintDataModeToggle() {
+  const button = $("#dataModeToggle");
+  if (!button) return;
+  const demo = Feed.isDemoMode();
+  button.textContent = demo ? "Demo mode on" : "Enable demo mode";
+  button.setAttribute("aria-pressed", String(demo));
+  button.title = demo
+    ? "Synthetic demonstration candles are enabled. Click to return to provider-only mode."
+    : "Provider-only mode. If no real candles are available, the chart stays empty; click to explicitly use synthetic demo candles.";
+}
 function paintTypeBtn() {
   const t = TYPES.find((x) => x[0] === state.type);
   $("#typeBtn").firstChild.textContent = (t ? t[1] : "Candles") + " ";
@@ -1068,11 +1078,14 @@ function paintSymCard() {
     S = Feed.symbol(sym),
     q = Feed.quote(sym);
   if (!S || !q) {
-    el.innerHTML = "";
+    el.innerHTML = S ? `<div class="sc-h"><div><b>${sym}</b><span class="sc-m">${S.market}</span></div><div class="sc-n">${S.name} · ${S.venue}</div></div><div class="sc-p">Unavailable</div><div class="sc-sn">No provider candles are available for this symbol. No market price, daily change, or spread is inferred. Enable Demo mode only to view synthetic candles.</div><div class="sc-f"><span>Quote currency <b>${S.quote || "Unavailable"}</b></span><span>Spread <b>Unavailable</b></span><span>Interval <b>${state.charts[state.sel].iv}</b></span></div>` : "";
     return;
   }
   const d = Feed.history(sym, "15m"),
     day = new Date(d[d.length - 1].t).getUTCDate();
+  const lastBar = d[d.length - 1];
+  const source = Feed.historicalSource(sym, "15m") || (Feed.isDemoMode() ? "Synthetic Demo mode" : "Provider history");
+  const closeTime = new Date(lastBar.t * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC";
   let lo = Infinity,
     hi = -Infinity;
   for (let i = d.length - 1; i >= 0; i--) {
@@ -1091,17 +1104,18 @@ function paintSymCard() {
   el.innerHTML =
     `<div class="sc-h"><div><b>${sym}</b><span class="sc-m">${S.market}</span></div>
        <div class="sc-n">${S.name} · ${S.venue}</div></div>
+     <div class="sc-price-note">Last candle close · ${source} · ${closeTime}</div>
      <div class="sc-p ${up ? "up" : "dn"}"><span>${head}</span><i>${tail}</i>
        <em>${S.quote || ""}</em></div>
-     <div class="sc-c ${up ? "up" : "dn"}">${up ? "+" : "−"}${Math.abs(q.chg).toFixed(dg)}
+     <div class="sc-c ${up ? "up" : "dn"}" title="Change from the first available 15-minute candle for the current UTC date">${up ? "+" : "−"}${Math.abs(q.chg).toFixed(dg)}
        <span>${up ? "+" : "−"}${Math.abs(q.chgPct).toFixed(2)}%</span>
-       <b>today</b></div>
+       <b>UTC day</b></div>
      <div class="sc-rg" title="Where the last price sits between the session low and the session high">
        <span class="sc-rl">${lo.toFixed(dg)}</span>
        <span class="sc-rt"><i style="left:${at.toFixed(1)}%"></i></span>
        <span class="sc-rl">${hi.toFixed(dg)}</span></div>
      <div class="sc-f">
-       <span title="The spread charged on this symbol">Spread <b>${S.spread.toFixed(1)} ${S.tickName}</b></span>
+       <span title="The spread charged on this symbol">Spread <b>${Number.isFinite(S.spread) ? S.spread.toFixed(1) + " " + S.tickName : "Unavailable"}</b></span>
        <span title="The session this symbol is most liquid in">Session <b>${S.session}</b></span>
        <span title="The interval the chart is drawn at">Interval <b>${state.charts[state.sel].iv}</b></span>
      </div>` + specHTML(sym, S);
@@ -1195,7 +1209,7 @@ function specHTML(sym, S) {
           `<div class="sc-sr"${t ? ` title="${t}"` : ""}><span>${k}</span><b class="mono">${v}</b></div>`,
       )
       .join("")}
-    <p class="sc-sn">Read from the same instrument table as the position panel and calculators. Historical Binance spot candles are used for supported crypto when available; other markets remain synthetic demo data. This panel is not a live quote.</p>
+    <p class="sc-sn">Instrument specifications come from the local instrument table. Real chart history is shown only when the selected provider returns candles. Unsupported markets stay unavailable unless Demo mode is explicitly enabled.</p>
   </div>`;
 }
 
@@ -1208,8 +1222,8 @@ function paintWatchlist() {
     .map((s) => {
       const S = SYMBOLS[s],
         q = Feed.quote(s);
-      if (!S || !q) return null;
-      return { s, S, last: q.price, ch: q.chgPct, d: Feed.spark(s, 40) };
+      if (!S) return null;
+      return { s, S, quote: q, last: q ? q.price : null, ch: q ? q.chgPct : null, d: q ? Feed.spark(s, 40) : [] };
     })
     .filter(Boolean);
   if (wlSort === "gain") rows.sort((a, b) => b.ch - a.ch);
@@ -1225,9 +1239,9 @@ function paintWatchlist() {
   const row = (r) => `
     <div class="wr ${state.charts[state.sel].sym === r.s ? "on" : ""}" data-sym="${r.s}">
       <div class="wr-l"><span class="wr-s">${r.s}</span><span class="wr-n">${r.S.name}</span></div>
-      <canvas class="spark" width="72" height="26" data-spark="${r.s}"></canvas>
-      <div class="wr-r"><span class="wr-p">${r.last.toFixed(r.S.digits)}</span>
-        <span class="wr-c ${r.ch >= 0 ? "up" : "dn"}">${r.ch >= 0 ? "+" : "−"}${Math.abs(r.ch).toFixed(2)}%</span></div>
+      ${r.quote ? `<canvas class="spark" width="72" height="26" data-spark="${r.s}"></canvas>` : '<span class="wr-unavailable">Unavailable</span>'}
+      <div class="wr-r"><span class="wr-p">${r.quote ? r.last.toFixed(r.S.digits) : "—"}</span>
+        <span class="wr-c ${r.quote ? r.ch >= 0 ? "up" : "dn" : "hint"}">${r.quote ? (r.ch >= 0 ? "+" : "−") + Math.abs(r.ch).toFixed(2) + "%" : "No real feed"}</span></div>
       <button class="wr-x" data-rm="${r.s}" title="Remove from watchlist">✕</button></div>`;
   if (wlSort === "none") {
     $("#wl").innerHTML = GRP.map((g) => {
@@ -1242,6 +1256,7 @@ function paintWatchlist() {
     $("#wl").innerHTML = rows.map(row).join("");
   }
   rows.forEach((r) => {
+    if (!r.d.length) return;
     const cv = $(`#wl [data-spark="${r.s}"]`);
     if (!cv) return;
     const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -1894,13 +1909,13 @@ function paintSymSearch(q = "") {
     rows
       .map(([k, S], i) => {
         const d = getSeries(k, "15m"),
-          last = d[d.length - 1].c,
-          prev = d[d.length - 25].c,
-          ch = ((last - prev) / prev) * 100;
+          last = d.length ? d[d.length - 1].c : null,
+          prev = d.length >= 25 ? d[d.length - 25].c : null,
+          ch = Number.isFinite(last) && Number.isFinite(prev) ? ((last - prev) / prev) * 100 : null;
         return `<div class="sr ${i === symSel ? "cur" : ""}" data-s="${k}" data-i="${i}" ${i === symSel ? 'aria-selected="true"' : ""}>
       <div><div class="sr-n">${k}<span class="sr-cls">${S.cls}</span></div><div class="sr-d">${S.name} · ${S.venue}</div></div>
-      <div class="sr-r"><span class="mono">${last.toFixed(S.digits)}</span>
-        <span class="${ch >= 0 ? "up" : "dn"} mono">${ch >= 0 ? "+" : "−"}${Math.abs(ch).toFixed(2)}%</span>
+      <div class="sr-r"><span class="mono">${Number.isFinite(last) ? last.toFixed(S.digits) : "—"}</span>
+        <span class="${Number.isFinite(ch) ? ch >= 0 ? "up" : "dn" : "hint"} mono">${Number.isFinite(ch) ? (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(2) + "%" : Feed.isDemoMode() ? "Demo" : "Unavailable"}</span>
         <button data-add="${k}" title="Add to watchlist">${state.watch.includes(k) ? "★" : "☆"}</button></div></div>`;
       })
       .join("") || `<div class="empty">No instrument matches “${q}”.</div>`;
@@ -1933,9 +1948,90 @@ function paintSymSearch(q = "") {
         paintWatchlist();
       }),
   );
+  loadProviderCatalog(s, symCls, 0);
+}
+
+let catalogSearchSerial = 0;
+let catalogSearchTimer = null;
+let catalogSearchOffset = 0;
+let catalogSearchQuery = "";
+let catalogSearchCategory = "";
+function loadProviderCatalog(query, category, offset = 0) {
+  if (catalogSearchTimer) clearTimeout(catalogSearchTimer);
+  const serial = ++catalogSearchSerial;
+  const market = category === "Crypto" ? "crypto_spot" : "";
+  if (!query && !market) return;
+  catalogSearchTimer = setTimeout(async () => {
+    try {
+      const page = await Feed.searchCatalog(query, 50, offset, market);
+      if (serial !== catalogSearchSerial || query !== $("#symSearch").value.trim().toLowerCase() || (category === "Crypto") !== (symCls === "Crypto")) return;
+      const rows = page.data.filter((record) => record.provider === "binance" && record.venue === "BINANCE_SPOT");
+      const host = $("#symList");
+      rows.forEach((record) => {
+        const shaped = Feed.registerCatalogInstrument(record);
+        if (!shaped) return;
+        SYMBOLS[shaped.symbol] = shaped;
+        if (!symRows.includes(shaped.symbol)) symRows.push(shaped.symbol);
+        const row = document.createElement("div");
+        row.className = "sr provider-row";
+        row.dataset.providerSymbol = shaped.symbol;
+        row.dataset.i = String(symRows.indexOf(shaped.symbol));
+        row.innerHTML = `<div><div class="sr-n"><span class="provider-symbol"></span><span class="sr-cls">Crypto spot</span></div><div class="sr-d provider-detail"></div></div><div class="sr-r"><span class="hint">Historical only</span><button data-provider-add="" title="Add to watchlist">☆</button></div>`;
+        row.querySelector(".provider-symbol").textContent = shaped.symbol;
+        row.querySelector(".provider-detail").textContent = `${shaped.name} · Binance · quote ${shaped.quote} · historical candles`;
+        const add = row.querySelector("[data-provider-add]");
+        add.dataset.providerAdd = shaped.symbol;
+        add.textContent = state.watch.includes(shaped.symbol) ? "★" : "☆";
+        row.onclick = (event) => {
+          if (event.target.closest("[data-provider-add]")) return;
+          chooseSymbol(shaped.symbol);
+        };
+        add.onclick = (event) => {
+          event.stopPropagation();
+          Feed.registerCatalogInstrument(record, true);
+          state.watch = state.watch.includes(shaped.symbol)
+            ? state.watch.filter((item) => item !== shaped.symbol)
+            : state.watch.concat(shaped.symbol);
+          saveWatch();
+          paintSymSearch($("#symSearch").value);
+          paintWatchlist();
+        };
+        host.appendChild(row);
+      });
+      catalogSearchOffset = offset + page.data.length;
+      catalogSearchQuery = query;
+      catalogSearchCategory = category;
+      if (page.has_more) {
+        const more = document.createElement("button");
+        more.className = "btn sm";
+        more.type = "button";
+        more.textContent = "Show more provider instruments";
+        more.onclick = () => { more.remove(); loadProviderCatalog(catalogSearchQuery, catalogSearchCategory, catalogSearchOffset); };
+        host.appendChild(more);
+      }
+      const count = $("#symCount");
+      if (count && page.total) count.textContent += ` · ${page.total.toLocaleString()} Binance spot listings match`;
+    } catch (error) {
+      if (serial === catalogSearchSerial) {
+        const notice = document.createElement("div");
+        notice.className = "empty";
+        notice.textContent = "Binance provider catalog unavailable. " + error.message;
+        $("#symList").appendChild(notice);
+      }
+    }
+  }, 180);
 }
 
 function chooseSymbol(k) {
+  const dynamic = Feed.symbol(k);
+  if (dynamic && dynamic.provider === "binance") {
+    const record = {
+      provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot", symbol: dynamic.symbol,
+      provider_symbol: dynamic.providerSymbol, base_asset: dynamic.base, quote_asset: dynamic.quote,
+      availability: "historical_only", price_tick: dynamic.tick,
+    };
+    Feed.registerCatalogInstrument(record, true);
+  }
   setSymbol(k);
   hide("#symModal");
 }
@@ -3451,6 +3547,12 @@ $("#themeBtn").textContent = Theme.current() === "dark" ? "Light" : "Dark";
 /* The demo badge is rendered by the feed, so its wording is identical on
    every screen that shows a price. */
 $("#feedBadge").innerHTML = Feed.badge({ compact: true, symbol: state.charts[state.sel].sym, interval: state.charts[state.sel].iv });
+paintDataModeToggle();
+$("#dataModeToggle").onclick = () => {
+  Feed.setDemoMode(!Feed.isDemoMode());
+  paintDataModeToggle();
+  draw();
+};
 
 /* Two doors to the same room: the toolbar button and the one under the
    note, which is where the roadmap mockup put it. */
@@ -3864,7 +3966,12 @@ buildGrid();
 requestAnimationFrame(() => {
   const c = charts[0],
     d = c.data,
-    last = d[d.length - 1].c;
+    last = d.length ? d[d.length - 1].c : null;
+  if (!Number.isFinite(last)) {
+    paintObjects();
+    draw();
+    return;
+  }
   const rng20 = d.slice(-20).reduce((a, b) => a + (b.h - b.l), 0) / 20;
   makePos(c.key, last, last - rng20 * 3.6, { quiet: true });
   paintObjects();

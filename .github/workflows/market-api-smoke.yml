@@ -32,12 +32,14 @@ jobs:
         run: |
           python - <<'PY'
           import json, urllib.request
-          url = "https://theonepercent-market-api.onrender.com/api/candles/BTCUSD/1H?limit=5"
+          url = "https://theonepercent-market-api.onrender.com/api/candles/BTCUSDT/1H?limit=5"
           with urllib.request.urlopen(url, timeout=60) as response:
               assert response.status == 200
               body = json.load(response)
           assert body["source"] == "Binance spot", body
           assert body["market"] == "spot", body
+          assert body["symbol"] == "BTCUSDT", body
+          assert body["provider_symbol"] == "BTCUSDT", body
           assert len(body["candles"]) == 5, body
           for b in body["candles"]:
               assert b["t"] > 1_000_000_000

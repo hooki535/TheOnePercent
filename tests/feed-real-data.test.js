@@ -14,7 +14,7 @@ const providerRows = [
 
 function candleBody() {
   return {
-    symbol: "BTCUSD",
+    symbol: "BTCUSDT",
     provider_symbol: "BTCUSDT",
     source: "Binance spot",
     market: "spot",
@@ -30,11 +30,16 @@ function candleBody() {
   };
 }
 
-async function startFeed(backendResponse) {
+async function startFeed(backendResponse, publicRows = providerRows) {
   const requests = [];
   const instrument = {
     symbol: "BTCUSD", name: "Bitcoin", market: "Crypto", base: "BTC", quote: "USD",
     price: 60000, dp: 2, pip: 0.01, contract: 1, unitValue: 1,
+  };
+  const catalogRow = {
+    provider: "binance", venue: "BINANCE_SPOT", market: "crypto_spot",
+    symbol: "BTCUSDT", provider_symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT",
+    availability: "historical_only", price_tick: "0.01", quantity_step: "0.00001",
   };
   const fetch = (url) => {
     requests.push(String(url));
@@ -42,13 +47,17 @@ async function startFeed(backendResponse) {
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     if (String(url).includes("/api/candles/")) return Promise.resolve(backendResponse);
     if (String(url).startsWith("https://data-api.binance.vision/"))
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(providerRows) });
+      return Promise.resolve({ ok: Array.isArray(publicRows), status: 503, json: () => Promise.resolve(publicRows) });
     throw new Error("Unexpected market-data request: " + url);
   };
   const window = {
     THEONEPERCENT_MARKET_API: "https://market-api.example",
     fetch,
-    Instruments: { find: () => instrument, INSTRUMENTS: [instrument] },
+    Instruments: {
+      find: (symbol) => symbol === "BTCUSD" || symbol === "EURUSD"
+        ? Object.assign({}, instrument, { symbol }) : null,
+      INSTRUMENTS: [instrument],
+    },
   };
   const context = {
     window,
@@ -61,7 +70,8 @@ async function startFeed(backendResponse) {
   };
   vm.runInNewContext(source, context, { filename: "assets/feed.js" });
   const feed = window.Feed;
-  feed.history("BTCUSD", "1H");
+  feed.registerCatalogInstrument(catalogRow);
+  feed.history("BTCUSDT", "1H");
   await new Promise((resolve) => setImmediate(resolve));
   return { feed, requests };
 }
@@ -69,10 +79,10 @@ async function startFeed(backendResponse) {
 test("uses real Binance candles directly when the configured proxy is unavailable", async () => {
   const { feed, requests } = await startFeed({ ok: false, status: 503 });
 
-  assert.equal(feed.isHistorical("BTCUSD", "1H"), true);
-  assert.equal(feed.historicalSource("BTCUSD", "1H"), "Binance spot (BTCUSDT)");
-  assert.deepEqual(feed.history("BTCUSD", "1H").map((bar) => bar.c), [60100, 60250, 60350]);
-  assert.ok(requests.some((url) => url.includes("/api/candles/BTCUSD/1H")));
+  assert.equal(feed.isHistorical("BTCUSDT", "1H"), true);
+  assert.equal(feed.historicalSource("BTCUSDT", "1H"), "Binance spot (BTCUSDT)");
+  assert.deepEqual(feed.history("BTCUSDT", "1H").map((bar) => bar.c), [60100, 60250, 60350]);
+  assert.ok(requests.some((url) => url.includes("/api/candles/BTCUSDT/1H")));
   const directRequest = requests.find((url) => url.includes("data-api.binance.vision/api/v3/klines"));
   assert.ok(directRequest);
   assert.match(directRequest, /symbol=BTCUSDT/);
@@ -85,9 +95,35 @@ test("keeps the configured market API as the first source when it succeeds", asy
     json: () => Promise.resolve(candleBody()),
   });
 
-  assert.equal(feed.isHistorical("BTCUSD", "1H"), true);
-  assert.deepEqual(feed.history("BTCUSD", "1H").map((bar) => bar.c), [60100, 60250, 60350]);
+  assert.equal(feed.isHistorical("BTCUSDT", "1H"), true);
+  assert.deepEqual(feed.history("BTCUSDT", "1H").map((bar) => bar.c), [60100, 60250, 60350]);
   assert.equal(requests.some((url) => url.startsWith("https://data-api.binance.vision/")), false);
+});
+
+test("catalog metadata keeps provider symbol, venue, and quote asset exact", async () => {
+  const { feed } = await startFeed({ ok: false, status: 503 });
+  const symbol = feed.symbol("BTCUSDT");
+  assert.equal(symbol.symbol, "BTCUSDT");
+  assert.equal(symbol.providerSymbol, "BTCUSDT");
+  assert.equal(symbol.venue, "Binance spot");
+  assert.equal(symbol.quote, "USDT");
+  assert.equal(symbol.spread, null);
+});
+
+test("provider failure leaves charts unavailable until Demo mode is explicitly enabled", async () => {
+  const { feed } = await startFeed({ ok: false, status: 503 }, null);
+
+  assert.equal(feed.isDemoMode(), false);
+  assert.deepEqual(Array.from(feed.history("BTCUSDT", "1H")), []);
+  assert.match(feed.badge({ symbol: "BTCUSDT", interval: "1H" }), /Unavailable/);
+
+  feed.setDemoMode(true);
+  assert.equal(feed.isDemoMode(), true);
+  assert.equal(feed.history("EURUSD", "1H").length, feed.BARS);
+  assert.match(feed.badge({ symbol: "EURUSD", interval: "1H" }), /Demo candles/);
+
+  feed.setDemoMode(false);
+  assert.equal(feed.history("EURUSD", "1H").length, 0);
 });
 
 test("chart labels distinguish historical spot data and never synthesize bid/ask quotes", () => {
@@ -95,8 +131,9 @@ test("chart labels distinguish historical spot data and never synthesize bid/ask
   assert.match(engineSource, /Spot historical/);
   assert.match(engineSource, /Number\.isFinite\(quote\.bid\).*Number\.isFinite\(quote\.ask\)/s);
   assert.doesNotMatch(engineSource, /Live · Dukascopy/);
-  assert.match(chartSource, /other markets remain synthetic demo data/);
-  assert.match(chartSource, /This panel is not a live quote/);
+  assert.match(chartSource, /No provider candles are available for this symbol/);
+  assert.match(engineSource, /Unavailable/);
+  assert.doesNotMatch(engineSource, /Demo fallback/);
   assert.doesNotMatch(chartSource, /Demo fallback until the Flask feed is connected/);
 });
 
