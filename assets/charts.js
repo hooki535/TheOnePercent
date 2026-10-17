@@ -3445,6 +3445,7 @@ $$("#moreMenu .mi").forEach((b) =>
   b.addEventListener("click", () => $("#moreMenu").classList.remove("open")),
 );
 $("#keysBtn").onclick = () => show("#keysModal");
+$("#showTourBtn").onclick = () => show("#tour");
 $("#themeBtn").textContent = Theme.current() === "dark" ? "Light" : "Dark";
 
 /* The demo badge is rendered by the feed, so its wording is identical on
@@ -3869,19 +3870,3 @@ requestAnimationFrame(() => {
   paintObjects();
   draw();
 });
-
-/* Shown once, then remembered. A tour that returns every visit is an
-   advert for itself. */
-const TOUR_KEY = "chartsTourSeen";
-if (!Store.settings.get()[TOUR_KEY]) {
-  setTimeout(() => {
-    const t = $("#tour");
-    if (t) t.hidden = false;
-  }, 900);
-}
-$("#tourClose") &&
-  $("#tourClose").addEventListener("click", () => {
-    try {
-      Store.settings.patch({ [TOUR_KEY]: true });
-    } catch (e) {}
-  });

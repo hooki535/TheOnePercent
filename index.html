@@ -31,7 +31,11 @@
      assets/shell.js so every screen shares one implementation. -->
 
     <!-- ============================================================ ticker tape -->
-    <div class="tape" id="tape" aria-label="Live market ticker">
+    <aside class="demo-market-notice" role="note">
+      <strong>SIMULATED MARKET DATA</strong>
+      <span>Prices, changes, candles and turnover below are illustrative samples, not a live feed.</span>
+    </aside>
+    <div class="tape" id="tape" aria-label="Simulated market ticker">
       <div class="tape-track" id="tape-track"></div>
     </div>
 
@@ -79,10 +83,9 @@
             </div>
             <div class="chart-foot">
               <span
-                ><i class="dot" aria-hidden="true"></i>Live preview · full
-                charts after sign-up</span
+                ><i class="dot" aria-hidden="true"></i>Synthetic demo candles</span
               >
-              <span id="chart-sync">updated just now</span>
+              <span id="chart-sync">Simulation</span>
             </div>
           </div>
         </div>
@@ -93,7 +96,7 @@
         <div class="wrap">
           <div class="summary-head">
             <h2>Market summary</h2>
-            <p>Live snapshot across every market you trade</p>
+            <p>Illustrative snapshot across major markets</p>
           </div>
 
           <div class="summary-grid">
@@ -116,7 +119,7 @@
             <div class="card table-card">
               <div class="table-head">
                 <h3>Major markets</h3>
-                <span id="summary-sync">updated just now</span>
+                <span id="summary-sync">Simulated sample</span>
               </div>
               <div class="table-scroll">
                 <table>
@@ -134,7 +137,7 @@
               </div>
               <div class="table-foot">
                 <span>Forex · Crypto · Futures · Indices · Commodities</span>
-                <span>Indicative prices, refreshed in place</span>
+                <span>Illustrative prices · simulated changes</span>
               </div>
             </div>
           </div>
@@ -148,8 +151,7 @@
             <div>
               <h2>Every market, one screener</h2>
               <p>
-                Sort by change or turnover, filter by asset class. Prices
-                refresh in place.
+                Sort or filter illustrative sample quotes. Changes are simulated.
               </p>
             </div>
             <div
@@ -442,12 +444,12 @@
         <div class="wrap reveal">
           <div class="band-head">
             <div>
-              <h2>On the calendar today</h2>
+              <h2>Sample calendar events</h2>
               <p>
-                Know what is about to move the market before you size the trade.
+                Illustrative placeholders only, not a current economic calendar. Verify event dates with an official source.
               </p>
             </div>
-            <a class="more" href="pages/markets.html">Full calendar →</a>
+            <a class="more" href="#screener">Browse market screener →</a>
           </div>
           <div class="cal-grid">
             <div class="card cal-item">
@@ -495,18 +497,17 @@
         <div class="wrap reveal">
           <div class="band-head">
             <div>
-              <h2>Ideas, with the risk shown</h2>
+              <h2>Illustrative trade examples</h2>
               <p>
-                Published entries from the community. Every one shows the stop
-                and the size, never just the win.
+                Static examples only, not published community trades, recommendations, or live posts.
               </p>
             </div>
-            <a class="more" href="pages/journal.html">Browse ideas →</a>
+            <a class="more" href="pages/journal.html">Open your journal →</a>
           </div>
           <div class="ideas">
             <article class="card idea">
               <div class="idea-head">
-                <span class="who">AK</span><span>Achieng K. · 2h ago</span
+                <span class="who">S</span><span>Sample entry</span
                 ><span class="tag">Forex</span>
               </div>
               <h3>EURUSD holding the London low</h3>
@@ -528,7 +529,7 @@
             </article>
             <article class="card idea">
               <div class="idea-head">
-                <span class="who">SP</span><span>Simon P. · 5h ago</span
+                <span class="who">S</span><span>Sample entry</span
                 ><span class="tag">Crypto</span>
               </div>
               <h3>BTCUSD range fade, not a breakout</h3>
@@ -550,7 +551,7 @@
             </article>
             <article class="card idea">
               <div class="idea-head">
-                <span class="who">MN</span><span>Moses N. · yesterday</span
+                <span class="who">S</span><span>Sample entry</span
                 ><span class="tag">Futures</span>
               </div>
               <h3>NQ1! I was wrong, here is why</h3>

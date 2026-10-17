@@ -1123,6 +1123,7 @@ class Chart {
     this.el.appendChild(this.cv);
     this.leg = document.createElement("div");
     this.leg.className = "leg";
+    this.legExpanded = false;
     this.el.appendChild(this.leg);
     this.bdg = document.createElement("div");
     this.bdg.className = "badge";
@@ -3187,9 +3188,11 @@ class Chart {
           `<span class="lchip" style="color:${[css("--i4"), css("--i5")][k % 2]}">${s} compare</span>`,
       )
       .join("");
+    this.leg.classList.toggle("expanded", this.legExpanded);
     this.leg.innerHTML = `
       <div class="leg-1"><span class="leg-sym">${blind ? "······" : this.cfg.sym}</span><span class="leg-int">${this.cfg.iv} · ${blind ? "hidden in blind mode" : S.venue}</span>
-        <span class="${cls} mono">${ch >= 0 ? "+" : "−"}${Math.abs(ch).toFixed(S.digits)} (${ch >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(2)}%)</span></div>
+        <span class="${cls} mono">${ch >= 0 ? "+" : "−"}${Math.abs(ch).toFixed(S.digits)} (${ch >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(2)}%)</span>
+        <button class="leg-toggle" type="button" data-act="details" aria-expanded="${this.legExpanded}" aria-label="${this.legExpanded ? "Hide" : "Show"} OHLC and indicator details">${this.legExpanded ? "Details ▴" : "Details ▾"}</button></div>
       <div class="leg-o"><span>O <b>${fmt(b.o, this.cfg.sym)}</b></span><span>H <b>${fmt(b.h, this.cfg.sym)}</b></span>
         <span>L <b>${fmt(b.l, this.cfg.sym)}</b></span><span>C <b class="${cls}">${fmt(b.c, this.cfg.sym)}</b></span>
         <span>V <b>${compact(b.v, true)}</b></span></div>
@@ -3210,6 +3213,11 @@ class Chart {
              study, so it is handled before anything looks for a uid. */
           if (act === "more") {
             this.legOpen = !this.legOpen;
+            this.legend(d);
+            return;
+          }
+          if (act === "details") {
+            this.legExpanded = !this.legExpanded;
             this.legend(d);
             return;
           }

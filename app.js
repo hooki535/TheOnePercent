@@ -2,7 +2,7 @@
    -------------------------------------------------------------------
    Scope: chart preview, featured index card and the major-markets
    table. Navigation, global search and the right-edge rail are handled
-   by assets/shell.js. Prices refresh in place — never a full reload.
+   by assets/shell.js. The visible quotes are illustrative simulated data.
 
    Quotes come from a seeded random walk shaped like a provider payload,
    so swapping in a live feed only touches MARKETS / buildCandles.
@@ -372,13 +372,11 @@
     drawChart();
   });
 
-  /* ------------------------------------------------------------ live refresh
-     Definition of done: prices refresh without a full reload. */
-
-  let lastSync = Date.now();
+  /* ------------------------------------------------------------ simulated refresh
+     Sample values animate in place; no market-data service is connected. */
 
   function refresh() {
-    /* two rows move per tick, cells update in place */
+    /* two sample rows move per tick, cells update in place */
     const picks = new Set();
     while (picks.size < 2) picks.add(Math.floor(Math.random() * rows.length));
 
@@ -406,7 +404,7 @@
       if (r === featured) renderFeatured();
     });
 
-    /* the live candle keeps forming */
+    /* the illustrative candle keeps forming */
     const last = chart.candles[chart.candles.length - 1];
     last.c += (Math.random() - 0.48) * PAIR.vol * 0.6;
     last.h = Math.max(last.h, last.c);
@@ -414,14 +412,6 @@
     renderChartHead();
     drawChart();
 
-    lastSync = Date.now();
-  }
-
-  function syncLabels() {
-    const age = Math.round((Date.now() - lastSync) / 1000);
-    const label = age < 2 ? "updated just now" : "updated " + age + "s ago";
-    $("#chart-sync").textContent = label;
-    $("#summary-sync").textContent = label;
   }
 
   /* ------------------------------------------------------------ boot */
@@ -433,9 +423,7 @@
   /* first quote batch lands after the shell paints, into fixed-height rows */
   setTimeout(() => {
     renderTable();
-    syncLabels();
     setInterval(refresh, 1800);
-    setInterval(syncLabels, 1000);
   }, 520);
 
   let resizeTimer;

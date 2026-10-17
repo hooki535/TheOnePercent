@@ -3,8 +3,8 @@
    Powers the ticker tape, the market screener, the heatmap, the top
    movers columns, the idea sparklines and the scroll reveal.
 
-   All quotes come from one seeded universe below, shaped like a
-   provider payload, so a real feed only replaces UNIVERSE + tick().
+   All quotes come from one seeded illustrative universe below. They are
+   explicitly disclosed as simulated and are not a provider feed.
    Nothing here touches app.js (hero chart + market summary) or
    shell.js (nav + rail).
    ------------------------------------------------------------------- */
@@ -375,10 +375,10 @@
     items.forEach((el) => io.observe(el));
   }
 
-  /* ------------------------------------------------------------ live ticks */
+  /* ------------------------------------------------------------ simulated ticks */
 
   function tick() {
-    /* four symbols move per tick; cells update in place, never a reload */
+    /* four sample symbols move per tick; no market feed is connected */
     const picks = new Set();
     while (picks.size < 4) picks.add(Math.floor(Math.random() * quotes.length));
 

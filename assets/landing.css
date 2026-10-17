@@ -7,6 +7,30 @@
 
 /* ============================================================ ticker tape */
 
+.demo-market-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 30px;
+  padding: 5px 16px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--brand));
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.demo-market-notice strong {
+  color: var(--ink);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 600px) {
+  .demo-market-notice { align-items: flex-start; flex-direction: column; gap: 2px; }
+}
+
 .tape {
   position: relative;
   overflow: hidden;
