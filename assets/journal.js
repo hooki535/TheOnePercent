@@ -42,7 +42,7 @@
     const dp = abs >= 1000 || s.currency === "UGX" ? 0 : 2;
     const body = abs.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
     const sign = n < 0 ? "−" : signed && n > 0 ? "+" : "";
-    return sign + body + " " + (s.currency || "");
+    return sign + body + " calculation units";
   }
 
   /* Table cells carry the number only — the currency lives in the column
@@ -54,7 +54,7 @@
     const abs = Math.abs(n);
     const dp = abs >= 1000 || s.currency === "UGX" ? 0 : 2;
     const body = abs.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
-    return (n < 0 ? "−" : signed && n > 0 ? "+" : "") + body;
+    return (n < 0 ? "−" : signed && n > 0 ? "+" : "") + body + " units";
   }
 
   function rfmt(n) {
@@ -162,29 +162,26 @@
 
   function renderSummary(rows) {
     const s = Store.stats(rows.map((r) => r.t), settings());
-    const closed = rows.map(({ c }) => c).filter(c => !c.open && c.result !== "Open");
-    const rs = closed.map(c => c.r).filter(Number.isFinite);
-    const averageR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
-    const bestR = rs.length ? Math.max(...rs) : null;
-    const worstR = rs.length ? Math.min(...rs) : null;
+    const averageR = s.averageR;
+    const bestR = s.bestR;
+    const worstR = s.worstR;
     const cards = [
       { k: "Trades", v: String(s.count), n: "all filtered trades" },
       { k: "Open trades", v: String(s.open), n: "positions not fully closed" },
-      { k: "Win rate", v: pct(s.winRate, 1), n: "closed trades only" },
-      { k: "Average R", v: rfmt(averageR), n: "closed trades with valid risk", cls: dir(averageR) },
-      { k: "Profit factor", v: s.profitFactor === null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2), n: "gross profits / gross losses" },
-      { k: "Best trade", v: rfmt(bestR), n: "highest realised R", cls: dir(bestR) },
-      { k: "Worst trade", v: rfmt(worstR), n: "lowest realised R", cls: dir(worstR) },
+      { k: "Win rate", v: pct(s.winRate, 1), n: s.eligiblePL + " eligible closed trades; unavailable P/L excluded" },
+      { k: "Average R", v: rfmt(averageR), n: s.eligibleR + " eligible R records; uses the recorded stop", cls: dir(averageR) },
+      { k: "Profit factor", v: "Unavailable", n: s.profitFactorUnavailableReason },
+      { k: "Best trade (R)", v: rfmt(bestR), n: "highest eligible R; recorded-stop basis", cls: dir(bestR) },
+      { k: "Worst trade (R)", v: rfmt(worstR), n: "lowest eligible R; recorded-stop basis", cls: dir(worstR) },
       {
-        k: "Net P/L",
-        v: money(s.netPL, true),
-        n: s.closed ? "across " + s.closed + " closed" : "nothing closed yet",
-        cls: dir(s.netPL),
+        k: "Net P/L of fully closed trades",
+        v: "Unavailable",
+        n: s.eligiblePL + " individually valid of " + s.closed + " closed; compatible units are not recorded. Cohort uses journal date because close timestamps are absent.",
       },
       {
         k: "Expectancy",
         v: s.expectancy === null ? "—" : rfmt(s.expectancy),
-        n: s.expectancy === null ? "needs a closed trade" : "average per trade",
+        n: s.expectancy === null ? "needs a closed trade with valid P/L and risk" : "mean R per eligible trade; uses the recorded stop",
         cls: s.expectancy === null ? "" : dir(s.expectancy),
       },
       {
@@ -279,8 +276,7 @@
     rows.forEach(({ t, c }) => {
       if (c.open) return;
       const k = String(t.date).slice(0, 10);
-      const cur = byDay.get(k) || { pl: 0, n: 0 };
-      cur.pl += c.netPL;
+      const cur = byDay.get(k) || { n: 0 };
       cur.n += 1;
       byDay.set(k, cur);
     });
@@ -296,10 +292,10 @@
     for (let d = 1; d <= days; d++) {
       const key = dayKey(new Date(m.getFullYear(), m.getMonth(), d));
       const hit = byDay.get(key);
-      const cls = hit ? (hit.pl > 0 ? "up" : hit.pl < 0 ? "down" : "") : "";
+      const cls = "";
       html += `<div class="day ${cls} ${key === today ? "today" : ""}">
         <div class="d">${d}</div>
-        ${hit ? `<div class="pl">${bare(hit.pl, true)}</div><div class="ct">${hit.n} trade${hit.n > 1 ? "s" : ""}</div>` : ""}
+        ${hit ? `<div class="ct">${hit.n} fully closed trade${hit.n > 1 ? "s" : ""}</div>` : ""}
       </div>`;
     }
     $("#cal").innerHTML = html;
@@ -310,17 +306,16 @@
   function groupBy(rows, field) {
     const map = new Map();
     rows.forEach((row) => {
-      if (row.c.open || row.c.r === null) return;
+      if (row.c.open || !Number.isFinite(row.c.r)) return;
       const k = row.t[field] || "Untagged";
-      const cur = map.get(k) || { n: 0, r: 0, wins: 0, pl: 0 };
+      const cur = map.get(k) || { n: 0, r: 0, wins: 0 };
       cur.n += 1;
       cur.r += row.c.r;
-      cur.pl += row.c.netPL;
-      if (row.c.netPL > 0) cur.wins += 1;
+      if (row.c.r > 0) cur.wins += 1;
       map.set(k, cur);
     });
     return Array.from(map.entries())
-      .map(([k, v]) => ({ label: k, n: v.n, exp: v.r / v.n, pl: v.pl, wr: (v.wins / v.n) * 100 }))
+      .map(([k, v]) => ({ label: k, n: v.n, exp: v.r / v.n, wr: (v.wins / v.n) * 100 }))
       .sort((a, b) => a.exp - b.exp);
   }
 
@@ -335,7 +330,7 @@
         const left = g.exp >= 0 ? 50 : 50 - w;
         return `<div class="ins-row">
           <div>
-            <div class="lab">${esc(g.label)}<small>${g.n} trade${g.n > 1 ? "s" : ""} · ${g.wr.toFixed(0)}% won · ${money(g.pl, true)}</small></div>
+            <div class="lab">${esc(g.label)}<small>${g.n} eligible R trade${g.n > 1 ? "s" : ""} · ${g.wr.toFixed(0)}% positive R</small></div>
             <div class="track"><i class="${g.exp < 0 ? "neg" : ""}" style="left:${left}%;width:${w}%"></i></div>
           </div>
           <div class="val ${dir(g.exp)}">${rfmt(g.exp)}</div>
@@ -972,7 +967,7 @@
     }));
     if (!rows.length) return toast("Nothing to export with these filters");
 
-    const cols = CSV_COLS.concat(["netPL", "r", "riskPct", "discipline"]);
+    const cols = CSV_COLS.concat(["netPL_calculation_units", "r_recorded_stop_basis", "riskPct", "discipline"]);
     const cell = (v) => {
       const s = v === null || v === undefined ? "" : String(v);
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -1256,7 +1251,7 @@
     if (!box || !Store.guardrails) return;
 
     const g = Store.guardrails(Store.trades.list(), Store.settings.get());
-    if (!g.blocked) {
+    if (!g.breaches.length && g.assessmentStatus !== "unavailable") {
       box.hidden = true;
       box.innerHTML = "";
       return;
@@ -1264,10 +1259,11 @@
 
     box.innerHTML =
       "<span><b>" +
-      (g.breaches.length === 1 ? "You have hit one of your own limits" : "You have hit " + g.breaches.length + " of your own limits") +
+      (g.breaches.length ? (g.breaches.length === 1 ? "A configured limit is breached" : g.breaches.length + " configured limits are breached") : "Guardrail assessment unavailable") +
       "</b><ul>" +
       g.breaches.map((b) => "<li>" + esc(b.text) + "</li>").join("") +
-      '</ul></span><a class="btn btn-quiet" href="settings.html#guardrails">Adjust the rules</a>';
+      g.unavailableReasons.map((x) => "<li>Assessment unavailable: " + esc(x) + "</li>").join("") +
+      '</ul><small>Advisory journal assessment; no broker orders are controlled.</small></span><a class="btn btn-quiet" href="settings.html#guardrails">Review rules</a>';
     box.hidden = false;
   }
 

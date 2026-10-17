@@ -541,3 +541,361 @@ body[data-page="charts"] .tabs { overflow-x:auto; scrollbar-width:thin; }
 @media(max-width:1300px){body[data-page="charts"] .toolbar-secondary { display:none !important; }}
 @media(max-width:1050px){body[data-page="charts"] .ctoolbar { flex-wrap:wrap; height:auto; min-height:54px; padding:5px 10px; row-gap:4px; }body[data-page="charts"] .ctoolbar>.spacer{display:none;}body[data-page="charts"] .toolbar-market { flex:1 1 100%; }body[data-page="charts"] .toolbar-workspace { margin-left:auto; }body[data-page="charts"] .risk-pill,body[data-page="charts"] #feedBadge { display:none; }}
 @media(max-width:720px){body[data-page="charts"] .ctoolbar { align-content:center; }body[data-page="charts"] .toolbar-market { flex:1 1 100%; }body[data-page="charts"] .toolbar-market #intervals { display:none; }body[data-page="charts"] .toolbar-workspace #workspaceSettingsOpen,body[data-page="charts"] .toolbar-workspace #workspacePanelToggle { display:none; }body[data-page="charts"] .toolbar-analysis { flex:0 0 auto; }body[data-page="charts"] .toolbar-workspace { flex:1 1 auto; justify-content:flex-end; }body[data-page="charts"] #journalBtn { display:inline-flex; }body[data-page="charts"] .crail { width:100%; flex-basis:auto; }}
+
+
+/* Stage D chart workspace polish: clearer hierarchy and stronger control feedback.
+   Presentation-only. Chart canvases, draw tools, settings keys and saved data are untouched. */
+body[data-page="charts"] {
+  color: var(--ws-text);
+  background: var(--ws-raised) !important;
+  --terminal-line: var(--ws-border);
+  --terminal-muted: var(--ws-muted);
+  --terminal-accent: var(--ws-accent);
+}
+body[data-page="charts"] .ctoolbar {
+  min-height: 58px;
+  height: auto;
+  flex-basis: auto;
+  gap: 10px;
+  padding: 7px 14px;
+  background: var(--ws-surface) !important;
+  border-bottom: 1px solid var(--ws-border) !important;
+  box-shadow: 0 2px 8px rgba(24, 39, 65, .06);
+}
+body[data-page="charts"] .ct-l,
+body[data-page="charts"] .ct-r {
+  gap: 7px;
+  align-items: center;
+}
+body[data-page="charts"] .toolbar-market,
+body[data-page="charts"] .toolbar-analysis,
+body[data-page="charts"] .toolbar-workspace {
+  min-width: 0;
+}
+body[data-page="charts"] .toolbar-analysis {
+  padding-left: 7px;
+  border-left: 1px solid var(--ws-border);
+}
+body[data-page="charts"] .sym {
+  min-width: 142px;
+  min-height: 38px;
+  padding: 6px 11px;
+  border: 1px solid var(--ws-border) !important;
+  border-radius: 9px;
+  background: var(--ws-raised) !important;
+  color: var(--ws-text) !important;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+body[data-page="charts"] .sym:hover {
+  border-color: color-mix(in srgb, var(--ws-accent) 45%, var(--ws-border)) !important;
+  background: var(--ws-hover) !important;
+}
+body[data-page="charts"] #symName { font-size: 14px; font-weight: 700; }
+body[data-page="charts"] .sym-meta { color: var(--ws-muted); }
+body[data-page="charts"] .ctoolbar .chips {
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--ws-border);
+  border-radius: 9px;
+  background: var(--ws-raised);
+}
+body[data-page="charts"] .ctoolbar .chip {
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ws-muted) !important;
+}
+body[data-page="charts"] .ctoolbar .chip.on,
+body[data-page="charts"] .ctoolbar .chip.active {
+  color: var(--ws-accent) !important;
+  background: var(--ws-hover) !important;
+  box-shadow: inset 0 -2px 0 var(--ws-accent);
+}
+body[data-page="charts"] .ctoolbar .tb-btn,
+body[data-page="charts"] .workspace-toggle {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid transparent !important;
+  border-radius: 8px;
+  color: var(--ws-text) !important;
+  background: transparent !important;
+  font-size: 11.5px;
+  font-weight: 600;
+  transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+body[data-page="charts"] .ctoolbar .tb-btn:hover,
+body[data-page="charts"] .workspace-toggle:hover {
+  color: var(--ws-accent) !important;
+  background: var(--ws-hover) !important;
+}
+body[data-page="charts"] .workspace-toggle.workspace-open {
+  color: var(--ws-accent) !important;
+  border-color: var(--ws-border) !important;
+  background: var(--ws-hover) !important;
+}
+body[data-page="charts"] .ct-r #feedBadge {
+  display: flex !important;
+  align-items: center;
+}
+body[data-page="charts"] .ct-r #journalBtn {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--ws-accent) !important;
+  border-radius: 9px;
+  background: var(--ws-accent) !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--ws-accent) 22%, transparent);
+}
+body[data-page="charts"] .ct-r #journalBtn:hover {
+  filter: brightness(.94);
+  transform: translateY(-1px);
+}
+body[data-page="charts"] .cshell { background: var(--ws-border) !important; }
+body[data-page="charts"] .crail,
+body[data-page="charts"] .chart-dock {
+  background: var(--ws-surface) !important;
+  border-color: var(--ws-border) !important;
+}
+body[data-page="charts"] .crail { gap: 4px; padding: 9px 0; }
+body[data-page="charts"] .rtool,
+body[data-page="charts"] .dock-btn {
+  border-radius: 8px;
+  transition: color .14s ease, background .14s ease, box-shadow .14s ease;
+}
+body[data-page="charts"] .rtool.on,
+body[data-page="charts"] .rtool.active,
+body[data-page="charts"] .dock-btn.active {
+  color: var(--ws-accent) !important;
+  background: var(--ws-hover) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ws-accent) 35%, transparent);
+}
+body[data-page="charts"] .grid {
+  gap: 2px;
+  background: var(--ws-border) !important;
+}
+body[data-page="charts"] .cw {
+  background: var(--ws-surface) !important;
+}
+body[data-page="charts"] .cw.sel {
+  box-shadow: inset 0 0 0 2px var(--ws-accent);
+}
+body[data-page="charts"] .leg {
+  top: 12px;
+  left: 12px;
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--ws-border) 80%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--ws-surface) 94%, transparent);
+  box-shadow: 0 3px 12px rgba(20, 35, 58, .08);
+  backdrop-filter: blur(8px);
+}
+body[data-page="charts"] .panel {
+  flex-basis: 352px !important;
+  background: var(--ws-surface) !important;
+  border-left: 1px solid var(--ws-border) !important;
+  box-shadow: -5px 0 18px rgba(24, 39, 65, .06);
+}
+body[data-page="charts"] .tabs {
+  min-height: 48px;
+  flex-basis: 48px;
+  gap: 3px;
+  padding: 6px 8px;
+  background: var(--ws-raised) !important;
+  border-bottom: 1px solid var(--ws-border) !important;
+}
+body[data-page="charts"] .tab {
+  min-height: 34px;
+  padding: 5px 9px;
+  border: 0 !important;
+  border-radius: 7px;
+  color: var(--ws-muted) !important;
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+body[data-page="charts"] .tab:hover {
+  color: var(--ws-text) !important;
+  background: var(--ws-hover) !important;
+}
+body[data-page="charts"] .tab.active {
+  color: var(--ws-accent) !important;
+  background: var(--ws-surface) !important;
+  box-shadow: 0 1px 3px rgba(24, 39, 65, .12);
+}
+body[data-page="charts"] .tabpane {
+  padding: 14px;
+  background: var(--ws-surface) !important;
+  scrollbar-width: thin;
+}
+body[data-page="charts"] .card,
+body[data-page="charts"] .obj,
+body[data-page="charts"] .ob {
+  border-color: var(--ws-border) !important;
+  border-radius: 11px;
+  box-shadow: 0 3px 12px rgba(24, 39, 65, .05);
+}
+body[data-page="charts"] .card { padding: 14px; }
+body[data-page="charts"] .mh,
+body[data-page="charts"] .lbl { color: var(--ws-muted); }
+body[data-page="charts"] .fin,
+body[data-page="charts"] input[type="number"],
+body[data-page="charts"] .notebar textarea {
+  min-height: 36px;
+  border-color: var(--ws-border) !important;
+  border-radius: 8px;
+  background: var(--ws-raised) !important;
+  color: var(--ws-text) !important;
+}
+body[data-page="charts"] .fin:focus,
+body[data-page="charts"] input[type="number"]:focus,
+body[data-page="charts"] .notebar textarea:focus {
+  border-color: var(--ws-accent) !important;
+  outline: 3px solid color-mix(in srgb, var(--ws-accent) 16%, transparent);
+}
+body[data-page="charts"] .side-toggle {
+  gap: 5px;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--ws-raised);
+}
+body[data-page="charts"] .side-toggle .st {
+  min-height: 34px;
+  border-radius: 7px;
+  font-weight: 650;
+}
+body[data-page="charts"] .readouts .ro {
+  padding: 10px 11px;
+  border-bottom: 1px solid var(--ws-border);
+}
+body[data-page="charts"] .warn {
+  border-radius: 11px;
+  box-shadow: 0 4px 14px rgba(24, 39, 65, .07);
+}
+body[data-page="charts"] .chart-bottom {
+  min-height: 38px;
+  padding: 3px 12px 3px 58px;
+  background: var(--ws-surface) !important;
+  border-top: 1px solid var(--ws-border) !important;
+  color: var(--ws-muted) !important;
+}
+body[data-page="charts"] .chart-bottom button {
+  min-height: 28px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  color: var(--ws-muted);
+  font-weight: 600;
+}
+body[data-page="charts"] .chart-bottom button:hover {
+  color: var(--ws-accent) !important;
+  background: var(--ws-hover) !important;
+}
+body[data-page="charts"] .notebar {
+  padding: 9px 12px;
+  gap: 10px;
+  align-items: center;
+  background: var(--ws-raised) !important;
+  border-top-color: var(--ws-border) !important;
+}
+body[data-page="charts"] .notebar textarea {
+  min-height: 38px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+body[data-page="charts"] .menu,
+body[data-page="charts"] .modal .sheet,
+body[data-page="charts"] .workspace-settings-sheet {
+  border: 1px solid var(--ws-border) !important;
+  border-radius: 13px;
+  box-shadow: 0 18px 54px rgba(14, 25, 44, .2);
+}
+body[data-page="charts"] .menu { padding: 7px; }
+body[data-page="charts"] .menu button,
+body[data-page="charts"] .workspace-settings-sheet button {
+  border-radius: 7px;
+}
+body[data-page="charts"] :is(.tb-btn, .chip, .tab, .rtool, .dock-btn, .chart-bottom button) {
+  outline-offset: 2px;
+}
+@media (max-width: 1050px) {
+  body[data-page="charts"] .ctoolbar {
+    min-height: 0;
+    gap: 6px;
+    padding: 7px 10px;
+  }
+  body[data-page="charts"] .toolbar-market { flex-wrap: wrap; }
+  body[data-page="charts"] .panel { flex-basis: 310px !important; }
+}
+@media (max-width: 720px) {
+  body[data-page="charts"] .ctoolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 5px;
+    padding: 7px 9px;
+  }
+  body[data-page="charts"] .ctoolbar > .spacer { display: none; }
+  body[data-page="charts"] .ct-l {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 4px;
+  }
+  body[data-page="charts"] .toolbar-market {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  body[data-page="charts"] .toolbar-analysis {
+    padding-left: 4px;
+  }
+  body[data-page="charts"] .sym {
+    flex: 1 1 120px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  body[data-page="charts"] .toolbar-workspace {
+    flex: 1 1 100%;
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+  body[data-page="charts"] .ct-r .risk-pill,
+  body[data-page="charts"] .ct-r #feedBadge,
+  body[data-page="charts"] .toolbar-secondary {
+    display: none !important;
+  }
+  body[data-page="charts"] #workspaceSettingsOpen,
+  body[data-page="charts"] #workspacePanelToggle { display: none !important; }
+  body[data-page="charts"] .ct-r #journalBtn { display: inline-flex !important; }
+  body[data-page="charts"] .chart-dock { display: none; }
+  body[data-page="charts"] .chart-bottom {
+    min-height: 36px;
+    padding: 2px 8px;
+    gap: 2px;
+    overflow-x: auto;
+  }
+  body[data-page="charts"] .bottom-status { display: none; }
+  body[data-page="charts"] .cbot { padding-inline: 6px; }
+  body[data-page="charts"] .notebar { padding: 7px 8px; }
+  body[data-page="charts"] .notebar .nb-l { min-width: 0; }
+  body[data-page="charts"] .panel {
+    position: absolute;
+    z-index: 50;
+    inset: 0 0 0 0;
+    width: auto !important;
+    max-width: none;
+    border-left: 0 !important;
+    box-shadow: 0 12px 34px rgba(8, 18, 35, .24);
+  }
+  body[data-page="charts"] .tabs { gap: 2px; padding: 5px; }
+  body[data-page="charts"] .tab { padding-inline: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="charts"] .ctoolbar *,
+  body[data-page="charts"] .crail *,
+  body[data-page="charts"] .chart-bottom * { transition-duration: 0.01ms !important; }
+}

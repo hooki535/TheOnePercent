@@ -226,6 +226,9 @@ const state = {
     balance: 0,
     pct: 1,
     dayUsed: 0,
+    dayAssessmentStatus: "unavailable",
+    dayAssessmentReason: "daily loss is not available",
+    guardrailBreaches: [],
     dayCap: 0,
     minRR: 1.5,
     currency: "USD",
@@ -291,7 +294,10 @@ function syncSettings() {
   R.currency = s.currency || "USD";
   /* What the rule has already spent today: realised losses, from the
      journal — not a number this screen invents. */
-  R.dayUsed = g.lossPctToday || 0;
+  R.dayUsed = g.lossPctToday;
+  R.dayAssessmentStatus = g.dailyLossStatus;
+  R.dayAssessmentReason = (g.unavailableReasons || []).join("; ");
+  R.guardrailBreaches = g.breaches || [];
 
   const saved = Array.isArray(s.chartsWatch)
     ? s.chartsWatch.filter((x) => Instruments.find(x))
@@ -468,6 +474,7 @@ function recalc() {
   const reward = Math.abs(P.target - P.entry) * perPriceUnit;
   const cost = (S.costTicks || 1) * inst.pip * perPriceUnit;
   const pctOfBal = R.balance ? (realRisk / R.balance) * 100 : 0;
+  const dayAssessment = chartsDayRiskAssessment(R.dayUsed, pctOfBal, R.dayCap, R.guardrailBreaches);
 
   P.calc = {
     size: +size.toFixed(S.step < 0.01 ? 3 : 2),
@@ -480,12 +487,22 @@ function recalc() {
     r: realRisk > 0 ? (reward - cost) / realRisk : 0,
     pct: pctOfBal,
     over: pctOfBal > R.pct * 1.05,
-    day: R.dayUsed + pctOfBal,
+    day: dayAssessment.totalPct,
+    dayAssessmentReason: dayAssessment.reason || null,
     ruleSize: +(size * (pctOfBal ? R.pct / pctOfBal : 1)).toFixed(
       S.step < 0.01 ? 3 : 2,
     ),
   };
   renderReadouts();
+}
+function chartsDayRiskAssessment(dailyLossPct, positionRiskPct, capPct, breaches) {
+  const confirmedBreaches = Array.isArray(breaches) ? breaches.slice() : [];
+  if (!Number.isFinite(dailyLossPct) || !Number.isFinite(positionRiskPct))
+    return { status: confirmedBreaches.length ? "breached" : "unavailable", totalPct: null,
+      reason: "Daily loss assessment is unavailable; position risk remains calculated separately.",
+      breaches: confirmedBreaches };
+  return { status: confirmedBreaches.length ? "breached" : "assessed",
+    totalPct: dailyLossPct + positionRiskPct, capPct, breaches: confirmedBreaches };
 }
 function renderReadouts() {
   const box = $("#readouts"),
@@ -513,8 +530,10 @@ function renderReadouts() {
     <div class="ro"><span>R multiple, after costs</span><b>${c.r.toFixed(2)}R</b></div>
     <div class="ro"><span>Stop distance</span><b>${c.ticks.toFixed(S.tickName === "pips" ? 1 : 0)} ${S.tickName}</b></div>
     <div class="ro"><span>Spread + commission</span><b>${money(c.cost)} <em>${((c.cost / c.risk) * 100).toFixed(1)}% of risk</em></b></div>
-    <div class="ro"><span>Day risk if filled</span><b>${c.day.toFixed(1)}% <em>cap ${R.dayCap.toFixed(1)}%</em></b></div>`;
-  const overDay = c.day > R.dayCap,
+    <div class="ro"><span>Day risk if filled</span><b>${c.day === null ? "Unavailable" : c.day.toFixed(1) + "%"} <em>${c.day === null ? esc(R.dayAssessmentReason || "Daily loss cannot be assessed") : "cap " + R.dayCap.toFixed(1) + "%"}</em></b></div>
+    ${R.guardrailBreaches.length ? '<div class="ro"><span>Confirmed guardrail breaches</span><b>' + esc(R.guardrailBreaches.map((b) => b.text).join("; ")) + '</b></div>' : ""}
+    ${R.dayAssessmentStatus === "unavailable" ? '<div class="ro"><span>Assessment warning</span><b>' + esc(R.dayAssessmentReason || "Daily loss cannot be assessed") + '</b></div>' : ""}`;
+  const overDay = Number.isFinite(c.day) && c.day > R.dayCap,
     w = $("#warn");
   if (c.over || overDay) {
     w.hidden = false;
@@ -522,17 +541,17 @@ function renderReadouts() {
       ? `Size is ${c.pct.toFixed(2)}% — above your ${R.pct.toFixed(1)}% rule`
       : `This fill takes today to ${c.day.toFixed(1)}%, past your ${R.dayCap.toFixed(1)}% day cap`;
     $("#warnB").textContent = c.over
-      ? `Sizing to the rule would be ${((c.size * R.pct) / c.pct).toFixed(S.step < 0.01 ? 3 : 2)} ${S.unit}. Nothing is blocked — the warning and your choice are both written to the journal entry.`
-      : `You can still take it. The override is recorded with the entry so the weekly review sees the sequence, not just the result.`;
+      ? `Sizing to the rule would be ${((c.size * R.pct) / c.pct).toFixed(S.step < 0.01 ? 3 : 2)} ${S.unit}. This journal does not control broker orders; the warning and your choice are recorded with the entry.`
+      : `This journal does not control broker orders. The warning and your choice are recorded with the entry for later review.`;
   } else w.hidden = true;
-  $("#rpFill").style.width = Math.min(100, (c.day / R.dayCap) * 100) + "%";
+  $("#rpFill").style.width = Number.isFinite(c.day) && R.dayCap > 0 ? Math.min(100, (c.day / R.dayCap) * 100) + "%" : "0%";
   $("#rpFill").style.background =
-    c.day > R.dayCap
+    Number.isFinite(c.day) && c.day > R.dayCap
       ? css("--dn")
-      : c.day > R.dayCap * 0.7
+      : Number.isFinite(c.day) && c.day > R.dayCap * 0.7
         ? css("--warn")
         : css("--acc");
-  $("#rpVal").textContent = `${c.day.toFixed(1)}% / ${R.dayCap.toFixed(1)}%`;
+  $("#rpVal").textContent = c.day === null ? "Unavailable" : `${c.day.toFixed(1)}% / ${R.dayCap.toFixed(1)}%`;
   $("#coachBody").innerHTML = coachHTML(P);
 }
 function atrTicks(sym) {
@@ -553,16 +572,9 @@ function symbolRecord(sym) {
   if (rows.length < 5) return { n: rows.length, thin: true };
   const wins = rows.filter((m) => m.netPL > 0);
   const wr = wins.length / rows.length;
-  const avgWin = wins.length
-    ? wins.reduce((a, m) => a + m.netPL, 0) / wins.length
-    : 0;
-  const losses = rows.filter((m) => m.netPL <= 0);
-  const avgLoss = losses.length
-    ? Math.abs(losses.reduce((a, m) => a + m.netPL, 0) / losses.length)
-    : 0;
   /* R needed to break even at this hit rate: (1-wr)/wr */
   const breakeven = wr > 0 && wr < 1 ? (1 - wr) / wr : null;
-  return { n: rows.length, thin: false, wr, avgWin, avgLoss, breakeven };
+  return { n: rows.length, thin: false, wr, breakeven };
 }
 
 function hourRecord(sym, hour) {
@@ -2911,7 +2923,7 @@ function logJournal() {
       facts.push(
         `Taken above the ${state.risk.pct.toFixed(1)}% rule. Sizing to the rule was ${P.calc.ruleSize} ${S.unit}.`,
       );
-    if (P.calc.day > state.risk.dayCap && state.risk.dayCap > 0)
+    if (Number.isFinite(P.calc.day) && P.calc.day > state.risk.dayCap && state.risk.dayCap > 0)
       facts.push(
         `This fill puts the day at ${P.calc.day.toFixed(1)}% against a ${state.risk.dayCap.toFixed(1)}% cap.`,
       );

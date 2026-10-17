@@ -38,7 +38,7 @@
     const dp = abs >= 1000 || settings().currency === "UGX" ? 0 : 2;
     return (
       (n < 0 ? "−" : signed && n > 0 ? "+" : "") +
-      abs.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp })
+      abs.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp }) + " calculation units"
     );
   }
 
@@ -64,43 +64,97 @@
     });
   }
 
+  function accountTrades() {
+    return Store.trades.list().filter((t) =>
+      state.account === "all" || (t.account || "") === state.account
+    );
+  }
+
+  /* ------------------------------------------------------------ account overview */
+
+  function renderAccountSummary(trades, stats) {
+    const s = settings();
+    const open = Store.openRisk(trades, s);
+    const missingStops = open.unknown
+      ? " · " + open.unknown + (open.unknown === 1 ? " position is" : " positions are") + " individually unmeasurable"
+      : "";
+
+    const cards = [
+      { k: "Shared balance setting", v: money(s.balance), n: "saved position-sizing input; not account equity" },
+      { k: "Net P/L of fully closed trades", v: "Unavailable", n: stats.eligiblePL + " individually valid of " + stats.closed + " closed · " + stats.aggregatePLReason },
+      { k: "Currently open positions", v: String(open.n), n: "selected account; all opening dates included" },
+      { k: "Aggregate open risk", v: open.n ? "Unavailable" : "—", n: open.n ? open.measurable + " individually measurable · " + open.aggregateReason + missingStops : "no open positions" },
+    ];
+
+    $("#account-summary").innerHTML = cards
+      .map(
+        (c) =>
+          `<div class="stat"><div class="k">${esc(c.k)}</div>` +
+          `<div class="v ${c.cls || ""}">${esc(c.v)}</div><div class="n">${esc(c.n)}</div></div>`
+      )
+      .join("");
+  }
+
   /* ------------------------------------------------------------ metrics */
 
   function renderStats(trades) {
     const s = Store.stats(trades, settings());
-    const streak = Store.streak(Store.trades.list());
+    const streak = Store.streak(trades);
     const limit = settings().riskPct;
-
-    /* A win rate on five trades is noise dressed as information, so it
-       stays hidden until the sample can carry it. */
-    const enoughForWinRate = s.closed >= 10;
+    const factor = s.profitFactor === null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2);
+    const hasClosed = s.closed > 0;
 
     const cards = [
       {
-        k: "Net P/L",
-        v: money(s.netPL, true),
-        n: s.closed ? s.closed + " closed" + (s.open ? ", " + s.open + " open" : "") : "nothing closed yet",
-        cls: dir(s.netPL),
+        k: "Net P/L of fully closed trades",
+        v: "Unavailable",
+        n: s.eligiblePL + " individually valid of " + s.closed + " closed; aggregate unavailable because compatible units are not recorded",
+      },
+      {
+        k: "Win rate",
+        v: pct(s.winRate, 1),
+        n: s.eligiblePL + " eligible P/L records; unavailable records excluded; breakeven remains in denominator",
+      },
+      {
+        k: "Average R",
+        v: rfmt(s.averageR),
+        n: s.eligibleR + " eligible R records; uses the recorded stop, not an immutable initial-risk snapshot",
+        cls: dir(s.averageR),
+      },
+      {
+        k: "Profit factor",
+        v: factor,
+        n: s.profitFactorUnavailableReason,
       },
       {
         k: "Expectancy",
         v: rfmt(s.expectancy),
-        n: s.expectancy === null ? "needs a closed trade" : "per trade, in R",
+        n: s.expectancy === null ? "needs a closed trade with valid P/L and risk" : "mean R per eligible trade; uses the recorded stop",
         cls: dir(s.expectancy),
       },
       {
-        k: "Win rate",
-        v: enoughForWinRate ? pct(s.winRate, 0) : "—",
-        n: enoughForWinRate
-          ? "profit factor " + (s.profitFactor === null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2))
-          : s.closed + " of 10 closed trades",
+        k: "Absolute drawdown",
+        v: "Unavailable",
+        n: s.drawdownUnavailableReason,
+      },
+      {
+        k: "Best trade (R)",
+        v: rfmt(s.bestR),
+        n: s.bestR === null ? "no realised R yet" : "highest realised R",
+        cls: dir(s.bestR),
+      },
+      {
+        k: "Worst trade (R)",
+        v: rfmt(s.worstR),
+        n: s.worstR === null ? "no realised R yet" : "lowest realised R",
+        cls: dir(s.worstR),
       },
       {
         k: "Discipline",
         v: s.discipline === null ? "—" : s.discipline + "/100",
         n:
-          s.avgRiskPct === null
-            ? "no sized trades yet"
+        s.avgRiskPct === null
+            ? s.avgRiskPctUnavailableReason
             : "avg risk " + pct(s.avgRiskPct, 2) + " vs " + limit + "% rule",
         cls: s.discipline === null ? "" : s.discipline >= 75 ? "up" : s.discipline < 50 ? "down" : "",
       },
@@ -140,7 +194,17 @@
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, w, h);
 
-    const pts = stats.curve;
+    const pts = stats.realizedCurve;
+    if (!pts) {
+      eq = null;
+      g.fillStyle = css("--faint");
+      g.font = "13px " + (css("--sans") || "sans-serif");
+      g.textAlign = "center";
+      g.fillText("Curve unavailable: compatible P/L units are not recorded.", w / 2, h / 2);
+      $("#eq-note").textContent = "Unavailable";
+      $("#eq-dd").textContent = "";
+      return;
+    }
     if (pts.length < 2) {
       eq = null;
       g.fillStyle = css("--faint");
@@ -150,7 +214,7 @@
       return;
     }
 
-    const vals = pts.map((p) => p.equity);
+    const vals = pts.map((p) => p.netPL);
     let lo = Math.min.apply(null, vals);
     let hi = Math.max.apply(null, vals);
     const padv = (hi - lo || Math.abs(hi) * 0.02 || 1) * 0.14;
@@ -162,7 +226,7 @@
     const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (h - padT - padB);
 
     /* the starting balance, so gains and losses are read against it */
-    const start = pts[0].equity;
+    const start = 0;
     g.strokeStyle = css("--line-strong");
     g.setLineDash([3, 4]);
     g.lineWidth = 1;
@@ -181,7 +245,7 @@
     grad.addColorStop(1, colour + "00");
     g.beginPath();
     g.moveTo(x(0), y(vals[0]));
-    pts.forEach((p, i) => g.lineTo(x(i), y(p.equity)));
+    pts.forEach((p, i) => g.lineTo(x(i), y(p.netPL)));
     g.lineTo(x(pts.length - 1), y(start));
     g.lineTo(x(0), y(start));
     g.closePath();
@@ -189,7 +253,7 @@
     g.fill();
 
     g.beginPath();
-    pts.forEach((p, i) => (i ? g.lineTo(x(i), y(p.equity)) : g.moveTo(x(i), y(p.equity))));
+    pts.forEach((p, i) => (i ? g.lineTo(x(i), y(p.netPL)) : g.moveTo(x(i), y(p.netPL))));
     g.strokeStyle = colour;
     g.lineWidth = 1.8;
     g.lineJoin = "round";
@@ -204,11 +268,8 @@
 
     eq = { pts, x, y, w, h, colour, start };
 
-    $("#eq-note").textContent = money(ending);
-    $("#eq-dd").innerHTML =
-      stats.maxDrawdownPct > 0.01
-        ? `<span><i class="dot down"></i> max drawdown ${pct(stats.maxDrawdownPct, 1)}</span>`
-        : "";
+    $("#eq-note").textContent = "Unavailable units";
+    $("#eq-dd").textContent = "Drawdown unavailable: compatible P/L units are not recorded.";
   }
 
   /* ------------------------------------------------------------ equity hover
@@ -239,7 +300,7 @@
     const p = eq.pts[best];
     const prev = best ? eq.pts[best - 1] : null;
     const px = eq.x(best);
-    const py = eq.y(p.equity);
+    const py = eq.y(p.netPL);
 
     drawEquity(Store.stats(filtered(), settings()));
 
@@ -258,9 +319,9 @@
     g.lineWidth = 2;
     g.stroke();
 
-    const chg = prev ? p.equity - prev.equity : 0;
+    const chg = prev ? p.netPL - prev.netPL : 0;
     tip.innerHTML =
-      "<b>" + esc(money(p.equity)) + "</b>" +
+      "<b>" + esc(bare(p.netPL, true)) + " calculation units</b>" +
       (prev ? '<span class="' + dir(chg) + '">' + esc(money(chg, true)) + "</span>" : "<span>opening balance</span>") +
       "<small>" + esc(p.t ? String(p.t).slice(0, 10) : "before the first trade") + "</small>";
     tip.hidden = false;
@@ -285,17 +346,16 @@
     const map = new Map();
     trades.forEach((t) => {
       const c = Store.compute(t);
-      if (c.open || c.r === null) return;
+      if (c.open || !Number.isFinite(c.r)) return;
       const k = t.setup || "Untagged";
-      const cur = map.get(k) || { n: 0, r: 0, pl: 0 };
+      const cur = map.get(k) || { n: 0, r: 0 };
       cur.n += 1;
       cur.r += c.r;
-      cur.pl += c.netPL;
       map.set(k, cur);
     });
 
     const rows = Array.from(map.entries())
-      .map(([k, v]) => ({ k, n: v.n, exp: v.r / v.n, pl: v.pl }))
+      .map(([k, v]) => ({ k, n: v.n, exp: v.r / v.n }))
       .sort((a, b) => b.exp - a.exp);
 
     if (!rows.length) {
@@ -311,7 +371,7 @@
         const left = r.exp >= 0 ? 50 : 50 - wide;
         return `<div class="bs-row">
           <div>
-            <div class="lab">${esc(r.k)}<small>${r.n} trade${r.n > 1 ? "s" : ""} · ${bare(r.pl, true)}</small></div>
+            <div class="lab">${esc(r.k)}<small>${r.n} eligible R trade${r.n > 1 ? "s" : ""}</small></div>
             <div class="track"><i class="${r.exp < 0 ? "neg" : ""}" style="left:${left}%;width:${wide}%"></i></div>
           </div>
           <div class="val ${dir(r.exp)}">${rfmt(r.exp)}</div>
@@ -324,7 +384,7 @@
 
   function renderRecent(trades) {
     const rows = trades.slice(0, 8);
-    $("#recent-body").innerHTML = rows
+    $("#recent-body").innerHTML = rows.length ? rows
       .map((t) => {
         const c = Store.compute(t);
         const d = Store.discipline(t, settings());
@@ -338,7 +398,7 @@
           <td class="num"><span class="disc"><span>${d}</span><span class="disc-bar ${band}"><i style="width:${d}%"></i></span></span></td>
         </tr>`;
       })
-      .join("");
+      .join("") : '<tr><td colspan="6" class="muted-note">No trades match this account and period.</td></tr>';
   }
 
   /* ------------------------------------------------------------ open risk
@@ -352,7 +412,7 @@
     const panel = $("#panel-open");
     if (!box || !Store.openRisk) return;
 
-    const o = Store.openRisk(filtered(), settings());
+    const o = Store.openRisk(accountTrades(), settings());
     panel.hidden = o.n === 0;
     if (!o.n) return;
 
@@ -360,16 +420,15 @@
 
     const cap = o.cap;
     const hot = o.over;
-    const bar = cap ? Math.min(100, (o.riskPct / cap) * 100) : null;
+    const bar = null;
 
     box.innerHTML =
       '<div class="or-head">' +
       '<div class="or-fig' + (hot ? " hot" : "") + '">' +
-      "<span>At risk if every stop is hit</span><b>" + esc(money(-o.riskMoney)) + "</b>" +
-      "<small>" + esc(pct(o.riskPct, 2)) + " of the balance" +
-      (o.unknown ? " · " + o.unknown + " with no stop, not counted" : "") + "</small>" +
+      "<span>Aggregate open risk</span><b>Unavailable</b>" +
+      "<small>" + esc(o.aggregateReason || "No open risk") + (o.unknown ? " · " + o.unknown + " individually unmeasurable" : "") + "</small>" +
       "</div>" +
-      (cap
+      (cap && bar !== null
         ? '<div class="or-cap">' +
           '<div class="or-cap-top"><span>Open risk against your daily stop</span><b class="' + (hot ? "hot" : "") + '">' +
           esc(pct(o.riskPct, 2)) + " of " + cap + "%</b></div>" +
@@ -378,8 +437,7 @@
             ? "You are past the daily stop before a single stop has been hit. Closing one of these is the only way back inside the rule."
             : "There is " + pct(Math.max(0, cap - o.riskPct), 2) + " of room left before the day is over by your own rule.") +
           "</small></div>"
-        : '<div class="or-cap"><small>No daily loss stop is set, so there is nothing to measure this against. ' +
-          'Settings has one, and it is the rail that makes this number mean something.</small></div>') +
+        : '<div class="or-cap"><small>Open-risk total and percentage are unavailable because instrument currency units are not recorded.</small></div>') +
       "</div>" +
       '<div class="or-rows">' +
       o.rows
@@ -389,8 +447,8 @@
           return '<div class="or-row">' +
             '<span class="or-sym"><span class="side ' + (t.side === "Short" ? "short" : "long") + '">' + esc(t.side) +
             "</span><b>" + esc(t.symbol) + "</b><small>" + esc(t.setup || "no setup") + "</small></span>" +
-            '<span class="or-risk">' + (c.riskMoney === null ? "no stop" : esc(bare(-Math.abs(c.riskMoney), true))) +
-            "<small>" + (c.riskPct === null ? "unmeasurable" : pct(c.riskPct, 2)) + "</small></span>" +
+            '<span class="or-risk">' + (x.openRiskMoney === null ? "risk unavailable" : esc(bare(-Math.abs(x.openRiskMoney), true)) + " calculation units") +
+            "<small>" + (x.openRiskPct === null ? "unmeasurable" : pct(x.openRiskPct, 2)) + " · remaining size</small></span>" +
             "</div>";
         })
         .join("") +
@@ -407,6 +465,8 @@
   function renderLeaks() {
     const box = $("#leaks");
     if (!box || !Store.leaks) return;
+    box.innerHTML = '<p class="muted-note">Setup cost summaries are unavailable because compatible trade and risk units are not recorded. R-based setup averages are shown separately.</p>';
+    return;
 
     const L = Store.leaks(filtered(), settings());
 
@@ -432,7 +492,7 @@
     const cost = (f) =>
       f.costR === 0
         ? '<span class="lk-cost none">not measurable</span>'
-        : '<span class="lk-cost">' + esc(money(f.costMoney)) + "<small>" + esc(rfmt(f.costR)) + "</small></span>";
+        : '<span class="lk-cost">' + esc(rfmt(f.costR)) + "<small>conditional R; recorded-stop basis</small></span>";
 
     const cards = L.findings
       .slice(0, 5)
@@ -468,7 +528,7 @@
       conc +
       wins +
       '<p class="lk-fine">Costs are measured against the rest of your journal, not against zero, and one R is priced at ' +
-      esc(money(L.rValue)) + " — your own average risk per trade.</p>";
+      "a calculation-unit conversion that is unavailable across unverified instrument units.</p>";
   }
 
   /* ------------------------------------------------------------ greeting */
@@ -484,7 +544,7 @@
     if (!box || !Store.guardrails) return;
 
     const g = Store.guardrails(Store.trades.list(), Store.settings.get());
-    if (!g.blocked) {
+    if (!g.breaches.length && g.assessmentStatus !== "unavailable") {
       box.hidden = true;
       box.innerHTML = "";
       return;
@@ -492,10 +552,11 @@
 
     box.innerHTML =
       "<span><b>" +
-      (g.breaches.length === 1 ? "You have hit one of your own limits" : "You have hit " + g.breaches.length + " of your own limits") +
+      (g.breaches.length ? (g.breaches.length === 1 ? "A configured limit is breached" : g.breaches.length + " configured limits are breached") : "Guardrail assessment unavailable") +
       "</b><ul>" +
       g.breaches.map((b) => "<li>" + esc(b.text) + "</li>").join("") +
-      '</ul></span><a class="btn btn-quiet" href="settings.html#guardrails">Adjust the rules</a>';
+      g.unavailableReasons.map((x) => "<li>Assessment unavailable: " + esc(x) + "</li>").join("") +
+      '</ul><small>Advisory journal assessment; no broker orders are controlled.</small></span><a class="btn btn-quiet" href="settings.html#guardrails">Review rules</a>';
     box.hidden = false;
   }
 
@@ -583,6 +644,7 @@
 
   function render() {
     const trades = filtered();
+    const exposureTrades = accountTrades();
     const hasAny = Store.trades.list().length > 0;
 
     $("#live-grid").hidden = !hasAny;
@@ -595,6 +657,7 @@
     });
 
     const stats = renderStats(trades);
+    renderAccountSummary(exposureTrades, stats);
     renderGreeting();
     renderGuardrails();
     renderWatchlist();
