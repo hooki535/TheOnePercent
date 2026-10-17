@@ -1901,12 +1901,17 @@ function symbolAvatar(symbol, instrument) {
 
 function makeSymbolSearchRow(symbol, instrument, index, options = {}) {
   const row = document.createElement("div");
-  row.className = `sr ${options.providerRow ? "provider-row" : ""} ${options.conflict ? "source-conflict" : ""} ${index === symSel ? "cur" : ""}`.trim();
+  row.className = `sr ${options.providerRow ? "provider-row" : ""} ${options.unavailableSource ? "broker-unavailable-row" : ""} ${options.conflict ? "source-conflict" : ""} ${index === symSel ? "cur" : ""}`.trim();
   row.dataset.s = symbol;
   row.dataset.i = String(index);
   row.setAttribute("role", "option");
   row.setAttribute("aria-selected", index === symSel ? "true" : "false");
-  if (options.conflict) { row.setAttribute("aria-disabled", "true"); row.title = "Source conflicts with the saved instrument identity"; }
+  if (options.conflict || options.unavailableSource) {
+    row.setAttribute("aria-disabled", "true");
+    row.title = options.conflict
+      ? "Source conflicts with the saved instrument identity"
+      : `${options.unavailableSource.name} has no connected quote feed; instrument coverage is unverified.`;
+  }
 
   const main = document.createElement("div"); main.className = "sr-main";
   main.appendChild(symbolAvatar(symbol, instrument));
@@ -1921,21 +1926,33 @@ function makeSymbolSearchRow(symbol, instrument, index, options = {}) {
   market.textContent = String(instrument.cls || instrument.market || "Instrument").replaceAll("_", " ");
   const provider = instrument.provider;
   const source = document.createElement("span"); source.className = "sr-source";
-  source.dataset.source = provider || "reference";
+  source.dataset.source = options.unavailableSource?.id || provider || "reference";
+  if (options.unavailableSource) row.dataset.provider = options.unavailableSource.id;
   const venue = String(instrument.venue || "MT5").split(" · ").at(-1);
-  source.textContent = provider === "binance" ? "Binance · spot" : provider === "exness_mt5" ? `Exness · ${venue}` : "Reference";
+  source.textContent = options.unavailableSource
+    ? options.unavailableSource.name
+    : provider === "binance" ? "Binance · spot" : provider === "exness_mt5" ? `Exness · ${venue}` : "Reference";
   const status = document.createElement("span");
-  status.className = `sr-access ${provider ? "available" : "unavailable"}`;
-  status.title = options.conflict ? "Cannot select: source identity conflicts" : provider ? "Historical candles available from this source" : "Reference instrument; no verified market feed connected";
+  status.className = `sr-access ${provider && !options.unavailableSource ? "available" : "unavailable"}`;
+  status.title = options.conflict
+    ? "Cannot select: source identity conflicts"
+    : options.unavailableSource
+      ? `${options.unavailableSource.name} feed is not connected; instrument coverage is unverified.`
+      : provider ? "Historical candles available from this source" : "Reference instrument; no verified market feed connected";
   status.setAttribute("aria-label", status.title);
-  status.innerHTML = '<span aria-hidden="true"></span>';
+  const statusDot = document.createElement("span"); statusDot.className = "sr-status-dot"; statusDot.setAttribute("aria-hidden", "true");
+  status.appendChild(statusDot);
+  if (options.unavailableSource) {
+    const label = document.createElement("span"); label.className = "sr-access-label"; label.textContent = "Not connected";
+    status.appendChild(label);
+  }
 
   const actions = document.createElement("div"); actions.className = "sr-r";
   const star = document.createElement("button"); star.type = "button"; star.dataset.add = symbol;
   star.title = state.watch.includes(symbol) ? "Remove from watchlist" : "Add to watchlist";
   star.classList.toggle("is-favorite", state.watch.includes(symbol));
   star.setAttribute("aria-label", star.title); star.textContent = state.watch.includes(symbol) ? "★" : "☆";
-  if (options.conflict) star.disabled = true;
+  if (options.conflict || options.unavailableSource) star.disabled = true;
   actions.appendChild(star);
   row.append(main, market, source, status, actions);
   return row;
@@ -1948,6 +1965,15 @@ const BROKER_DIRECTORY = [
   { id: "pepperstone", name: "Pepperstone", note: "Check country eligibility, products, and account costs.", url: "https://pepperstone.com/", badge: "P" },
   { id: "fxcm", name: "FXCM", note: "Check account eligibility and product availability by country.", url: "https://www.fxcm.com/markets/", badge: "F" },
   { id: "forexcom", name: "FOREX.com", note: "Account eligibility and products vary by operating entity.", url: "https://www.forex.com/", badge: "FX" },
+];
+
+const FOREX_SOURCE_CHOICES = [
+  { id: "exness_mt5", name: "Exness · MT5" },
+  { id: "oanda", name: "OANDA" },
+  { id: "fxcm", name: "FXCM" },
+  { id: "forexcom", name: "FOREX.com" },
+  { id: "pepperstone", name: "Pepperstone" },
+  { id: "deriv", name: "Deriv" },
 ];
 
 function renderBrokerDirectory() {
@@ -2014,6 +2040,7 @@ function paintSymSearch(q = "") {
   else if (symCls === "watch")
     rows = state.watch.filter((k) => SYMBOLS[k]).map((k) => [k, SYMBOLS[k]]);
   else if (symCls !== "all") rows = rows.filter(([, S]) => S.cls === symCls);
+  const matchingRows = rows.slice();
   if (symSource !== "all") rows = rows.filter(([, S]) => S.provider === symSource);
   if (s)
     /* Exact ticker first, then ticker prefix, then everything else — so "eu"
@@ -2036,7 +2063,18 @@ function paintSymSearch(q = "") {
   const host = $("#symList");
   host.replaceChildren();
   rows.forEach(([k, S], i) => host.appendChild(makeSymbolSearchRow(k, S, i)));
-  if (!rows.length) {
+  const sourceChoices = symSource === "all"
+    ? FOREX_SOURCE_CHOICES
+    : FOREX_SOURCE_CHOICES.filter((source) => source.id === symSource);
+  const brokerRows = s.length >= 3
+    ? matchingRows
+      .filter(([, instrument]) => instrument.cls === "Forex")
+      .slice(0, 5)
+      .flatMap(([symbol, instrument]) => sourceChoices
+        .filter((source) => instrument.provider !== source.id)
+        .map((source) => ({ symbol, instrument, source })))
+    : [];
+  if (!rows.length && !brokerRows.length) {
     const empty = document.createElement("div"); empty.className = "empty";
     const unavailableSource = { oanda: "OANDA", fxcm: "FXCM", forexcom: "FOREX.com", pepperstone: "Pepperstone", deriv: "Deriv" }[symSource];
     empty.textContent = unavailableSource
@@ -2047,6 +2085,15 @@ function paintSymSearch(q = "") {
       ? `No verified ${$("#symTabs [data-c='" + symCls + "']")?.textContent || ""} catalog is connected yet.`
       : q ? `No local match for “${q}”. Searching connected provider catalogs…` : "No instruments in this view yet.";
     host.appendChild(empty);
+  }
+  if (brokerRows.length) {
+    const note = document.createElement("div");
+    note.className = "broker-source-note";
+    note.textContent = `${brokerRows.length} broker source option${brokerRows.length === 1 ? "" : "s"} · feeds not connected, coverage unverified`;
+    host.appendChild(note);
+    brokerRows.forEach(({ symbol, instrument, source }) => {
+      host.appendChild(makeSymbolSearchRow(symbol, instrument, -1, { unavailableSource: source }));
+    });
   }
   $$("#symList .sr").forEach((el) => {
     if (el.getAttribute("aria-disabled") === "true") return;
@@ -2064,8 +2111,10 @@ function paintSymSearch(q = "") {
     };
   });
   $("#symCount").textContent = rows.length
-    ? `${rows.length} instrument${rows.length === 1 ? "" : "s"}`
-    : symSource === "all" ? "No instruments in this view" : "No results from this source";
+    ? `${rows.length} instrument${rows.length === 1 ? "" : "s"}${brokerRows.length ? ` · ${brokerRows.length} broker options are not connected` : ""}`
+    : brokerRows.length
+      ? `${brokerRows.length} broker option${brokerRows.length === 1 ? "" : "s"} · no connected quote source`
+      : symSource === "all" ? "No instruments in this view" : "No results from this source";
   $$("#symList [data-add]").forEach(
     (b) =>
       (b.onclick = (e) => {
@@ -2112,6 +2161,9 @@ function loadProviderCatalog(query, category, offset = 0) {
       rows.forEach((record) => {
         const rawCode = String(record.symbol || "").toUpperCase();
         if (!rawCode) return;
+        host.querySelectorAll(".broker-unavailable-row").forEach((placeholder) => {
+          if (placeholder.dataset.s === rawCode && placeholder.dataset.provider === record.provider) placeholder.remove();
+        });
         const existing = SYMBOLS[rawCode];
         const conflict = !!existing && existing.provider !== record.provider;
         const shaped = conflict ? null : Feed.registerCatalogInstrument(record);
