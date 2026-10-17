@@ -39,9 +39,29 @@ BINANCE_PUBLIC_BASES = (
 cache = {}
 CACHE_SECONDS = 30
 logger = logging.getLogger("theonepercent.market_data")
+BINANCE_RETRY_UNTIL = 0.0
+
+
+def _retry_delay(exc):
+    try:
+        return max(1, min(int(exc.headers.get("Retry-After", "60")), 259200))
+    except (AttributeError, TypeError, ValueError):
+        return 60
+
+
+def _rate_limit_error(seconds):
+    return HTTPException(
+        status_code=503,
+        detail=f"Binance market data is rate limited; retry in {seconds} seconds",
+        headers={"Retry-After": str(seconds)},
+    )
 
 
 def provider_get(path):
+    global BINANCE_RETRY_UNTIL
+    remaining = int(math.ceil(BINANCE_RETRY_UNTIL - time.monotonic()))
+    if remaining > 0:
+        raise _rate_limit_error(remaining)
     last_error = None
     for base in BINANCE_PUBLIC_BASES:
         req = Request(base + path, headers={"User-Agent": "TheOnePercent/0.1"})
@@ -51,8 +71,15 @@ def provider_get(path):
         except HTTPError as exc:
             last_error = exc
             if exc.code == 429:
-                logger.warning("Binance public market-data host %s returned HTTP 429", req.full_url.split("/api/")[0])
-                raise HTTPException(status_code=503, detail="Binance public market-data rate limit reached") from exc
+                delay = _retry_delay(exc)
+                BINANCE_RETRY_UNTIL = time.monotonic() + delay
+                logger.warning("Binance public market-data host %s returned HTTP 429; cooling down for %s seconds", req.full_url.split("/api/")[0], delay)
+                raise _rate_limit_error(delay) from exc
+            if exc.code == 418:
+                delay = _retry_delay(exc)
+                BINANCE_RETRY_UNTIL = time.monotonic() + delay
+                logger.error("Binance public market-data host %s returned HTTP 418 IP ban; cooling down for %s seconds", req.full_url.split("/api/")[0], delay)
+                raise _rate_limit_error(delay) from exc
             if exc.code in (403, 451):
                 logger.warning("Binance public market-data host %s denied access with HTTP %s; trying another official host", req.full_url.split("/api/")[0], exc.code)
                 continue

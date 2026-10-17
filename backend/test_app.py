@@ -4,9 +4,12 @@ from io import BytesIO
 from urllib.error import HTTPError
 from unittest.mock import MagicMock, patch
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from app import BASE_URL, app, cache
+import app as market_api
 from catalog import binance_catalog, stable_instrument_id
+import catalog as market_catalog
 
 client = TestClient(app)
 
@@ -14,6 +17,8 @@ client = TestClient(app)
 class MarketDataContractTests(unittest.TestCase):
     def setUp(self):
         cache.clear()
+        market_api.BINANCE_RETRY_UNTIL = 0.0
+        market_catalog.BINANCE_RETRY_UNTIL = 0.0
         binance_catalog._rows = None
         binance_catalog._updated = 0.0
         binance_catalog._updated_at = None
@@ -40,6 +45,22 @@ class MarketDataContractTests(unittest.TestCase):
         self.assertIn("data-api.binance.vision", open_url.call_args_list[0].args[0].full_url)
         self.assertIn("api-gcp.binance.com", open_url.call_args_list[1].args[0].full_url)
 
+    @patch("app.urlopen")
+    def test_candle_provider_honors_binance_ip_ban_retry_after(self, open_url):
+        open_url.side_effect = HTTPError(
+            BASE_URL + "/klines", 418, "IP banned", {"Retry-After": "120"}, None,
+        )
+        from app import provider_get
+        with self.assertRaises(HTTPException) as first:
+            provider_get("/klines?symbol=BTCUSDT&interval=1h&limit=1")
+        self.assertEqual(first.exception.status_code, 503)
+        self.assertEqual(first.exception.headers["Retry-After"], "120")
+        self.assertEqual(open_url.call_count, 1)
+        with self.assertRaises(HTTPException) as second:
+            provider_get("/klines?symbol=BTCUSDT&interval=1h&limit=1")
+        self.assertEqual(second.exception.headers["Retry-After"], "120")
+        self.assertEqual(open_url.call_count, 1, "do not send more requests during an IP ban")
+
     @patch("catalog._get_json")
     def test_catalog_retries_an_official_host_after_http_403(self, get_json):
         get_json.side_effect = [
@@ -51,6 +72,20 @@ class MarketDataContractTests(unittest.TestCase):
         self.assertEqual(get_json.call_count, 2)
         self.assertIn("data-api.binance.vision", get_json.call_args_list[0].args[0])
         self.assertIn("api-gcp.binance.com", get_json.call_args_list[1].args[0])
+
+    @patch("catalog._get_json")
+    def test_catalog_honors_binance_ip_ban_retry_after(self, get_json):
+        get_json.side_effect = HTTPError(
+            "https://data-api.binance.vision/api/v3/exchangeInfo", 418, "IP banned", {"Retry-After": "120"}, None,
+        )
+        from catalog import _get_binance_json
+        with self.assertRaises(HTTPError) as first:
+            _get_binance_json("/exchangeInfo")
+        self.assertEqual(first.exception.code, 418)
+        self.assertEqual(get_json.call_count, 1)
+        with self.assertRaises(RuntimeError):
+            _get_binance_json("/exchangeInfo")
+        self.assertEqual(get_json.call_count, 1, "do not retry catalog requests during an IP ban")
 
     def test_rejects_unsupported_instrument(self):
         response = client.get("/api/candles/ES1!/1H")

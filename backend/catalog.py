@@ -19,6 +19,14 @@ BINANCE_BASES = (BINANCE_API, "https://api-gcp.binance.com/api/v3", "https://api
 TWELVE_DATA_API = "https://api.twelvedata.com"
 NAMESPACE = uuid.UUID("9df4fe74-e8cf-5f42-9ee8-94d650c9e85b")
 CATALOG_TTL = 300
+BINANCE_RETRY_UNTIL = 0.0
+
+
+def _retry_delay(exc: HTTPError) -> int:
+    try:
+        return max(1, min(int(exc.headers.get("Retry-After", "60")), 259200))
+    except (AttributeError, TypeError, ValueError):
+        return 60
 
 
 def stable_instrument_id(venue: str, raw_symbol: str) -> str:
@@ -34,13 +42,18 @@ def _get_json(url: str, timeout: float = 12):
 
 
 def _get_binance_json(path: str):
+    global BINANCE_RETRY_UNTIL
+    remaining = int(max(0, BINANCE_RETRY_UNTIL - time.monotonic()))
+    if remaining > 0:
+        raise RuntimeError(f"Binance catalog rate limited; retry after {remaining} seconds")
     last = None
     for base in BINANCE_BASES:
         try:
             return _get_json(base + path)
         except HTTPError as exc:
             last = exc
-            if exc.code == 429:
+            if exc.code in (418, 429):
+                BINANCE_RETRY_UNTIL = time.monotonic() + _retry_delay(exc)
                 raise
             if exc.code in (403, 451):
                 continue
