@@ -3412,7 +3412,7 @@ function switchTab(name) {
   $$(".tabpane").forEach((p) =>
     p.classList.toggle("active", p.dataset.pane === name),
   );
-  $(".dock-btn[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  $$(".dock-btn[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   if (name === "data") paintWorkspaceData();
   if (name === "objects") paintObjects();
   if (name === "watchlist") switchWatchView(state.watchView || "list", false);

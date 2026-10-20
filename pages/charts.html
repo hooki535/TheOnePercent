@@ -24,9 +24,18 @@
     <link rel="stylesheet" href="../assets/components.css" />
     <link rel="stylesheet" href="../assets/charts.css" />
     <link rel="stylesheet" href="../assets/charts-terminal.css" />
+    <link rel="stylesheet" href="../assets/charts-desk.css" />
   </head>
 
   <body data-page="charts" data-depth="1" data-shell="nav" class="chart-first">
+    <nav class="desk-top" aria-label="Chart workspace navigation">
+      <a class="desk-brand" href="../index.html" aria-label="TheOnePercent home"><b>1%</b><span>THEONEPERCENT</span></a>
+      <div class="desk-navigation"><a href="charts.html" aria-current="page">Charts</a><a href="backtesting.html#sessions">Backtesting</a><a href="journal.html">Journal</a></div>
+      <span class="desk-top-spacer"></span>
+      <button type="button" class="desk-save" data-desk-action="wsBtn" title="Open saved workspaces">Save workspace</button>
+      <details class="desk-options"><summary aria-label="Workspace options">Workspace <span aria-hidden="true">⌄</span></summary><div id="deskOptions" class="desk-options-menu"></div></details>
+    </nav>
+    <div class="desk-markets" aria-label="Quick markets"><div id="deskMarkets" class="desk-market-list" role="group" aria-label="Watchlist shortcuts"></div><button type="button" class="desk-add" data-desk-action="symBtn" aria-label="Search all symbols" title="Search all symbols">＋</button></div>
     <!-- The chart toolbar. Primary actions only: the symbol, the interval,
          what is drawn, what is measured, and the one button this screen
          exists for. Everything occasional lives behind More, because
@@ -243,7 +252,8 @@
         </footer>
       </div>
 
-      <aside class="panel" id="panel">
+      <aside class="panel" id="panel" aria-label="Chart workspace panel">
+        <div class="desk-panel-heading"><strong id="deskPanelTitle">Watchlist</strong><button id="deskPanelClose" type="button" aria-label="Close side panel" title="Close side panel">✕</button></div>
         <div id="workspacePanelGrip" class="workspace-panel-grip" role="separator" tabindex="0" aria-label="Resize right panel" aria-orientation="vertical" title="Drag to resize panel, or use left and right arrow keys"></div>
         <div class="tabs" role="tablist">
           <button class="tab" data-tab="position" role="tab">
@@ -769,7 +779,8 @@
     <script src="../assets/charts-engine.js"></script>
     <script src="../assets/charts-shapes.js"></script>
     <script src="../assets/charts-rail.js"></script>
-    <script src="../assets/charts.js"></script>
+    <script src="../assets/charts.js?v=desk1"></script>
     <script src="../assets/charts-workspace.js"></script>
+    <script src="../assets/charts-desk.js"></script>
   </body>
 </html>
