@@ -1,5 +1,7 @@
 # Backtesting workspace
 
+For the reference-inspired dashboard, multi-pair shared account, drawings, reviews, practice challenges and analytics, see [BACKTESTING-WORKBENCH.md](BACKTESTING-WORKBENCH.md).
+
 For the TradingView chart and all available MT5 forex pairs, see [BACKTESTING-TRADINGVIEW.md](BACKTESTING-TRADINGVIEW.md).
 
 Open `pages/backtesting.html` on the static site, or `/backtesting` in the Flask edition. The shared navigation includes Backtesting.
@@ -10,7 +12,7 @@ Open `pages/backtesting.html` on the static site, or `/backtesting` in the Flask
 - Written strategy playbooks; each session freezes the selected rules so subsequent playbook edits cannot change the recorded hypothesis.
 - Archived EURUSD 1H, GBPUSD 1D and BTCUSD 1D sample datasets, plus OHLC CSV import. Archives are copied from the existing project cache, attributed there to Yahoo Finance/yfinance. They are historical examples, not authenticated broker execution feeds.
 - TradingView Lightweight Charts candle replay, play/pause, stepping, speed selection, forward date advance, zoom, crosshair, SMA20 and saved horizontal levels. Future candles are excluded from chart data and indicator calculations.
-- Simulated long/short market, limit and stop entries with a required stop and target; one pending order or position at a time. Manual closes, cancellation, configurable fees and adverse slippage.
+- Simulated long/short market, limit and stop entries with a required stop and target; one pending order or position per pair. Manual closes, cancellation, configurable fees and adverse slippage.
 - Marked equity curve, closed trade history, win rate, net profit factor, realized and unrealized P&L, close-to-close equity drawdown and net R.
 - Notes, resumable action logs, trades CSV export, JSON workspace backup and validated restore. Storage failures show a warning rather than claiming that a save succeeded. A corrupt saved workspace is preserved until explicit restore.
 - Responsive desktop and mobile layouts, keyboard controls and explicit data-source labels.

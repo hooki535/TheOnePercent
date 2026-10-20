@@ -19,10 +19,13 @@
       <div class="bt-sidebar-label">WORKSPACE</div>
       <a class="bt-side-link" href="#sessions" data-section="sessions">▦ <span>Your sessions</span><small id="session-count">0</small></a>
       <a class="bt-side-link" href="#strategies" data-section="strategies">⌘ <span>Strategies</span><small id="strategy-count">0</small></a>
+      <a class="bt-side-link" href="#challenges" data-section="challenges" title="Practice challenges">♜ <span>Challenges</span></a>
+      <a class="bt-side-link" href="#analytics/all" data-section="analytics" title="Backtest analytics">▥ <span>Analytics</span></a>
       <button class="bt-side-link" id="bt-guide">▷ <span>Replay guide</span></button>
       <div class="bt-side-bottom"><span class="bt-status-dot"></span> Simulation workspace<p id="bt-storage-label">Saved in this browser</p><p>Research results stay separate from your live trading journal.</p><button id="bt-backup" class="bt-text-button">Export workspace backup ↗</button><label class="bt-text-button bt-restore">Restore backup<input type="file" id="bt-restore" accept=".json,application/json" hidden></label></div>
     </aside>
     <main class="bt-main" id="main">
+      <div class="bt-page-top"><a href="/">Home</a><span>›</span><strong>Backtesting</strong><small>SIMULATED RESEARCH</small></div>
       <div class="bt-sync-bar" aria-live="polite"><span id="bt-sync-status">Guest · sessions saved on this device</span><div class="bt-actions"><a id="bt-sync-login" class="bt-button small">Sign in to sync</a><button id="bt-sync-retry" class="bt-button small" hidden>Retry sync</button><button id="bt-sync-load" class="bt-button small" hidden>Load online workspace</button></div></div>
       <div id="bt-app"><div class="bt-empty">Loading your research workspace…</div></div>
       <div class="bt-mobile-storage"><button id="bt-mobile-backup" class="bt-button small">↓ Workspace backup</button><label class="bt-button small" for="bt-restore">Restore backup</label></div>
@@ -31,6 +34,8 @@
   <dialog id="bt-dialog" class="bt-dialog" aria-labelledby="bt-dialog-title"><div class="bt-dialog-body" id="bt-dialog-body"></div></dialog>
   <div id="bt-toast" class="bt-toast" role="status" aria-live="polite" hidden></div>
   <script src="{{ url_for('static', filename='assets/backtest-engine.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/backtest-lab.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/backtest-workspace.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/vendor/lightweight-charts.standalone.production.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/backtest-chart.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/backtest-sync.js') }}"></script>

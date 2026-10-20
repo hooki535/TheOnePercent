@@ -9,7 +9,18 @@
   'use strict';
   const finite = n => typeof n === 'number' && Number.isFinite(n);
   const id = () => 'bt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
-  const strategyCopy = s => s && typeof s === 'object' ? Object.fromEntries(['name','setup','entry','exit','risk'].map(k=>[k,String(s[k] || '').slice(0,2000)])) : null;
+  const strategyCopy = s => s && typeof s === 'object' ? {...Object.fromEntries(['name','description','setup','entry','exit','risk'].map(k=>[k,String(s[k] || '').slice(0,2000)])),color:/^#[0-9a-f]{6}$/i.test(s.color)?s.color:'#4385ff',checklist:Array.isArray(s.checklist)?s.checklist.map(x=>String(x).slice(0,200)).filter(Boolean).slice(0,20):[]} : null;
+  const tradeKey=t=>[t.symbol || '',t.entryTime,t.exitTime,t.side].join(':');
+  function cleanAnnotations(rows){return Array.isArray(rows)?rows.filter(a=>a && ['trend','ray','rectangle','fib','long','short'].includes(a.type) && Array.isArray(a.points) && a.points.length===2 && a.points.every(p=>finite(p.i)&&Math.abs(p.i)<20000&&finite(p.p)&&p.p>0)).slice(0,60).map(a=>({id:/^[\w-]{1,100}$/.test(a.id)?a.id:id(),type:a.type,points:a.points.map(p=>({i:p.i,p:p.p})),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#f8c344'})):[];}
+  function cleanChallenge(c){if(!c || typeof c!=='object')return null;const rule={name:String(c.name || 'Practice challenge').slice(0,80),targetPct:Number(c.targetPct),dailyLossPct:Number(c.dailyLossPct),maxLossPct:Number(c.maxLossPct),minDays:Number(c.minDays),trailing:!!c.trailing};if(![rule.targetPct,rule.dailyLossPct,rule.maxLossPct].every(n=>finite(n)&&n>0&&n<=100)||!Number.isInteger(rule.minDays)||rule.minDays<1||rule.minDays>100)throw Error('Invalid practice challenge rules.');return rule;}
+  function challengeState(s,marked=unrealized(s)){
+    if(!s.challenge)return null;const r=s.challenge;let peak=s.startBalance,day=null,dayBase=s.startBalance,last=s.startBalance,failed=null;
+    for(const e of s.equity){const d=new Date(e.t*1000).toISOString().slice(0,10);if(d!==day){day=d;dayBase=last;}peak=Math.max(peak,e.value);const floor=(r.trailing?peak:s.startBalance)-s.startBalance*r.maxLossPct/100;
+      if(!failed && e.value<=floor)failed='Maximum loss limit';if(!failed && e.value<=dayBase-s.startBalance*r.dailyLossPct/100)failed='Daily loss limit';last=e.value;}
+    const days=new Set([...s.trades.map(t=>t.entryTime),...(s.position?[s.position.entryTime]:[])].map(t=>new Date(t*1000).toISOString().slice(0,10))).size;
+    const equity=s.balance+marked,target=s.startBalance*(1+r.targetPct/100),passed=!failed&&!s.position&&!s.pending&&equity>=target&&days>=r.minDays;
+    return {status:failed?'failed':passed?'passed':'active',reason:failed||'',days,target,equity,profitPct:(equity/s.startBalance-1)*100,dailyLoss:Math.max(0,dayBase-equity),dailyLimit:s.startBalance*r.dailyLossPct/100,maxFloor:(r.trailing?peak:s.startBalance)-s.startBalance*r.maxLossPct/100};
+  }
   function validateBars(bars, minimum = 60) {
     if (!Array.isArray(bars) || bars.length < minimum || bars.length > 10000) throw Error(`Use ${minimum}-10,000 candles.`);
     let previous = -Infinity;
@@ -65,10 +76,11 @@
     const balance = Number(options.startBalance), multiplier = Number(options.multiplier), fee = Number(options.fee || 0), slippage = Number(options.slippage || 0);
     if (!finite(balance) || balance <= 0 || balance > 1e9 || !finite(multiplier) || multiplier <= 0 || multiplier > 1e9 || !finite(fee) || fee < 0 || !finite(slippage) || slippage < 0) throw Error('Check balance, cash multiplier, fees and slippage.');
     const cursor = Math.max(29, Math.min(candles.length-2, Number.isInteger(options.cursor) ? options.cursor : Math.min(99, Math.max(29,candles.length-31))));
-    return {id:id(), name:String(options.name || options.symbol || 'Replay').slice(0,80), symbol:String(options.symbol || 'CUSTOM').slice(0,64), interval:String(options.interval || 'CSV').slice(0,12), source:String(options.source || 'User-imported CSV').slice(0,180), strategyId:String(options.strategyId || ''), strategySnapshot:strategyCopy(options.strategySnapshot), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(), startBalance:balance, balance, multiplier, fee, slippage, candles, cursor, initialCursor:cursor, position:null, pending:null, trades:[], equity:[{t:candles[cursor].t, value:balance}], notes:'', drawings:[], actions:[], notice:''};
+    return {id:id(), name:String(options.name || options.symbol || 'Replay').slice(0,80), symbol:String(options.symbol || 'CUSTOM').slice(0,64), interval:String(options.interval || 'CSV').slice(0,12), source:String(options.source || 'User-imported CSV').slice(0,180), strategyId:String(options.strategyId || ''), strategySnapshot:strategyCopy(options.strategySnapshot), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(), startBalance:balance, balance, multiplier, fee, slippage, candles, cursor, initialCursor:cursor, position:null, pending:null, trades:[], equity:[{t:candles[cursor].t, value:balance}], notes:'',description:String(options.description||'').slice(0,2000),challenge:cleanChallenge(options.challenge),annotations:[],reviews:{},indicators:[],checklist:[],drawings:[],actions:[],notice:''};
   }
-  function placeOrder(s, order) {
-    if (s.balance + unrealized(s) <= 0) throw Error('The simulated account has no positive equity. Start another session.');
+  function placeOrder(s, order, availableEquity) {
+    if(s.challenge && challengeState(s).status!=='active')throw Error('This practice challenge has finished. Start a new attempt.');
+    if ((Number.isFinite(availableEquity)?availableEquity:s.balance + unrealized(s)) <= 0) throw Error('The simulated account has no positive equity. Start another session.');
     if (s.cursor >= s.candles.length-1) throw Error('Replay finished. Create a new session to trade again.');
     if (s.position || s.pending) throw Error('Close or cancel the current order before placing another.');
     const quantity = Number(order.quantity), stop = Number(order.stop), target = Number(order.target);
@@ -162,7 +174,7 @@
     s.pending=null; s.actions.push({cursor:s.cursor,kind:'cancel'}); s.notice='Pending order cancelled.';
   }
   function snapshot(s) {
-    const keys=['id','name','symbol','interval','source','strategyId','strategySnapshot','createdAt','updatedAt','startBalance','multiplier','fee','slippage','candles','initialCursor','cursor','actions','notes','drawings'];
+    const keys=['id','name','symbol','interval','source','strategyId','strategySnapshot','createdAt','updatedAt','startBalance','multiplier','fee','slippage','candles','initialCursor','cursor','actions','notes','drawings','description','challenge','annotations','reviews','indicators','checklist'];
     return Object.fromEntries(keys.map(k=>[k,s[k]]));
   }
   function restore(raw) {
@@ -182,6 +194,11 @@
     s.id=String(raw.id || s.id).slice(0,100); s.notes=String(raw.notes || '').slice(0,10000);
     s.createdAt=typeof raw.createdAt === 'string' ? raw.createdAt : s.createdAt;
     s.updatedAt=typeof raw.updatedAt === 'string' ? raw.updatedAt : s.updatedAt;
+    s.indicators=Array.isArray(raw.indicators)?raw.indicators.filter(x=>['SMA20','EMA20','EMA50','EMA200','BB20','RSI14','ATR14'].includes(x)).slice(0,7):[];
+    s.annotations=cleanAnnotations(raw.annotations);
+    const validKeys=new Set(s.trades.map(tradeKey));s.reviews={};
+    if(raw.reviews && typeof raw.reviews==='object')for(const [k,v] of Object.entries(raw.reviews).slice(0,10000))if(validKeys.has(k) && v && typeof v==='object')s.reviews[k]={notes:String(v.notes||'').slice(0,4000),emotion:['confident','calm','neutral','anxious','frustrated'].includes(v.emotion)?v.emotion:'neutral'};
+    s.checklist=Array.isArray(raw.checklist)?raw.checklist.filter(x=>Number.isInteger(x)&&x>=0&&x<20).slice(0,20):[];
     s.drawings=Array.isArray(raw.drawings) ? raw.drawings.filter(finite).filter(n=>n>0).slice(0,30) : [];
     return s;
   }
@@ -194,5 +211,5 @@
     const equity=s.balance+unrealized(s);
     return {trades:s.trades.length,wins:wins.length,losses:losses.length,breakeven:s.trades.length-wins.length-losses.length,winRate:s.trades.length ? wins.length/s.trades.length*100 : null,profitFactor:grossLoss>0 ? grossWin/grossLoss : grossWin>0 ? Infinity : null,drawdown,realized,unrealized:unrealized(s),equity,returnPct:(equity/s.startBalance-1)*100,expectancy:s.trades.length ? realized/s.trades.length : null};
   }
-  return {id,validateBars,parseCSV,createSession,placeOrder,step,requestClose,cancelOrder,snapshot,restore,unrealized,metrics};
+  return {id,tradeKey,cleanAnnotations,cleanChallenge,challengeState,validateBars,parseCSV,createSession,placeOrder,step,requestClose,cancelOrder,snapshot,restore,unrealized,metrics};
 });

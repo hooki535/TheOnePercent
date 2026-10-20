@@ -24,7 +24,7 @@ class BacktestingPageTests(unittest.TestCase):
         self.assertNotIn('{{', text)
 
     def test_replay_assets_and_archives_are_served(self):
-        for file in ('backtesting.js', 'backtest-engine.js', 'backtesting.css',
+        for file in ('backtesting.js', 'backtest-engine.js', 'backtest-lab.js', 'backtest-workspace.js', 'backtest-chart.js', 'backtesting.css', 'backtesting/tutorial-preview.svg',
                      'backtesting/data/EURUSD_1H.csv', 'backtesting/data/GBPUSD_1D.csv',
                      'backtesting/data/BTCUSD_1D.csv'):
             with self.subTest(file=file):
