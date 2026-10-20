@@ -22,13 +22,78 @@
 
   // Move the actual buttons, keeping their existing event handlers and settings.
   const options = byId('deskOptions');
+  // Keep the site's original navigation, search and account handlers available.
+  const apps = document.createElement('details'); apps.className = 'desk-apps';
+  apps.innerHTML = '<summary aria-label="TheOnePercent menu" title="TheOnePercent menu">☰</summary><div class="desk-apps-panel"><strong>TheOnePercent</strong></div>';
+  const appPanel = apps.querySelector('.desk-apps-panel');
+  function syncAppNavigation() {
+    const shellHeader = document.querySelector('header.topbar');
+    ['.nav-links', '.nav-search', '.nav-actions'].forEach(selector => {
+      const node = shellHeader?.querySelector(selector);
+      if (node) { appPanel.querySelector(selector)?.remove(); appPanel.append(node); }
+    });
+  }
+  // Shell mounts at DOM ready and can replace its header after account changes.
+  const navigationObserver = new MutationObserver(syncAppNavigation);
+  navigationObserver.observe(body, {childList:true});
+  document.addEventListener('DOMContentLoaded', syncAppNavigation);
+  syncAppNavigation();
+  document.querySelector('.desk-top').prepend(apps);
   ['workspaceSettingsOpen', 'workspaceThemeToggle', 'workspaceFullscreen', 'workspaceNotesToggle', 'dataModeToggle'].forEach(id => {
     const button = byId(id);
     if (button) { button.classList.remove('toolbar-secondary'); options.append(button); }
   });
   options.addEventListener('click', e => { if (e.target.closest('button')) options.closest('details').open = false; });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.desk-options[open],.desk-layout[open]').forEach(el => { el.open = false; el.querySelector('summary').focus(); }); });
-  document.addEventListener('click', e => document.querySelectorAll('.desk-options[open],.desk-layout[open]').forEach(el => { if (!el.contains(e.target)) el.open = false; }));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.desk-options[open],.desk-layout[open],.desk-apps[open]').forEach(el => { el.open = false; el.querySelector('summary').focus(); }); });
+  document.addEventListener('click', e => document.querySelectorAll('.desk-options[open],.desk-layout[open],.desk-apps[open]').forEach(el => { if (!el.contains(e.target)) el.open = false; }));
+
+  // A scrollable tool shelf preserves every control at small widths.
+  const shelf = document.createElement('nav'); shelf.className = 'desk-tool-shelf'; shelf.setAttribute('aria-label','Chart tools and favorite timeframes');
+  const typeControl = byId('typeBtn')?.closest('.menu-wrap');
+  if (typeControl) shelf.append(typeControl);
+  shelf.append(byId('intervals'));
+  function shelfButton(label, action, title) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'desk-shelf-button'; b.textContent = label; b.title = title || label;
+    b.addEventListener('click', action); shelf.append(b); return b;
+  }
+  shelfButton('Drawing tools', () => { library.showModal(); library.querySelector('input').focus(); }, 'Browse and search every drawing tool');
+  shelfButton('Compare', () => { openPanel('watchlist'); switchWatchView('compare'); }, 'Compare symbols on this chart');
+  shelfButton('↶', () => command('undoBtn'), 'Undo (Ctrl+Z)').setAttribute('aria-label','Undo');
+  shelfButton('↷', () => command('redoBtn'), 'Redo (Ctrl+Shift+Z)').setAttribute('aria-label','Redo');
+  shelfButton('Chart settings', () => command('setBtn'));
+  const notesShortcut = shelfButton('Notes', () => command('workspaceNotesToggle'));
+  shelfButton('Save workspace', () => command('wsBtn'));
+  shelfButton('Full screen', () => command('workspaceFullscreen'));
+  shelfButton('Commands', () => command('paletteBtn'), 'Command palette (Ctrl+K)');
+  document.querySelector('.ctoolbar').after(shelf);
+
+  // The catalog enumerates the existing engine's tools; nothing is substituted.
+  const library = document.createElement('dialog'); library.className = 'desk-tool-library';
+  library.setAttribute('aria-labelledby','deskLibraryTitle');
+  library.innerHTML = '<header><div><h2 id="deskLibraryTitle">Drawing tools</h2><p>Lines, Fibonacci, patterns, shapes, annotations and position tools</p></div><form method="dialog"><button aria-label="Close drawing tools">✕</button></form></header><input type="search" aria-label="Search all drawing tools" placeholder="Search every drawing tool…"><div class="desk-library-results"></div><p class="desk-library-empty" hidden>No matching drawing tools</p>';
+  const results = library.querySelector('.desk-library-results');
+  if (typeof RAIL !== 'undefined') RAIL.forEach(group => {
+    const section = document.createElement('section'), heading = document.createElement('h3'); heading.textContent = group.name; section.append(heading);
+    const grid = document.createElement('div'); grid.className = 'desk-library-grid'; section.append(grid);
+    group.sections.forEach(category => category.tools.forEach(id => {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.libraryTool = id;
+      b.dataset.search = (toolName(id) + ' ' + group.name + ' ' + category.label).toLowerCase();
+      const icon = document.createElement('span'), label = document.createElement('span'); icon.innerHTML = svgIcon(id); label.textContent = toolName(id); b.append(icon,label);
+      b.addEventListener('click', () => { pickTool(id); library.close(); }); grid.append(b);
+    })); results.append(section);
+  });
+  const search = library.querySelector('input');
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase(); let count = 0;
+    results.querySelectorAll('button').forEach(b => { b.hidden = !b.dataset.search.includes(q); if (!b.hidden) count++; });
+    results.querySelectorAll('section').forEach(section => { section.hidden = ![...section.querySelectorAll('button')].some(b => !b.hidden); });
+    library.querySelector('.desk-library-empty').hidden = count > 0;
+  });
+  search.addEventListener('keydown', e => {
+    const first = [...results.querySelectorAll('button')].find(b => !b.hidden);
+    if (first && (e.key === 'Enter' || e.key === 'ArrowDown')) { e.preventDefault(); if (e.key === 'Enter') first.click(); else first.focus(); }
+  });
+  document.body.append(library);
 
   const analysis = document.querySelector('.toolbar-analysis');
   const replay = document.createElement('button');
@@ -74,6 +139,9 @@
   const footer = document.createElement('footer'); footer.className = 'desk-bottom';
   footer.innerHTML = '<div class="desk-bottom-actions"><button type="button" data-desk-bottom="position">Position planner</button><button type="button" data-desk-bottom="journal">Journal</button><button type="button" data-desk-bottom="alerts">Alerts</button><a href="backtesting.html#sessions">Backtesting <span aria-hidden="true">↗</span></a></div><div class="desk-feed-status" id="deskFeedStatus" role="status"></div>';
   document.querySelector('.cshell').after(footer);
+  const badgeHost = byId('deskFeedStatus'); badgeHost.append(byId('feedBadge'));
+  const blindStatus = document.createElement('span'); blindStatus.textContent = 'Blind replay · symbol and date hidden'; blindStatus.hidden = true; badgeHost.append(blindStatus);
+  const riskPill = byId('riskPill'); if (riskPill) footer.querySelector('.desk-bottom-actions').after(riskPill);
   const empty = document.createElement('section'); empty.className = 'desk-empty'; empty.hidden = true;
   empty.setAttribute('aria-label','Choose chart data');
   empty.innerHTML = '<span class="desk-empty-symbol" aria-hidden="true">' + svg('data') + '</span><h1>Choose your chart data</h1><p id="deskEmptyMessage">Historical candles are not available for this instrument. Search for a supported market, or explore the chart tools with clearly labeled demo candles.</p><div><button type="button" class="desk-empty-primary">Search markets</button><button type="button" class="desk-empty-demo">Use demo candles</button></div><a href="' + (window.OP_FLASK ? '/backtesting#sessions' : 'backtesting.html#sessions') + '">Practice with archived history in Backtesting ↗</a>';
@@ -114,7 +182,9 @@
     layout.querySelectorAll('[data-desk-layout]').forEach(b => b.setAttribute('aria-pressed',String(Number(b.dataset.deskLayout) === state.layout)));
     replay.setAttribute('aria-pressed',String(state.replay.on));
     const badge = byId('feedBadge');
-    byId('deskFeedStatus').textContent = blind ? 'Blind replay · symbol and date hidden' : (badge?.textContent.trim() || 'Market data unavailable');
+    if (badge) badge.hidden = blind;
+    blindStatus.hidden = !blind;
+    notesShortcut.setAttribute('aria-expanded',String(body.classList.contains('chart-notes-open')));
     byId('deskFeedStatus').classList.toggle('is-demo',Feed.isDemoMode());
     try { localStorage.setItem('top.chartDeskPanel.v1',name); } catch (_) {}
   }

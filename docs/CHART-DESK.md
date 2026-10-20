@@ -14,3 +14,11 @@ The public GitHub Pages Charts screen (`pages/charts.html`) uses a compact termi
 This change targets the public static website. The separate legacy Flask Charts template is unchanged. No TradingView Advanced Charts license, GoCharting SDK, provider subscription, account credentials or market-data entitlement is added by this visual upgrade. Shared forex history still needs the server-side provider connection described in `BACKTESTING-TRADINGVIEW.md`.
 
 Validation: run `node --test tests/*.test.js tests/*.test.cjs` with shell-appropriate glob expansion. The panel-switch regression exercises all six panes with no optional dock. Browser verification covers explicit data mode, market shortcuts, six panels, chart layouts, trend drawing, blind replay, themes, workspace dialog, PNG download, persistence and mobile viewports.
+
+## Control visibility correction
+
+The tool shelf keeps all favorite timeframes, chart types, drawing tools, Compare, Undo/Redo, chart settings, notes, saved workspaces, full screen and commands reachable through horizontal scrolling at small widths. Panel tabs remain visible beside the activity rail. The full drawing catalog enumerates all 47 existing rail tools and filters across every group; picking a result delegates to the existing tool selector.
+
+The TheOnePercent menu reuses the original navigation, global search and account controls, including after Shell rebuilds on account changes. The footer holds the original day-risk pill and original feed badge, preserving source tooltips. The engine-controlled data window is visible again when enabled and wide enough. Notes remain a user-controlled panel with a direct shelf button.
+
+Browser checks cover these restored controls at 320, 390, 768 and 1440 pixels, compare and settings panels, notes toggling, the complete tool catalog, and original site navigation. A markup-ID comparison with the earlier chart page confirms no original element IDs were removed.
