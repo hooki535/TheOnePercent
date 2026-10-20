@@ -111,7 +111,7 @@ INTERVALS = {
 }
 
 
-def _bars(symbol: str, interval: str, limit: int):
+def _bars(symbol: str, interval: str, limit: int, *, closed_only: bool = False):
     _terminal()
     matches = mt5.symbols_get(symbol=symbol)
     if not matches or not any(str(getattr(row, "name", "")) == symbol for row in matches):
@@ -120,7 +120,7 @@ def _bars(symbol: str, interval: str, limit: int):
     timeframe = getattr(mt5, timeframe_name, None) if timeframe_name else None
     if timeframe is None:
         raise HTTPException(status_code=422, detail="Interval is not supported by the connected MT5 terminal")
-    rows = mt5.copy_rates_from_pos(symbol, timeframe, 0, limit)
+    rows = mt5.copy_rates_from_pos(symbol, timeframe, 1 if closed_only else 0, limit)
     if rows is None or len(rows) == 0:
         error = mt5.last_error() if hasattr(mt5, "last_error") else "no candle history"
         raise HTTPException(status_code=404, detail=f"No MT5 candle history is available for {symbol}: {error}")
@@ -204,6 +204,18 @@ def candles(response: Response, symbol: str = Query(..., min_length=1, max_lengt
     return _bars(symbol, interval, limit)
 
 
+@app.get("/api/backtesting/candles")
+def backtesting_candles(response: Response, symbol: str = Query(..., min_length=1, max_length=64),
+                        interval: str = Query(..., min_length=1, max_length=8),
+                        limit: int = Query(2000, ge=60, le=10000)):
+    response.headers["Cache-Control"] = "no-store"
+    result = _bars(symbol, interval, limit, closed_only=True)
+    if len(result["candles"]) < 60:
+        raise HTTPException(status_code=404, detail="At least 60 closed candles are required. Load more history in MT5 and retry.")
+    result["closed_only"] = True
+    return result
+
+
 @app.middleware("http")
 async def local_security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -217,10 +229,19 @@ async def local_security_headers(request: Request, call_next):
     return response
 
 
+@app.get("/pages/backtesting.html", include_in_schema=False)
+def local_backtesting_page():
+    return _local_page("backtesting.html")
+
+
 @app.get("/pages/charts.html", include_in_schema=False)
 def local_charts_page():
+    return _local_page("charts.html")
+
+
+def _local_page(page_name: str):
     """Serve a cloud-isolated copy of Charts, without production auth or CDNs."""
-    page = (ROOT / "pages" / "charts.html").read_text(encoding="utf-8")
+    page = (ROOT / "pages" / page_name).read_text(encoding="utf-8")
     page = re.sub(r"<script\b[^>]*\bsrc=[\"']https://cdn\.jsdelivr\.net/npm/@supabase/supabase-js[^\"']*[\"'][^>]*>\s*</script>", "", page, flags=re.I)
     page = re.sub(r"<script\b[^>]*\bsrc=[\"'][^\"']*/assets/cloud\.js[\"'][^>]*>\s*</script>", "", page, flags=re.I)
     page = re.sub(r"<link\b(?=[^>]*https://fonts\.(?:googleapis|gstatic)\.com)[^>]*>", "", page, flags=re.I)

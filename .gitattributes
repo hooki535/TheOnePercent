@@ -1,0 +1,12 @@
+# Keep generated course media byte-for-byte intact on Windows checkouts.
+*.pdf binary
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.svg text eol=lf
+*.vtt text eol=lf

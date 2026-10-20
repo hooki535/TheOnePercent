@@ -24,6 +24,6 @@ jobs:
         run: python -m pip install -r backend/requirements-dev.txt
       - name: Run API contract tests
         working-directory: backend
-        run: python -m unittest -v test_app
+        run: python -m unittest discover -v -p 'test_*.py'
       - name: Check Python syntax
         run: python -m compileall -q backend

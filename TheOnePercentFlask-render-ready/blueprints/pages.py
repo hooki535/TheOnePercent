@@ -28,6 +28,11 @@ def journal():
     return render_template("pages/journal.html")
 
 
+@pages.get("/backtesting")
+def backtesting():
+    return render_template("pages/backtesting.html")
+
+
 @pages.get("/calculators")
 def calculators():
     return render_template("pages/calculators.html")

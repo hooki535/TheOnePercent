@@ -91,6 +91,29 @@ class LocalMT5BridgeTests(unittest.TestCase):
         self.assertEqual(self.fake.request, ("EURUSDm", 1, 0, 2))
         self.assertEqual(response.headers["cache-control"], "no-store")
 
+    def test_replay_uses_closed_candles_and_bounded_history(self):
+        self.fake.rates = [{"time": 1700000000 + i*60, "open": 1, "high": 2, "low": .5, "close": 1.5, "tick_volume": 1} for i in range(60)]
+        response = self.client.get("/api/backtesting/candles?symbol=EURUSDm&interval=1m&limit=60")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["closed_only"])
+        self.assertEqual(self.fake.request, ("EURUSDm", 1, 1, 60))
+        self.assertEqual(len(response.json()["candles"]), 60)
+        self.assertEqual(self.client.get("/api/backtesting/candles?symbol=EURUSDm&interval=1m&limit=10001").status_code, 422)
+        self.assertEqual(self.client.get("/api/backtesting/candles?symbol=EURUSD&interval=1m").status_code, 404)
+
+    def test_replay_rejects_short_history(self):
+        response = self.client.get("/api/backtesting/candles?symbol=EURUSDm&interval=1m")
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("60 closed candles", response.json()["detail"])
+
+    def test_local_replay_page_is_cloud_isolated(self):
+        response = self.client.get("/pages/backtesting.html")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("supabase-js", response.text)
+        self.assertNotIn("assets/cloud.js", response.text)
+        self.assertIn("vendor/lightweight-charts.standalone.production.js", response.text)
+        self.assertIn("connect-src 'self'", response.headers["content-security-policy"])
+
     def test_unknown_symbol_and_interval_are_not_guessed(self):
         self.assertEqual(self.client.get("/api/candles?symbol=EURUSD&interval=1m").status_code, 404)
         self.assertEqual(self.client.get("/api/candles?symbol=EURUSDm&interval=99m").status_code, 422)

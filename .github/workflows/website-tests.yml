@@ -1,0 +1,16 @@
+name: Website checks
+on:
+  push:
+    paths: ['assets/**', 'pages/**', 'tests/**', 'TheOnePercentFlask-render-ready/static/assets/**', 'TheOnePercentFlask-render-ready/templates/**', '.github/workflows/website-tests.yml']
+  pull_request:
+    paths: ['assets/**', 'pages/**', 'tests/**', 'TheOnePercentFlask-render-ready/static/assets/**', 'TheOnePercentFlask-render-ready/templates/**', '.github/workflows/website-tests.yml']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run website and replay checks
+        run: node --test tests/*.test.js tests/*.test.cjs

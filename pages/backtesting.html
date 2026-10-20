@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Backtesting · TheOnePercent</title>
+  <meta name="description" content="Build a strategy, replay archived candles and review simulated trades in your private browser workspace.">
+  <script src="../assets/theme.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/cloud.js"></script>
+  <script src="../assets/market-config.js"></script>
+  <link rel="stylesheet" href="../assets/shell.css"><link rel="stylesheet" href="../assets/components.css">
+  <link rel="stylesheet" href="../assets/backtesting.css">
+</head>
+<body data-page="backtesting" data-depth="1" data-shell="nav">
+  <div class="bt-layout">
+    <aside class="bt-sidebar" aria-label="Backtesting navigation">
+      <a class="bt-brand" href="#sessions"><span>↗</span><b>THE LAB<small>REPLAY & RESEARCH</small></b></a>
+      <div class="bt-sidebar-label">WORKSPACE</div>
+      <a class="bt-side-link" href="#sessions" data-section="sessions">▦ <span>Your sessions</span><small id="session-count">0</small></a>
+      <a class="bt-side-link" href="#strategies" data-section="strategies">⌘ <span>Strategies</span><small id="strategy-count">0</small></a>
+      <button class="bt-side-link" id="bt-guide">▷ <span>Replay guide</span></button>
+      <div class="bt-side-bottom"><span class="bt-status-dot"></span> Simulation workspace<p id="bt-storage-label">Saved in this browser</p><p>Research results stay separate from your live trading journal.</p><button id="bt-backup" class="bt-text-button">Export workspace backup ↗</button><label class="bt-text-button bt-restore">Restore backup<input type="file" id="bt-restore" accept=".json,application/json" hidden></label></div>
+    </aside>
+    <main class="bt-main" id="main">
+      <div class="bt-sync-bar" aria-live="polite"><span id="bt-sync-status">Guest · sessions saved on this device</span><div class="bt-actions"><a id="bt-sync-login" class="bt-button small">Sign in to sync</a><button id="bt-sync-retry" class="bt-button small" hidden>Retry sync</button><button id="bt-sync-load" class="bt-button small" hidden>Load online workspace</button></div></div>
+      <div id="bt-app"><div class="bt-empty">Loading your research workspace…</div></div>
+      <div class="bt-mobile-storage"><button id="bt-mobile-backup" class="bt-button small">↓ Workspace backup</button><label class="bt-button small" for="bt-restore">Restore backup</label></div>
+    </main>
+  </div>
+  <dialog id="bt-dialog" class="bt-dialog" aria-labelledby="bt-dialog-title"><div class="bt-dialog-body" id="bt-dialog-body"></div></dialog>
+  <div id="bt-toast" class="bt-toast" role="status" aria-live="polite" hidden></div>
+  <script src="../assets/backtest-engine.js"></script>
+  <script src="../assets/vendor/lightweight-charts.standalone.production.js"></script>
+  <script src="../assets/backtest-chart.js"></script>
+  <script src="../assets/backtest-sync.js"></script>
+  <script src="../assets/backtesting.js"></script>
+  <script src="../assets/shell.js"></script>
+</body>
+</html>

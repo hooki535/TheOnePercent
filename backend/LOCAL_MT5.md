@@ -12,7 +12,7 @@ The bridge binds to `localhost:8765`. The local Charts page omits Supabase,
 cloud sync, and external fonts, and a restrictive Content-Security-Policy blocks
 all non-local connections. The page uses a browser profile's local storage;
 use a fresh profile for synthetic review records. The server serves only the
-Charts page, local app assets, and read-only bridge endpoints. It is not part
+Charts and Backtesting pages, local app assets, and read-only bridge endpoints. It is not part
 of Render and is not exposed as a public feed.
 
 ## Start on Windows
@@ -31,7 +31,8 @@ of Render and is not exposed as a public feed.
    python -m uvicorn backend.local_mt5_bridge:app --host localhost --port 8765
    ```
 
-4. Open <http://localhost:8765/pages/charts.html>.
+4. Open <http://localhost:8765/pages/charts.html> or the replay workspace at
+   <http://localhost:8765/pages/backtesting.html#sessions>.
 
 Stop the service with Ctrl+C. No credentials or provider keys are configured
 in TheOnePercent. A catalog or candle request will remain unavailable if the

@@ -11,7 +11,9 @@
   const URL_ = "https://ecnxstqfnjaiibwiwwto.supabase.co";
   const KEY = "sb_publishable_vqHYZ_AasII7F611BTDWdg_Nftd7dCb";
   const OWNER = "onepercent:__owner";
-  const isSynced = (k) => typeof k === "string" && k.indexOf("onepercent") === 0 && k !== OWNER;
+  // Backtesting owns its account-scoped optimistic sync; exclude guest workspaces
+  // and prevent the generic storage mirror from overwriting session revisions.
+  const isSynced = (k) => typeof k === "string" && k.indexOf("onepercent") === 0 && k !== OWNER && !k.startsWith("onepercent:backtesting:");
 
   const ls = window.localStorage;
   const sb = window.supabase.createClient(URL_, KEY, {
@@ -92,7 +94,7 @@
   async function pull() {
     const { data, error } = await sb.from("user_data").select("key,value");
     if (error) return;
-    const remote = new Map(data.map((r) => [r.key, r.value]));
+    const remote = new Map(data.filter(r => isSynced(r.key)).map((r) => [r.key, r.value]));
     const owner = ls.getItem(OWNER);
     if (owner && owner !== userId) wipeLocal();
     let changed = false;
@@ -124,7 +126,7 @@
      Only a known page + a plain #hash can be stored, so it can't be abused as
      an open redirect. */
   const RETURN_KEY = "op-return";
-  const RETURN_PAGES = ["learn", "dashboard", "journal", "charts", "calculators", "settings"];
+  const RETURN_PAGES = ["learn", "dashboard", "journal", "charts", "backtesting", "calculators", "settings"];
   function setReturn(pageName, hash) {
     if (RETURN_PAGES.indexOf(pageName) < 0) return;
     if (hash && !/^#[A-Za-z0-9/_-]*$/.test(hash)) hash = "";

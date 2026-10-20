@@ -10,6 +10,7 @@ from app import BASE_URL, app, cache
 import app as market_api
 from catalog import binance_catalog, stable_instrument_id
 import catalog as market_catalog
+from binance_limits import BinanceCooldown
 
 client = TestClient(app)
 
@@ -17,8 +18,9 @@ client = TestClient(app)
 class MarketDataContractTests(unittest.TestCase):
     def setUp(self):
         cache.clear()
-        market_api.BINANCE_RETRY_UNTIL = 0.0
-        market_catalog.BINANCE_RETRY_UNTIL = 0.0
+        cooldown = BinanceCooldown()
+        self.enterContext(patch.object(market_api, "binance_cooldown", cooldown))
+        self.enterContext(patch.object(market_catalog, "binance_cooldown", cooldown))
         binance_catalog._rows = None
         binance_catalog._updated = 0.0
         binance_catalog._updated_at = None
@@ -90,6 +92,63 @@ class MarketDataContractTests(unittest.TestCase):
     def test_rejects_unsupported_instrument(self):
         response = client.get("/api/candles/ES1!/1H")
         self.assertEqual(response.status_code, 422)
+
+    @patch("app.urlopen")
+    @patch("catalog._get_json")
+    def test_candle_rate_limit_blocks_catalog_requests(self, get_json, open_url):
+        open_url.side_effect = HTTPError(BASE_URL + "/klines", 429, "Limited",
+                                         {"Retry-After": "120"}, None)
+        with self.assertRaises(HTTPException):
+            market_api.provider_get("/klines")
+        with self.assertRaises(RuntimeError):
+            market_catalog._get_binance_json("/exchangeInfo")
+        get_json.assert_not_called()
+        self.assertEqual(open_url.call_count, 1)
+
+    @patch("app.urlopen")
+    @patch("catalog._get_json")
+    def test_catalog_ip_ban_blocks_candle_requests(self, get_json, open_url):
+        get_json.side_effect = HTTPError(BASE_URL + "/exchangeInfo", 418, "Banned",
+                                         {"Retry-After": "120"}, None)
+        with self.assertRaises(HTTPError):
+            market_catalog._get_binance_json("/exchangeInfo")
+        response = client.get("/api/candles/BTCUSDT/1H?limit=1")
+        self.assertEqual(response.status_code, 503)
+        self.assertGreater(int(response.headers["retry-after"]), 0)
+        open_url.assert_not_called()
+        self.assertEqual(get_json.call_count, 1)
+
+    @patch("app.provider_get")
+    def test_fresh_candle_cache_is_available_during_cooldown(self, provider):
+        provider.return_value = [[1720000000000, "60000", "60500", "59000", "60100", "12.5"]]
+        self.assertEqual(client.get("/api/candles/BTCUSDT/1H?limit=1").status_code, 200)
+        market_api.binance_cooldown.record(HTTPError(BASE_URL, 429, "Limited", {}, None))
+        response = client.get("/api/candles/BTCUSDT/1H?limit=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["x-market-cache"], "HIT")
+        provider.assert_called_once()
+
+    @patch("app.urlopen")
+    @patch("catalog._get_json", return_value={"symbols": []})
+    def test_both_rest_paths_resume_after_cooldown(self, get_json, open_url):
+        response = MagicMock()
+        response.__enter__.return_value = BytesIO(b"[]")
+        open_url.return_value = response
+        with patch("binance_limits.time.monotonic", return_value=100):
+            market_api.binance_cooldown.record(HTTPError(BASE_URL, 429, "Limited",
+                                                       {"Retry-After": "2"}, None))
+        with patch("binance_limits.time.monotonic", return_value=101.9):
+            with self.assertRaises(HTTPException):
+                market_api.provider_get("/klines")
+            with self.assertRaises(RuntimeError):
+                market_catalog._get_binance_json("/exchangeInfo")
+        open_url.assert_not_called()
+        get_json.assert_not_called()
+        with patch("binance_limits.time.monotonic", return_value=102):
+            self.assertEqual(market_api.provider_get("/klines"), [])
+            self.assertEqual(market_catalog._get_binance_json("/exchangeInfo"), {"symbols": []})
+        open_url.assert_called_once()
+        get_json.assert_called_once()
 
     @patch("app.binance_catalog.list", return_value=([], 0.0))
     def test_rejects_symbol_that_is_not_in_the_binance_catalog(self, catalog):

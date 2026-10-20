@@ -1,0 +1,14 @@
+Backtesting
+Original captioned summary / 75 seconds / no narration
+
+Mechanism
+A backtest simulates rules using information available at each decision time. Separate development, validation and final holdout samples. Include fees, spread, slippage, delisted instruments and ambiguous intrabar fills. Parameter trials are research decisions and must be logged.
+
+Worked example
+A candle touches both stop and target after entry, but OHLC data cannot reveal which occurred first. Use finer data or a conservative documented rule; assigning every ambiguous case to the target inflates performance.
+
+Failure condition
+Do not optimize on the holdout sample or treat historical simulation as proof of future returns.
+
+Practice
+Test one frozen rule on a chronological sample, log all trials, then evaluate once on untouched data. Repeat with worse costs and delayed entries.

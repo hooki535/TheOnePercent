@@ -16,11 +16,18 @@ from fastapi.middleware.cors import CORSMiddleware
 try:  # Supports both `uvicorn app:app` and `uvicorn backend.app:app`.
     from .catalog import binance_catalog, filter_page, provider_status, twelve_data_catalog
     from .binance_stream import binance_streams
+    from .binance_limits import binance_cooldown
 except ImportError:  # pragma: no cover - exercised by the Render start command
     from catalog import binance_catalog, filter_page, provider_status, twelve_data_catalog
     from binance_stream import binance_streams
+    from binance_limits import binance_cooldown
 
 app = FastAPI(title="TheOnePercent Market Data API", version="0.1.0")
+try:
+    from .backtesting import router as backtesting_router
+except ImportError:
+    from backtesting import router as backtesting_router
+app.include_router(backtesting_router)
 origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "https://hooki535.github.io").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET"], allow_headers=["*"])
 
@@ -41,14 +48,6 @@ BINANCE_PUBLIC_BASES = (
 cache = {}
 CACHE_SECONDS = 30
 logger = logging.getLogger("theonepercent.market_data")
-BINANCE_RETRY_UNTIL = 0.0
-
-
-def _retry_delay(exc):
-    try:
-        return max(1, min(int(exc.headers.get("Retry-After", "60")), 259200))
-    except (AttributeError, TypeError, ValueError):
-        return 60
 
 
 def _rate_limit_error(seconds):
@@ -60,12 +59,14 @@ def _rate_limit_error(seconds):
 
 
 def provider_get(path):
-    global BINANCE_RETRY_UNTIL
-    remaining = int(math.ceil(BINANCE_RETRY_UNTIL - time.monotonic()))
+    remaining = binance_cooldown.remaining()
     if remaining > 0:
         raise _rate_limit_error(remaining)
     last_error = None
     for base in BINANCE_PUBLIC_BASES:
+        remaining = binance_cooldown.remaining()
+        if remaining > 0:
+            raise _rate_limit_error(remaining)
         req = Request(base + path, headers={"User-Agent": "TheOnePercent/0.1"})
         try:
             with urlopen(req, timeout=9) as response:
@@ -73,13 +74,11 @@ def provider_get(path):
         except HTTPError as exc:
             last_error = exc
             if exc.code == 429:
-                delay = _retry_delay(exc)
-                BINANCE_RETRY_UNTIL = time.monotonic() + delay
+                delay = binance_cooldown.record(exc)
                 logger.warning("Binance public market-data host %s returned HTTP 429; cooling down for %s seconds", req.full_url.split("/api/")[0], delay)
                 raise _rate_limit_error(delay) from exc
             if exc.code == 418:
-                delay = _retry_delay(exc)
-                BINANCE_RETRY_UNTIL = time.monotonic() + delay
+                delay = binance_cooldown.record(exc)
                 logger.error("Binance public market-data host %s returned HTTP 418 IP ban; cooling down for %s seconds", req.full_url.split("/api/")[0], delay)
                 raise _rate_limit_error(delay) from exc
             if exc.code in (403, 451):
