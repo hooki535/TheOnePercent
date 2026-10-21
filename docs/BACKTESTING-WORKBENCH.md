@@ -82,3 +82,11 @@ Validation: `node --test tests/backtest-*.test.cjs tests/backtesting-assets.test
 Browser QA covers risk orders/reviews, drawings/handles/PNG export, studies,
 analytics/calendar, challenge failure, real three-archive portfolio restore,
 cross-device sync conflicts and desktop/mobile layout.
+
+## Reference controls added after account inspection
+
+The replay header includes balance visibility, keyboard help and Backtest settings with Session info, Time, Costs and Chart tabs. Name and description remain editable; the original strategy stays frozen. Fees and adverse slippage can change only before the first submitted order, including any subsequently cancelled order. This preserves action-log replay results.
+
+The replay clock can display UTC, Kampala, London, New York or Tokyo using timezone-aware formatting. Stored bars, table timestamps, exports and analytics remain UTC. A draggable and keyboard-accessible separator changes chart height. Table column visibility and table expansion work without modifying exported trade fields. These display preferences are local to the browser.
+
+The signed-in reference exposed these controls, but its embedded chart remained on Almost ready during inspection and the browser later timed out. No reference trades, settings, licensed code or account data were copied. The complete native TradingView toolkit is not included.
