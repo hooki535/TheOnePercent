@@ -1,0 +1,64 @@
+{
+  "publisher": "SiftingIO",
+  "license": "CC-BY-SA-4.0",
+  "source": "forex-archive-manifest.json",
+  "transform": "Original minute OHLC split by pair, UTC 11-17 August 2026; no generated or filled prices.",
+  "datasets": [
+    {
+      "symbol": "AUDUSD",
+      "file": "AUDUSD_M1_2026_SIFTINGIO.csv",
+      "bars": 6987,
+      "start": "2026-08-11T00:00:00.000Z",
+      "end": "2026-08-17T23:59:00.000Z",
+      "sha256": "b7f3b35144ad7740825ef8d86b95602d0ee7ee0b705acf633b2a305c9aa69901"
+    },
+    {
+      "symbol": "EURUSD",
+      "file": "EURUSD_M1_2026_SIFTINGIO.csv",
+      "bars": 6978,
+      "start": "2026-08-11T00:00:00.000Z",
+      "end": "2026-08-17T23:59:00.000Z",
+      "sha256": "b9e12758fb7c89f4d29340c12f38b817955c1ebb58a1a6fd1b83a5bc27380d95"
+    },
+    {
+      "symbol": "GBPUSD",
+      "file": "GBPUSD_M1_2026_SIFTINGIO.csv",
+      "bars": 6976,
+      "start": "2026-08-11T00:00:00.000Z",
+      "end": "2026-08-17T23:59:00.000Z",
+      "sha256": "accbf3fcfd54f54b70ef1ebc2e8a120ec388d3d761714f8a07cbedb32d6bca98"
+    },
+    {
+      "symbol": "NZDUSD",
+      "file": "NZDUSD_M1_2026_SIFTINGIO.csv",
+      "bars": 6912,
+      "start": "2026-08-11T00:00:00.000Z",
+      "end": "2026-08-17T23:59:00.000Z",
+      "sha256": "31971593b4694579310c3bd2df995076d08b01a02043c84c4f9e0576e40a9b60"
+    },
+    {
+      "symbol": "USDCAD",
+      "file": "USDCAD_M1_2026_SIFTINGIO.csv",
+      "bars": 6926,
+      "start": "2026-08-11T00:00:00.000Z",
+      "end": "2026-08-17T23:59:00.000Z",
+      "sha256": "da07c21d39e788e8d39647fcc80eb1529458b1afc90b4428839d0950ec563739"
+    },
+    {
+      "symbol": "USDCHF",
+      "file": "USDCHF_M1_2026_SIFTINGIO.csv",
+      "bars": 6917,
+      "start": "2026-08-11T00:00:00.000Z",
+      "end": "2026-08-17T23:59:00.000Z",
+      "sha256": "23244b9623c0e8f4c0a1de5fa280f4d8232532aa8287b52d9e98bd39b273f63e"
+    },
+    {
+      "symbol": "USDJPY",
+      "file": "USDJPY_M1_2026_SIFTINGIO.csv",
+      "bars": 6984,
+      "start": "2026-08-11T00:00:00.000Z",
+      "end": "2026-08-17T23:59:00.000Z",
+      "sha256": "88dec08b255dbaf30a5910ac5f207b5a410f088caf51ffca913cdb118b5a21de"
+    }
+  ]
+}

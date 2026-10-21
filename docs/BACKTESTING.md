@@ -1,5 +1,9 @@
 # Backtesting workspace
 
+The chart toolbar now offers timeframes from 1m through 1M, using only compatible intervals at or above the source resolution. Each larger candle is aggregated from the revealed source prefix; its current candle develops as source steps replay. Orders still execute on each original source bar. An H1 backup cannot provide smaller candles: use **Minute data** to create a new minute-source session. New sessions default to original SiftingIO minute history for 11–17 August 2026; the longer hourly archives remain under **Data source & import**.
+
+Drawing search and saved favorites provide direct access to line, channel, shape, annotation, range and position tools. Selected drawings support solid, dashed or dotted lines; channels include an adjustable third handle. Alt+T/H/V select trend, horizontal and vertical lines. Horizontal, vertical, cross lines and text use one click.
+
 The default pair picker offers EURUSD, GBPUSD, USDJPY, USDCAD, USDCHF, AUDUSD and NZDUSD. Select up to five for one shared replay account. Each bundled archive contains roughly 1,550 UTC hourly candles from 19 May to 17 August 2026. These are historical samples, not a live feed. Older project archives and CSV/shared-provider imports remain under **Data source & import**.
 
 The hourly files aggregate SiftingIO minute OHLC, retaining CC BY-SA 4.0. Attribution, source hashes, dates and the aggregation method are in `assets/backtesting/data/SIFTINGIO-NOTICE.md` and `forex-archive-manifest.json`. No prices are generated or filled across missing periods. USD-base pairs convert mark-to-market at the current close and realized proceeds at the actual exit price; older sessions preserve their fixed conversion model.

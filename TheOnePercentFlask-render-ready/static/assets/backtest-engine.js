@@ -11,7 +11,7 @@
   const id = () => 'bt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
   const strategyCopy = s => s && typeof s === 'object' ? {...Object.fromEntries(['name','description','setup','entry','exit','risk'].map(k=>[k,String(s[k] || '').slice(0,2000)])),color:/^#[0-9a-f]{6}$/i.test(s.color)?s.color:'#4385ff',checklist:Array.isArray(s.checklist)?s.checklist.map(x=>String(x).slice(0,200)).filter(Boolean).slice(0,20):[]} : null;
   const tradeKey=t=>[t.symbol || '',t.entryTime,t.exitTime,t.side].join(':');
-  function cleanAnnotations(rows){return Array.isArray(rows)?rows.filter(a=>a && ['trend','ray','extended','arrow','horizontal','vertical','rectangle','ellipse','fib','long','short','text','measure'].includes(a.type) && Array.isArray(a.points) && a.points.length===2 && a.points.every(p=>finite(p.i)&&Math.abs(p.i)<20000&&finite(p.p)&&p.p>0)).slice(0,60).map(a=>({id:/^[\w-]{1,100}$/.test(a.id)?a.id:id(),type:a.type,points:a.points.map(p=>({i:p.i,p:p.p})),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#f8c344',width:[1,2,3,4].includes(a.width)?a.width:2,locked:!!a.locked,text:String(a.text||'Note').slice(0,200),...(finite(a.target)&&a.target>0?{target:a.target}:{})})):[];}
+  function cleanAnnotations(rows){return Array.isArray(rows)?rows.filter(a=>a && ['trend','ray','extended','arrow','horizontal','vertical','rectangle','ellipse','fib','long','short','text','measure','horizontalray','crossline','info','channel','triangle','pricerange','daterange'].includes(a.type) && Array.isArray(a.points) && a.points.length===2 && a.points.every(p=>finite(p.i)&&Math.abs(p.i)<100000000&&finite(p.p)&&p.p>0)).slice(0,60).map(a=>({id:/^[\w-]{1,100}$/.test(a.id)?a.id:id(),type:a.type,points:a.points.map(p=>({i:p.i,p:p.p})),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#f8c344',width:[1,2,3,4].includes(a.width)?a.width:2,dash:['solid','dashed','dotted'].includes(a.dash)?a.dash:'solid',...(finite(a.offset)?{offset:a.offset}:{}),locked:!!a.locked,text:String(a.text||'Note').slice(0,200),...(finite(a.target)&&a.target>0?{target:a.target}:{})})):[];}
   function cleanChallenge(c){if(!c || typeof c!=='object')return null;const rule={name:String(c.name || 'Practice challenge').slice(0,80),targetPct:Number(c.targetPct),dailyLossPct:Number(c.dailyLossPct),maxLossPct:Number(c.maxLossPct),minDays:Number(c.minDays),trailing:!!c.trailing};if(![rule.targetPct,rule.dailyLossPct,rule.maxLossPct].every(n=>finite(n)&&n>0&&n<=100)||!Number.isInteger(rule.minDays)||rule.minDays<1||rule.minDays>100)throw Error('Invalid practice challenge rules.');return rule;}
   function challengeState(s,marked=unrealized(s)){
     if(!s.challenge)return null;const r=s.challenge;let peak=s.startBalance,day=null,dayBase=s.startBalance,last=s.startBalance,failed=null;
@@ -178,7 +178,7 @@
     s.pending=null; s.actions.push({cursor:s.cursor,kind:'cancel'}); s.notice='Pending order cancelled.';
   }
   function snapshot(s) {
-    const keys=['id','name','symbol','interval','source','strategyId','strategySnapshot','createdAt','updatedAt','startBalance','multiplier','fxMode','fee','slippage','candles','initialCursor','cursor','actions','notes','drawings','description','challenge','annotations','reviews','indicators','checklist'];
+    const keys=['id','name','symbol','interval','source','strategyId','strategySnapshot','createdAt','updatedAt','viewTimeframe','startBalance','multiplier','fxMode','fee','slippage','candles','initialCursor','cursor','actions','notes','drawings','description','challenge','annotations','reviews','indicators','checklist'];
     return Object.fromEntries(keys.map(k=>[k,s[k]]));
   }
   function restore(raw) {
@@ -199,7 +199,7 @@
     s.createdAt=typeof raw.createdAt === 'string' ? raw.createdAt : s.createdAt;
     s.updatedAt=typeof raw.updatedAt === 'string' ? raw.updatedAt : s.updatedAt;
     s.indicators=Array.isArray(raw.indicators)?raw.indicators.filter(x=>['SMA20','EMA20','EMA50','EMA200','BB20','RSI14','ATR14'].includes(x)).slice(0,7):[];
-    s.annotations=cleanAnnotations(raw.annotations);
+    s.viewTimeframe=typeof raw.viewTimeframe==='string'?raw.viewTimeframe.slice(0,12):undefined;s.annotations=cleanAnnotations(raw.annotations);
     const validKeys=new Set(s.trades.map(tradeKey));s.reviews={};
     if(raw.reviews && typeof raw.reviews==='object')for(const [k,v] of Object.entries(raw.reviews).slice(0,10000))if(validKeys.has(k) && v && typeof v==='object')s.reviews[k]={notes:String(v.notes||'').slice(0,4000),emotion:['confident','calm','neutral','anxious','frustrated'].includes(v.emotion)?v.emotion:'neutral'};
     s.checklist=Array.isArray(raw.checklist)?raw.checklist.filter(x=>Number.isInteger(x)&&x>=0&&x<20).slice(0,20):[];

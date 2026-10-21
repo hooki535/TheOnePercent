@@ -40,7 +40,7 @@
  function metrics(s){if(!multi(s))return B.metrics(s);const u=unrealized(s),m=B.metrics({...s,balance:s.balance+u,position:null,challenge:null});return {...m,unrealized:u};}
  function snapshot(s){
   if(!multi(s))return B.snapshot(s);
-  const keys=['kind','id','name','description','startBalance','activeSymbol','initialTime','clock','endTime','actions','strategyId','strategySnapshot','challenge','notes','reviews','checklist','createdAt','updatedAt'];
+  const keys=['kind','id','name','description','startBalance','activeSymbol','initialTime','clock','endTime','actions','strategyId','strategySnapshot','challenge','notes','reviews','checklist','viewTimeframe','createdAt','updatedAt'];
   return {...Object.fromEntries(keys.map(k=>[k,s[k]])),markets:s.markets.map(m=>Object.fromEntries(['symbol','interval','source','multiplier','fxMode','fee','slippage','candles','drawings','annotations','indicators'].map(k=>[k,m[k]])))};
  }
  function restore(raw){
@@ -50,7 +50,7 @@
   for(const event of raw.actions){if(!event||!Number.isInteger(event.at)||event.at<s.clock||event.at>raw.clock||!s.markets.some(m=>m.symbol===event.market))throw Error('Invalid multi-pair action.');while(s.clock<event.at){if(!step(s))throw Error('Action is outside shared history.');}if(s.clock!==event.at)throw Error('Action does not match a replay candle.');s.activeSymbol=event.market;if(event.kind==='order')placeOrder(s,event.order);else if(event.kind==='close')requestClose(s);else if(event.kind==='cancel')cancelOrder(s);else throw Error('Unknown multi-pair action.');}
   while(s.clock<raw.clock){if(!step(s))throw Error('Saved clock is outside shared history.');}if(s.clock!==raw.clock)throw Error('Invalid saved portfolio clock.');
   for(const m of s.markets){const saved=raw.markets.find(x=>x.symbol===m.symbol);m.annotations=B.cleanAnnotations(saved.annotations);m.drawings=Array.isArray(saved.drawings)?saved.drawings.filter(n=>Number.isFinite(n)&&n>0).slice(0,30):[];m.indicators=Array.isArray(saved.indicators)?saved.indicators.filter(x=>['SMA20','EMA20','EMA50','EMA200','BB20','RSI14','ATR14'].includes(x)).slice(0,7):[];}
-  if(!s.markets.some(m=>m.symbol===raw.activeSymbol))throw Error('Invalid active pair.');s.activeSymbol=raw.activeSymbol;s.id=raw.id;s.notes=String(raw.notes||'').slice(0,10000);s.createdAt=String(raw.createdAt||s.createdAt);s.updatedAt=String(raw.updatedAt||s.updatedAt);
+  if(!s.markets.some(m=>m.symbol===raw.activeSymbol))throw Error('Invalid active pair.');s.viewTimeframe=typeof raw.viewTimeframe==='string'?raw.viewTimeframe.slice(0,12):undefined;s.activeSymbol=raw.activeSymbol;s.id=raw.id;s.notes=String(raw.notes||'').slice(0,10000);s.createdAt=String(raw.createdAt||s.createdAt);s.updatedAt=String(raw.updatedAt||s.updatedAt);
   s.checklist=Array.isArray(raw.checklist)?raw.checklist.filter(x=>Number.isInteger(x)&&x>=0&&x<20).slice(0,20):[];const valid=new Set(s.trades.map(B.tradeKey));if(raw.reviews&&typeof raw.reviews==='object')for(const [key,v] of Object.entries(raw.reviews).slice(0,10000))if(valid.has(key)&&v&&typeof v==='object')s.reviews[key]={notes:String(v.notes||'').slice(0,4000),emotion:['confident','calm','neutral','anxious','frustrated'].includes(v.emotion)?v.emotion:'neutral'};
   return s;
  }
