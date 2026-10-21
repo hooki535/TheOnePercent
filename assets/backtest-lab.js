@@ -42,5 +42,7 @@
   const grossWin=sum(wins),grossLoss=-sum(losses);
   return {trades,wins,losses,breakeven,days,months,weeks,weekdays,buckets,pairs:[...pairs].map(([symbol,trades])=>({symbol,trades,pnl:sum(trades)})),net:sum(trades),fees:trades.reduce((n,t)=>n+t.fees,0),grossWin,grossLoss,profitFactor:grossLoss?grossWin/grossLoss:grossWin?Infinity:null,winRate:trades.length?wins.length/trades.length*100:null,expectancy:average(trades),avgWin:average(wins),avgLoss:average(losses),avgDay:days.length?sum(trades)/days.length:null,maxWins,maxLosses,maxDayWins,maxDayLosses,profitableDays:days.filter(d=>d.pnl>0).length,dayExtremes:extremes(days),monthExtremes:extremes(months),weekExtremes:extremes(weeks),largestWin:wins.length?wins.reduce((n,t)=>Math.max(n,t.pnl),-Infinity):null,largestLoss:losses.length?losses.reduce((n,t)=>Math.min(n,t.pnl),Infinity):null,averageDuration:trades.length?trades.reduce((n,t)=>n+t.exitTime-t.entryTime,0)/trades.length:null};
  }
- return {study,riskSize,analytics};
+ function scopeSessions(sessions,scope='all'){if(scope==='all')return sessions.slice();if(scope.startsWith('strategy:')){const id=scope.slice(9);return id?sessions.filter(s=>s.strategyId===id):[];}return sessions.filter(s=>s.id===scope);}
+ function strategyMetrics(sessions,id){const selected=scopeSessions(sessions,'strategy:'+id),a=analytics(selected);return {sessions:selected.length,trades:a.trades.length,winRate:a.winRate,net:a.net,replayedSeconds:selected.reduce((n,s)=>n+Math.max(0,s.kind==='portfolio'?s.clock-s.initialTime:s.candles[s.cursor].t-s.candles[s.initialCursor].t),0)};}
+ return {study,riskSize,analytics,scopeSessions,strategyMetrics};
 });

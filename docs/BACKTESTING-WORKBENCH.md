@@ -100,3 +100,7 @@ The searchable Drawing objects panel selects, hides, locks and deletes annotatio
 ## Forex cost entry
 
 The Costs tab offers USD commission per standard 100,000-unit lot (round turn), converted to per-unit/per-side fees, plus adverse slippage per fill in pips. JPY quote pairs use 0.01 per pip; other supported forex pairs use 0.0001. Portfolio pairs convert independently and validation completes before any cost mutation. These controls remain locked after the first order. This is a slippage allowance, not a bid/ask spread model. Trade tables show forex sizes in standard lots with the underlying base units in the cell tooltip. Non-forex quantities remain displayed in base units.
+
+## Strategy analytics
+
+Each strategy card calculates win rate, closed-trade count and net P&L only from its assigned sessions. Market time replayed sums source-clock progress once per session, including the shared clock for portfolios; it is not wall-clock usage. View stats opens a strategy scope shared by overview, outcomes and calendar. Empty or unknown strategy/session scopes never fall back to all sessions. Session strategy snapshots remain unchanged when a strategy is edited.
