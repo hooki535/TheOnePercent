@@ -96,3 +96,7 @@ The signed-in reference exposed these controls, but its embedded chart remained 
 The chart type selector supports candles, hollow candles, OHLC bars, line and area. Each renders only the revealed source prefix; changing presentation never changes prices used by orders. The selected type survives session backups and reloads. Higher timeframe OHLC readouts follow the displayed aggregation.
 
 The searchable Drawing objects panel selects, hides, locks and deletes annotations. Drawing undo/redo supports toolbar buttons, Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl/Cmd+Y; a new edit clears the redo branch. Undo history is per session and pair for the current page lifetime. Saved drawings and individual visibility survive reloads. Legacy horizontal levels are listed with delete controls. Orders remain managed separately in the trade table.
+
+## Forex cost entry
+
+The Costs tab offers USD commission per standard 100,000-unit lot (round turn), converted to per-unit/per-side fees, plus adverse slippage per fill in pips. JPY quote pairs use 0.01 per pip; other supported forex pairs use 0.0001. Portfolio pairs convert independently and validation completes before any cost mutation. These controls remain locked after the first order. This is a slippage allowance, not a bid/ask spread model. Trade tables show forex sizes in standard lots with the underlying base units in the cell tooltip. Non-forex quantities remain displayed in base units.
