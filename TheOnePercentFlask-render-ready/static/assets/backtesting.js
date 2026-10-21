@@ -242,6 +242,7 @@
     window.BacktestTools.mount(s,chartView,{editText:editDrawingText});
     bindWorkbench(s);
     window.BacktestDesk.mount(s,{modal,persist,toast,redraw:drawChart,rerender:sessionView,pause});
+    window.BacktestObjects.mount(s,chartView,{persist,redraw:drawChart,pause});
   }
   function estimate(){const s=current(),form=$('#bt-order-form');if(!s||!form)return;const entry=form.elements.type.value==='market'?s.candles[s.cursor].c:Number(form.elements.entry.value),q=Number(form.elements.quantity.value),stop=Number(form.elements.stop.value),target=Number(form.elements.target.value);if(![entry,q,stop,target].every(n=>Number.isFinite(n)&&n>0)){$('#bt-risk-estimate').textContent='Enter entry, size, stop and target.';return;}const risk=Math.abs(entry-stop)*q*E.cashMultiplier(s,stop)+2*s.fee*q+2*s.slippage*q*E.cashMultiplier(s,stop),reward=Math.abs(target-entry)*q*E.cashMultiplier(s,target)-2*s.fee*q;$('#bt-risk-estimate').innerHTML='Planned risk <b>'+cash(risk)+'</b><br>Potential reward <b>'+cash(reward)+'</b><br>Risk / reward <b>1 : '+(risk>0?num(reward/risk):'—')+'</b><br><small>Estimate includes configured fees and slippage allowance. Actual fills and gaps change the result.</small>';}
   function advance(){const s=current();if(!s)return;const count=s.trades.length;if(!E.step(s)){pause();return toast('End of dataset.');}if(s.position)tradeTab='open';if(s.trades.length>count)tradeTab='closed';persist();updateSession();const challenge=E.challengeState(s);if(E.finished(s)||challenge&&challenge.status!=='active')pause();if(s.trades.length>count){pause();reviewTrade(s,s.trades.length-1);}}
@@ -258,7 +259,7 @@
     $('#bt-position').hidden=!p;$('#bt-trade-table').innerHTML=tradesTable(s);$('#bt-trade-filter').onchange=e=>{tradeFilter=e.target.value;updateSession();};$('#bt-order-form').recalculateRisk?.();estimate();drawChart();
   }
   function editDrawingText(a){if(!a)return;modal('Chart note','<form id="bt-drawing-note"><label class="bt-field"><span>Note</span><input id="bt-drawing-text" class="bt-input" maxlength="200" value="'+esc(a.text||'Note')+'" required></label><div class="bt-actions"><button class="bt-button primary" type="submit">Save note</button></div></form>');$('#bt-drawing-note').onsubmit=e=>{e.preventDefault();chartView.updateSelected({text:$('#bt-drawing-text').value});$('#bt-dialog').close();};}
-  function drawChart() {const s=current();if(s && chartView && $('#bt-chart')){chartView.render(s,movingAverage,barsVisible);window.BacktestDesk?.refresh(s);}}
+  function drawChart() {const s=current();if(s && chartView && $('#bt-chart')){chartView.render(s,movingAverage,barsVisible);window.BacktestDesk?.refresh(s);window.BacktestObjects?.refresh(s,chartView);}}
   function exportTrades(s) {
     const cell=v=>{const text=String(v??'');return '"'+(typeof v==='string' && /^[\s]*[=+@\-]/.test(text)?"'":'')+text.replace(/"/g,'""')+'"';};
     const rows=[['symbol','side','quantity','entry_utc','exit_utc','entry','exit','gross_usd','fees_usd','net_usd','net_r','reason'],...s.trades.map(t=>[t.symbol||s.symbol,t.side,t.quantity,date(t.entryTime),date(t.exitTime),t.entry,t.exit,t.gross,t.fees,t.pnl,t.r,t.reason])];download('backtest-'+s.symbol+'-trades.csv',rows.map(r=>r.map(cell).join(',')).join('\r\n'),'text/csv');

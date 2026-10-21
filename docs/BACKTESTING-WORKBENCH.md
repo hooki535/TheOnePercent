@@ -90,3 +90,9 @@ The replay header includes balance visibility, keyboard help and Backtest settin
 The replay clock can display UTC, Kampala, London, New York or Tokyo using timezone-aware formatting. Stored bars, table timestamps, exports and analytics remain UTC. A draggable and keyboard-accessible separator changes chart height. Table column visibility and table expansion work without modifying exported trade fields. These display preferences are local to the browser.
 
 The signed-in reference exposed these controls, but its embedded chart remained on Almost ready during inspection and the browser later timed out. No reference trades, settings, licensed code or account data were copied. The complete native TradingView toolkit is not included.
+
+## Chart presentation and drawing objects
+
+The chart type selector supports candles, hollow candles, OHLC bars, line and area. Each renders only the revealed source prefix; changing presentation never changes prices used by orders. The selected type survives session backups and reloads. Higher timeframe OHLC readouts follow the displayed aggregation.
+
+The searchable Drawing objects panel selects, hides, locks and deletes annotations. Drawing undo/redo supports toolbar buttons, Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl/Cmd+Y; a new edit clears the redo branch. Undo history is per session and pair for the current page lifetime. Saved drawings and individual visibility survive reloads. Legacy horizontal levels are listed with delete controls. Orders remain managed separately in the trade table.

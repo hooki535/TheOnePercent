@@ -19,7 +19,7 @@
   const contextStart=Math.max(...markets.map(m=>m.candles[29].t)),start=options.startTime??contextStart;
   if(!Number.isInteger(start)||start<contextStart||start>=windowEnd)throw Error('Choose a start within the common history, with 30 earlier candles for every pair.');
   for(const m of markets){while(m.cursor<m.candles.length-1&&m.candles[m.cursor+1].t<=start)B.step(m);m.initialCursor=m.cursor;m.equity=[{t:start,value:m.startBalance}];}
-  const s=decorate({kind:'portfolio',id:B.id(),name:String(options.name||markets.map(m=>m.symbol).join(' + ')).slice(0,80),description:String(options.description||'').slice(0,2000),startBalance:markets[0].startBalance,markets,activeSymbol:markets[0].symbol,initialTime:start,clock:start,endTime:windowEnd,actions:[],equity:[{t:start,value:markets[0].startBalance}],strategyId:String(options.strategyId||''),strategySnapshot:markets[0].strategySnapshot,challenge:B.cleanChallenge(options.challenge),notes:'',reviews:{},checklist:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  const s=decorate({kind:'portfolio',chartType:['candles','hollow','bars','line','area'].includes(options.chartType)?options.chartType:'candles',id:B.id(),name:String(options.name||markets.map(m=>m.symbol).join(' + ')).slice(0,80),description:String(options.description||'').slice(0,2000),startBalance:markets[0].startBalance,markets,activeSymbol:markets[0].symbol,initialTime:start,clock:start,endTime:windowEnd,actions:[],equity:[{t:start,value:markets[0].startBalance}],strategyId:String(options.strategyId||''),strategySnapshot:markets[0].strategySnapshot,challenge:B.cleanChallenge(options.challenge),notes:'',reviews:{},checklist:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
   if(finished(s))throw Error('No shared history remains after the chosen start.');return s;
  }
  function challengeState(s){if(!multi(s))return B.challengeState(s);const state=B.challengeState(s,unrealized(s));if(state?.status==='passed'&&s.markets.some(m=>m.position||m.pending))state.status='active';return state;}
@@ -40,7 +40,7 @@
  function metrics(s){if(!multi(s))return B.metrics(s);const u=unrealized(s),m=B.metrics({...s,balance:s.balance+u,position:null,challenge:null});return {...m,unrealized:u};}
  function snapshot(s){
   if(!multi(s))return B.snapshot(s);
-  const keys=['kind','id','name','description','startBalance','activeSymbol','initialTime','clock','endTime','actions','strategyId','strategySnapshot','challenge','notes','reviews','checklist','viewTimeframe','createdAt','updatedAt'];
+  const keys=['kind','id','name','description','startBalance','activeSymbol','initialTime','clock','endTime','actions','strategyId','strategySnapshot','challenge','notes','reviews','checklist','viewTimeframe','chartType','createdAt','updatedAt'];
   return {...Object.fromEntries(keys.map(k=>[k,s[k]])),markets:s.markets.map(m=>Object.fromEntries(['symbol','interval','source','multiplier','fxMode','fee','slippage','candles','drawings','annotations','indicators'].map(k=>[k,m[k]])))};
  }
  function restore(raw){
