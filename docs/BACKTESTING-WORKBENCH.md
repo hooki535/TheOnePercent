@@ -104,3 +104,9 @@ The Costs tab offers USD commission per standard 100,000-unit lot (round turn), 
 ## Strategy analytics
 
 Each strategy card calculates win rate, closed-trade count and net P&L only from its assigned sessions. Market time replayed sums source-clock progress once per session, including the shared clock for portfolios; it is not wall-clock usage. View stats opens a strategy scope shared by overview, outcomes and calendar. Empty or unknown strategy/session scopes never fall back to all sessions. Session strategy snapshots remain unchanged when a strategy is edited.
+
+## Drawing workflow controls
+
+The rail supports persisted Stay in drawing mode for ordinary annotations, plus reversible lock/unlock-all. Text and position drawings return to the cursor to finish their note/order dialogs. Escape cancels an unfinished drawing and restores the crosshair. Lock state survives session backups; live orders remain separate.
+
+Selected Fibonacci retracements have a settings dialog for 2–20 unique ratios from -10 to 10, left/right extension, and optional prices. Validation precedes mutation, settings participate in undo/redo, and old archives retain seven default levels. Browser QA creates each of the 20 supported drawing types and checks repeat mode, locking, saved settings, reload, eight display timeframes, and mobile layout. This custom tool set is a subset of the reference chart toolkit.

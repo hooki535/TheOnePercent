@@ -1,4 +1,4 @@
-/* Official TradingView chart with TheOnePercent's saved drawing tools. */
+/* TradingView Lightweight Charts with TheOnePercent's saved drawing tools. */
 (() => {
  'use strict';
  window.BacktestChart=function(host,onCrosshair,onLevel,callbacks={}){
@@ -11,7 +11,7 @@
   const ma=chart.addSeries(L.LineSeries,{color:'#a390ff',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
   const extra=new Map();let markers=L.createSeriesMarkers?L.createSeriesMarkers(candles,[]):null;
   let previous=-1,sessionId=null,visible=0,lines=[],current=null,tool='cursor',first=null,selected=null,drag=null,frame=null,hover=null,magnet=false,hidden=false,suppressClick=false,lastMA=false;
-  let projection=null;
+  let projection=null,keepMode=false;
   const histories=new Map(),redos=new Map();
   const snapshot=()=>JSON.stringify({annotations:current?.annotations||[],drawings:current?.drawings||[]});
   function remember(value=snapshot()){if(!current)return;const key=current.id+':'+current.symbol;redos.set(key,[]);const h=histories.get(key)||[];if(h.at(-1)!==value)h.push(value);if(h.length>30)h.shift();histories.set(key,h);}
@@ -47,7 +47,7 @@
    else if(a.type==='text'){text(p.x,p.y,a.text||'Note',stroke,group);line(p.x,p.y+5,q.x,q.y);}
    else if(['measure','pricerange','daterange'].includes(a.type)){element('rect',{x:Math.min(p.x,q.x),y:Math.min(p.y,q.y),width:Math.max(1,Math.abs(p.x-q.x)),height:Math.max(1,Math.abs(p.y-q.y)),fill:stroke+'18',stroke,'stroke-dasharray':'4 3','pointer-events':'all'},group);text(Math.min(p.x,q.x)+5,Math.min(p.y,q.y)-8,(a.type==='daterange'?'':(a.points[1].p-a.points[0].p).toFixed(5)+' ('+((a.points[1].p/a.points[0].p-1)*100).toFixed(2)+'%)')+(a.type==='pricerange'?'':' · '+Math.round(Math.abs(a.points[1].i-a.points[0].i))+' source bars'),stroke,group);}
    else if(a.type==='rectangle')element('rect',{x:Math.min(p.x,q.x),y:Math.min(p.y,q.y),width:Math.max(1,Math.abs(q.x-p.x)),height:Math.max(1,Math.abs(q.y-p.y)),fill:stroke+'18',stroke,'stroke-width':a.width||2,'stroke-dasharray':a.dash==='dashed'?'7 4':a.dash==='dotted'?'2 4':'','pointer-events':'all'},group);
-   else if(a.type==='fib'){for(const ratio of [0,.236,.382,.5,.618,.786,1]){const y=q.y+(p.y-q.y)*ratio;line(p.x,y,q.x,y,stroke,'4 3');text(Math.min(p.x,q.x)+4,y-4,ratio.toFixed(3)+' · '+(a.points[1].p+(a.points[0].p-a.points[1].p)*ratio).toFixed(5),stroke,group);}}
+   else if(a.type==='fib'){for(const ratio of (a.levels||[0,.236,.382,.5,.618,.786,1])){const y=q.y+(p.y-q.y)*ratio;line(a.extendLeft?0:Math.min(p.x,q.x),y,a.extendRight?host.clientWidth-65:Math.max(p.x,q.x),y,stroke,a.dash==='solid'?'':a.dash==='dotted'?'2 4':'7 4');text((a.extendLeft?0:Math.min(p.x,q.x))+4,y-4,ratio.toFixed(3)+(a.showPrices===false?'':' · '+(a.points[1].p+(a.points[0].p-a.points[1].p)*ratio).toFixed(5)),stroke,group);}}
    else if(a.type==='long'||a.type==='short'){
     const entry=a.points[0].p,stop=a.points[1].p,target=entry+(a.type==='long'?1:-1)*Math.abs(entry-stop)*2,ty=candles.priceToCoordinate(a.target||target),left=Math.min(p.x,q.x),width=Math.max(25,Math.abs(q.x-p.x));if(ty==null)return;
     element('rect',{x:left,y:Math.min(p.y,ty),width,height:Math.max(1,Math.abs(p.y-ty)),fill:'#32cf9130',stroke:'#32cf9150','pointer-events':isLive?'none':'all'},group);
@@ -88,7 +88,7 @@
    svg.onpointerup=e=>{if(!drag)return;const edited=drag.changed;drag=null;suppressClick=edited;try{svg.releasePointerCapture(e.pointerId);}catch(_){}if(edited)callbacks.onChange?.();repaint();};
    svg.onclick=e=>{if(suppressClick){suppressClick=false;return;}if(drag)return;if(tool==='cursor'){if(e.target===svg){selected=null;callbacks.onSelect?.(null);repaint();}return;}const p=readPoint(e);if(!p)return;if(!first){first=p;hover=null;if(!['horizontal','horizontalray','vertical','crossline','text'].includes(tool)){repaint();return;}}const points=[first,tool==='text'?{i:p.i+8,p:p.p}:p];first=null;hover=null;
     if(tool==='long'||tool==='short'){const distance=Math.abs(points[0].p-points[1].p);points[1].p=points[0].p+(tool==='long'?-1:1)*distance;if(points[1].p<=0||points[0].p+(tool==='long'?2:-2)*distance<=0){repaint();return;}}
-    const a={id:'draw-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),type:tool,points,color:color('accent'),width:2};if(tool==='long'||tool==='short')a.target=points[0].p+(tool==='long'?1:-1)*2*Math.abs(points[0].p-points[1].p);if(tool==='text')a.text='Note';if((current.annotations||[]).length>=60)return;remember();current.annotations??=[];current.annotations.push(a);selected=a.id;tool='cursor';callbacks.onChange?.();callbacks.onDrawing?.(a);callbacks.onSelect?.(a);repaint();};
+    const a={id:'draw-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),type:tool,points,color:color('accent'),width:2};if(tool==='long'||tool==='short')a.target=points[0].p+(tool==='long'?1:-1)*2*Math.abs(points[0].p-points[1].p);if(tool==='text')a.text='Note';if((current.annotations||[]).length>=60)return;remember();current.annotations??=[];current.annotations.push(a);selected=a.id;tool=keepMode&&!['long','short','text'].includes(a.type)?a.type:'cursor';callbacks.onChange?.();callbacks.onDrawing?.(a);callbacks.onSelect?.(a);repaint();};
    ts.subscribeVisibleLogicalRangeChange?.(()=>{if(frame)cancelAnimationFrame(frame);frame=requestAnimationFrame(repaint);});
   }
   chart.subscribeCrosshairMove(p=>{const b=p.seriesData.get(candles);onCrosshair((b&&projection?.bars.find(row=>row.t===b.time))||current?.candles[current.cursor]);});
@@ -115,9 +115,13 @@
     previous=s.cursor;sessionId=identity;visible=barsVisible;onCrosshair(bars.at(-1));repaint();
    },
    tool(value){tool=value;first=null;hover=null;selected=null;suppressClick=false;callbacks.onSelect?.(null);repaint();},
+   keep(value){keepMode=!!value;return keepMode;},
+   currentTool(){return tool;},
+   allLocked(){return !!current?.annotations?.length&&current.annotations.every(a=>a.locked);},
+   lockAll(){if(!current?.annotations?.length)return false;const locked=!current.annotations.every(a=>a.locked);remember();current.annotations.forEach(a=>a.locked=locked);changed();callbacks.onSelect?.(this.selected());return locked;},
    magnet(){magnet=!magnet;return magnet;},
    hide(){hidden=!hidden;if(current)this.render(current,lastMA,visible);return hidden;},
-   updateSelected(changes){const a=current?.annotations?.find(a=>a.id===selected);if(!a)return false;remember();if(/^#[0-9a-f]{6}$/i.test(changes.color))a.color=changes.color;if([1,2,3,4].includes(changes.width))a.width=changes.width;if(['solid','dashed','dotted'].includes(changes.dash))a.dash=changes.dash;if(typeof changes.hidden==='boolean')a.hidden=changes.hidden;if(typeof changes.locked==='boolean')a.locked=changes.locked;if(typeof changes.text==='string')a.text=changes.text.slice(0,200);changed();callbacks.onSelect?.(a);return true;},
+   updateSelected(changes){const a=current?.annotations?.find(a=>a.id===selected);if(!a)return false;const levels=changes.levels===undefined?null:window.BacktestEngine.cleanFibLevels(changes.levels);remember();if(levels&&a.type==='fib')a.levels=levels;for(const k of ['extendLeft','extendRight','showPrices'])if(typeof changes[k]==='boolean')a[k]=changes[k];if(/^#[0-9a-f]{6}$/i.test(changes.color))a.color=changes.color;if([1,2,3,4].includes(changes.width))a.width=changes.width;if(['solid','dashed','dotted'].includes(changes.dash))a.dash=changes.dash;if(typeof changes.hidden==='boolean')a.hidden=changes.hidden;if(typeof changes.locked==='boolean')a.locked=changes.locked;if(typeof changes.text==='string')a.text=changes.text.slice(0,200);changed();callbacks.onSelect?.(a);return true;},
    selected(){return current?.annotations?.find(a=>a.id===selected)||null;},
    clear(){if(!current)return;remember();current.annotations=[];current.drawings=[];selected=null;callbacks.onSelect?.(null);changed();},
    deleteSelected(){if(!selected||!current)return false;remember();current.annotations=current.annotations.filter(a=>a.id!==selected);selected=null;callbacks.onSelect?.(null);changed();return true;},
