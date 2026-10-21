@@ -11,6 +11,7 @@
   <script src="{{ url_for('static', filename='assets/market-config.js') }}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='assets/shell.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='assets/components.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='assets/backtesting.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/backtesting-reference.css') }}?v=reference2">
 </head>
 <body data-page="backtesting" data-depth="0" data-shell="nav">
   <div class="bt-layout">
@@ -33,13 +34,14 @@
   </div>
   <dialog id="bt-dialog" class="bt-dialog" aria-labelledby="bt-dialog-title"><div class="bt-dialog-body" id="bt-dialog-body"></div></dialog>
   <div id="bt-toast" class="bt-toast" role="status" aria-live="polite" hidden></div>
-  <script src="{{ url_for('static', filename='assets/backtest-engine.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/backtest-engine.js') }}?v=reference2"></script>
   <script src="{{ url_for('static', filename='assets/backtest-lab.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/backtest-workspace.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/backtest-workspace.js') }}?v=reference2"></script>
   <script src="{{ url_for('static', filename='assets/vendor/lightweight-charts.standalone.production.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/backtest-chart.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/backtest-chart.js') }}?v=reference2"></script>
+  <script src="{{ url_for('static', filename='assets/backtest-tools.js') }}?v=reference2"></script>
   <script src="{{ url_for('static', filename='assets/backtest-sync.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/backtesting.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/backtesting.js') }}?v=reference2"></script>
   <script src="{{ url_for('static', filename='assets/shell.js') }}"></script>
 </body>
 </html>

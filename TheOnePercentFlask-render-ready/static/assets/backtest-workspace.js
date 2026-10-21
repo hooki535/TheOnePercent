@@ -6,7 +6,7 @@
  const balance=s=>s.startBalance+s.markets.reduce((n,m)=>n+m.balance-m.startBalance,0);
  const finished=s=>multi(s)?!s.markets.some(m=>m.cursor<m.candles.length-1&&m.candles[m.cursor+1].t<=s.endTime):s.cursor===s.candles.length-1;
  function decorate(s){
-  for(const key of ['symbol','interval','candles','cursor','initialCursor','position','pending','multiplier','fee','slippage','drawings','annotations','indicators','notice'])Object.defineProperty(s,key,{enumerable:true,configurable:true,get:()=>active(s)[key],set:v=>active(s)[key]=v});
+  for(const key of ['symbol','interval','candles','cursor','initialCursor','position','pending','multiplier','fxMode','fee','slippage','drawings','annotations','indicators','notice'])Object.defineProperty(s,key,{enumerable:true,configurable:true,get:()=>active(s)[key],set:v=>active(s)[key]=v});
   Object.defineProperty(s,'balance',{enumerable:true,get:()=>balance(s)});
   Object.defineProperty(s,'source',{enumerable:true,get:()=>active(s).source});
   Object.defineProperty(s,'trades',{enumerable:true,get:()=>s.markets.flatMap(m=>m.trades.map(t=>({...t,symbol:m.symbol}))).sort((a,b)=>a.exitTime-b.exitTime||a.symbol.localeCompare(b.symbol))});
@@ -41,7 +41,7 @@
  function snapshot(s){
   if(!multi(s))return B.snapshot(s);
   const keys=['kind','id','name','description','startBalance','activeSymbol','initialTime','clock','endTime','actions','strategyId','strategySnapshot','challenge','notes','reviews','checklist','createdAt','updatedAt'];
-  return {...Object.fromEntries(keys.map(k=>[k,s[k]])),markets:s.markets.map(m=>Object.fromEntries(['symbol','interval','source','multiplier','fee','slippage','candles','drawings','annotations','indicators'].map(k=>[k,m[k]])))};
+  return {...Object.fromEntries(keys.map(k=>[k,s[k]])),markets:s.markets.map(m=>Object.fromEntries(['symbol','interval','source','multiplier','fxMode','fee','slippage','candles','drawings','annotations','indicators'].map(k=>[k,m[k]])))};
  }
  function restore(raw){
   if(raw?.kind!=='portfolio')return B.restore(raw);

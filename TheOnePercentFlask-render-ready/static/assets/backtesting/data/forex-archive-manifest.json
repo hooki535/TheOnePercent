@@ -1,0 +1,86 @@
+{
+  "title": "Major Forex Pairs: 1-Minute OHLC (90 Days)",
+  "publisher": "SiftingIO",
+  "url": "https://www.kaggle.com/datasets/siftingio/major-forex-pairs-1-minute-ohlc-90-days",
+  "publisherURL": "https://sifting.io/product/forex",
+  "license": "CC-BY-SA-4.0",
+  "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "retrieved": "2026-10-20",
+  "sourceZipSha256": "92fb9e82572c35548d1537a395898ebd1d2da8d7d7b401ac26c99ab1c4ee437d",
+  "sourceCSVsha256": "0358747373b329956bdcb268aa7766b4a39a67ac912003abde3bafec388d9ff0",
+  "sourceRows": 643744,
+  "timestampNote": "Original one-minute bar-open timestamps are UTC. Output timestamp is the start of each UTC hour.",
+  "transform": "Aggregate real minute bars by symbol and UTC hour: first open, maximum high, minimum low, last close. Market closures and missing source minutes are not filled. No generated prices. Adapted archives retain CC BY-SA 4.0.",
+  "datasets": [
+    {
+      "symbol": "EURUSD",
+      "file": "EURUSD_H1_2026_SIFTINGIO.csv",
+      "bars": 1548,
+      "start": "2026-05-19T00:00:00Z",
+      "end": "2026-08-17T23:00:00Z",
+      "minPrice": 1.13245,
+      "maxPrice": 1.16857,
+      "sha256": "9a9c10bc3a8ad6ab08f7bca70d753d57b2eb568ccc51db0868fd0d52a2e1d351"
+    },
+    {
+      "symbol": "GBPUSD",
+      "file": "GBPUSD_H1_2026_SIFTINGIO.csv",
+      "bars": 1548,
+      "start": "2026-05-19T00:00:00Z",
+      "end": "2026-08-17T23:00:00Z",
+      "minPrice": 1.31398,
+      "maxPrice": 1.35714,
+      "sha256": "2454457cf9f3dab92156085f44ac990fd2d0c553fa67236c0be212daaf3e7589"
+    },
+    {
+      "symbol": "USDJPY",
+      "file": "USDJPY_H1_2026_SIFTINGIO.csv",
+      "bars": 1548,
+      "start": "2026-05-19T00:00:00Z",
+      "end": "2026-08-17T23:00:00Z",
+      "minPrice": 155.233,
+      "maxPrice": 163.989,
+      "sha256": "4542f5a676753380c5efed5d3b6fc6caa6b07228886865d673329e15d6e2fd20"
+    },
+    {
+      "symbol": "USDCAD",
+      "file": "USDCAD_H1_2026_SIFTINGIO.csv",
+      "bars": 1549,
+      "start": "2026-05-19T00:00:00Z",
+      "end": "2026-08-17T23:00:00Z",
+      "minPrice": 1.37239,
+      "maxPrice": 1.42477,
+      "sha256": "b40286f4b76776c550a03caedb24f890aaa1f6cf17c78d05f5ffb0f76c4b2ccd"
+    },
+    {
+      "symbol": "USDCHF",
+      "file": "USDCHF_H1_2026_SIFTINGIO.csv",
+      "bars": 1548,
+      "start": "2026-05-19T00:00:00Z",
+      "end": "2026-08-17T23:00:00Z",
+      "minPrice": 0.7795,
+      "maxPrice": 0.82069,
+      "sha256": "8d98e1f67f750b5898ff03bf820b891574c022c467b61211428d5c56c844f6cd"
+    },
+    {
+      "symbol": "AUDUSD",
+      "file": "AUDUSD_H1_2026_SIFTINGIO.csv",
+      "bars": 1548,
+      "start": "2026-05-19T00:00:00Z",
+      "end": "2026-08-17T23:00:00Z",
+      "minPrice": 0.68648,
+      "maxPrice": 0.72001,
+      "sha256": "1e481fbf107c0d5aa77e226e67e1840552beae99ea24c25e987c5cf99e22196a"
+    },
+    {
+      "symbol": "NZDUSD",
+      "file": "NZDUSD_H1_2026_SIFTINGIO.csv",
+      "bars": 1545,
+      "start": "2026-05-19T00:00:00Z",
+      "end": "2026-08-17T23:00:00Z",
+      "minPrice": 0.56259,
+      "maxPrice": 0.59939,
+      "sha256": "c834ca1d0a1980cd9f955c82af756f99f1d517cc4b6618cfa896523c7e25e237"
+    }
+  ]
+}

@@ -1,5 +1,11 @@
 # Backtesting workspace
 
+The default pair picker offers EURUSD, GBPUSD, USDJPY, USDCAD, USDCHF, AUDUSD and NZDUSD. Select up to five for one shared replay account. Each bundled archive contains roughly 1,550 UTC hourly candles from 19 May to 17 August 2026. These are historical samples, not a live feed. Older project archives and CSV/shared-provider imports remain under **Data source & import**.
+
+The hourly files aggregate SiftingIO minute OHLC, retaining CC BY-SA 4.0. Attribution, source hashes, dates and the aggregation method are in `assets/backtesting/data/SIFTINGIO-NOTICE.md` and `forex-archive-manifest.json`. No prices are generated or filled across missing periods. USD-base pairs convert mark-to-market at the current close and realized proceeds at the actual exit price; older sessions preserve their fixed conversion model.
+
+The drawing rail groups lines, Fibonacci, shapes, annotations and long/short positions. Select a drawing to change its color, width or lock state. Positions have separate entry, stop and target handles. Undo restores deleted or cleared drawings; the draggable replay controls support arrow keys on their grip. Drawings and position targets persist with sessions.
+
 For the reference-inspired dashboard, multi-pair shared account, drawings, reviews, practice challenges and analytics, see [BACKTESTING-WORKBENCH.md](BACKTESTING-WORKBENCH.md).
 
 For the TradingView chart and all available MT5 forex pairs, see [BACKTESTING-TRADINGVIEW.md](BACKTESTING-TRADINGVIEW.md).

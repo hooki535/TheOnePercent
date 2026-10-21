@@ -11,7 +11,7 @@
   const id = () => 'bt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
   const strategyCopy = s => s && typeof s === 'object' ? {...Object.fromEntries(['name','description','setup','entry','exit','risk'].map(k=>[k,String(s[k] || '').slice(0,2000)])),color:/^#[0-9a-f]{6}$/i.test(s.color)?s.color:'#4385ff',checklist:Array.isArray(s.checklist)?s.checklist.map(x=>String(x).slice(0,200)).filter(Boolean).slice(0,20):[]} : null;
   const tradeKey=t=>[t.symbol || '',t.entryTime,t.exitTime,t.side].join(':');
-  function cleanAnnotations(rows){return Array.isArray(rows)?rows.filter(a=>a && ['trend','ray','rectangle','fib','long','short'].includes(a.type) && Array.isArray(a.points) && a.points.length===2 && a.points.every(p=>finite(p.i)&&Math.abs(p.i)<20000&&finite(p.p)&&p.p>0)).slice(0,60).map(a=>({id:/^[\w-]{1,100}$/.test(a.id)?a.id:id(),type:a.type,points:a.points.map(p=>({i:p.i,p:p.p})),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#f8c344'})):[];}
+  function cleanAnnotations(rows){return Array.isArray(rows)?rows.filter(a=>a && ['trend','ray','extended','arrow','horizontal','vertical','rectangle','ellipse','fib','long','short','text','measure'].includes(a.type) && Array.isArray(a.points) && a.points.length===2 && a.points.every(p=>finite(p.i)&&Math.abs(p.i)<20000&&finite(p.p)&&p.p>0)).slice(0,60).map(a=>({id:/^[\w-]{1,100}$/.test(a.id)?a.id:id(),type:a.type,points:a.points.map(p=>({i:p.i,p:p.p})),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#f8c344',width:[1,2,3,4].includes(a.width)?a.width:2,locked:!!a.locked,text:String(a.text||'Note').slice(0,200),...(finite(a.target)&&a.target>0?{target:a.target}:{})})):[];}
   function cleanChallenge(c){if(!c || typeof c!=='object')return null;const rule={name:String(c.name || 'Practice challenge').slice(0,80),targetPct:Number(c.targetPct),dailyLossPct:Number(c.dailyLossPct),maxLossPct:Number(c.maxLossPct),minDays:Number(c.minDays),trailing:!!c.trailing};if(![rule.targetPct,rule.dailyLossPct,rule.maxLossPct].every(n=>finite(n)&&n>0&&n<=100)||!Number.isInteger(rule.minDays)||rule.minDays<1||rule.minDays>100)throw Error('Invalid practice challenge rules.');return rule;}
   function challengeState(s,marked=unrealized(s)){
     if(!s.challenge)return null;const r=s.challenge;let peak=s.startBalance,day=null,dayBase=s.startBalance,last=s.startBalance,failed=null;
@@ -73,10 +73,11 @@
   }
   function createSession(options, bars) {
     const candles = validateBars(bars);
+    const fxMode=options.fxMode===undefined?'fixed':options.fxMode;if(!['fixed','inverse'].includes(fxMode))throw Error('Unsupported USD conversion model.');if(fxMode==='inverse'&&!/^USD[A-Z]{3}$/.test(String(options.symbol||'')))throw Error('Inverse conversion requires a USD-base forex pair.');
     const balance = Number(options.startBalance), multiplier = Number(options.multiplier), fee = Number(options.fee || 0), slippage = Number(options.slippage || 0);
     if (!finite(balance) || balance <= 0 || balance > 1e9 || !finite(multiplier) || multiplier <= 0 || multiplier > 1e9 || !finite(fee) || fee < 0 || !finite(slippage) || slippage < 0) throw Error('Check balance, cash multiplier, fees and slippage.');
     const cursor = Math.max(29, Math.min(candles.length-2, Number.isInteger(options.cursor) ? options.cursor : Math.min(99, Math.max(29,candles.length-31))));
-    return {id:id(), name:String(options.name || options.symbol || 'Replay').slice(0,80), symbol:String(options.symbol || 'CUSTOM').slice(0,64), interval:String(options.interval || 'CSV').slice(0,12), source:String(options.source || 'User-imported CSV').slice(0,180), strategyId:String(options.strategyId || ''), strategySnapshot:strategyCopy(options.strategySnapshot), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(), startBalance:balance, balance, multiplier, fee, slippage, candles, cursor, initialCursor:cursor, position:null, pending:null, trades:[], equity:[{t:candles[cursor].t, value:balance}], notes:'',description:String(options.description||'').slice(0,2000),challenge:cleanChallenge(options.challenge),annotations:[],reviews:{},indicators:[],checklist:[],drawings:[],actions:[],notice:''};
+    return {id:id(), name:String(options.name || options.symbol || 'Replay').slice(0,80), symbol:String(options.symbol || 'CUSTOM').slice(0,64), interval:String(options.interval || 'CSV').slice(0,12), source:String(options.source || 'User-imported CSV').slice(0,180), strategyId:String(options.strategyId || ''), strategySnapshot:strategyCopy(options.strategySnapshot), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(), startBalance:balance, balance, multiplier, fxMode, fee, slippage, candles, cursor, initialCursor:cursor, position:null, pending:null, trades:[], equity:[{t:candles[cursor].t, value:balance}], notes:'',description:String(options.description||'').slice(0,2000),challenge:cleanChallenge(options.challenge),annotations:[],reviews:{},indicators:[],checklist:[],drawings:[],actions:[],notice:''};
   }
   function placeOrder(s, order, availableEquity) {
     if(s.challenge && challengeState(s).status!=='active')throw Error('This practice challenge has finished. Start a new attempt.');
@@ -93,16 +94,19 @@
     s.actions.push({cursor:s.cursor, kind:'order', order:{side,type,quantity,stop,target,entry}});
     s.notice = 'Order queued. First eligible on the next candle.';
   }
+  function cashMultiplier(s, price=s.candles[s.cursor].c) {
+    if(s.fxMode==='inverse'){if(!finite(price)||price<=0)throw Error('Invalid conversion price.');return 1/price;}return s.multiplier;
+  }
   function unrealized(s) {
     if (!s.position) return 0;
     const p = s.position, sign = p.side === 'long' ? 1 : -1;
-    return sign * (s.candles[s.cursor].c-p.entry)*p.quantity*s.multiplier;
+    return sign * (s.candles[s.cursor].c-p.entry)*p.quantity*cashMultiplier(s);
   }
   function closePosition(s, price, time, reason) {
     const p = s.position; if (!p) return;
     const sign = p.side === 'long' ? 1 : -1;
     const exit = Math.max(Number.EPSILON, price-(reason === 'Target' ? 0 : sign*s.slippage));
-    const gross = sign*(exit-p.entry)*p.quantity*s.multiplier;
+    const gross = sign*(exit-p.entry)*p.quantity*cashMultiplier(s,exit);
     const exitFee = s.fee*p.quantity;
     const pnl = gross - 2*exitFee;
     s.balance += gross - exitFee; // Entry fee was deducted at fill.
@@ -146,7 +150,7 @@
         if (!(fill > 0 && (long ? p.stop < fill && fill < p.target : p.target < fill && fill < p.stop))) {
           s.pending=null; s.notice='Order rejected: the opening gap/slippage crossed the stop or target.';
         } else {
-          s.position={...p, entry:fill, entryTime:bar.t, riskCash:Math.abs(fill-p.stop)*p.quantity*s.multiplier+2*s.fee*p.quantity};
+          s.position={...p, entry:fill, entryTime:bar.t, riskCash:Math.abs(fill-p.stop)*p.quantity*cashMultiplier(s,p.stop)+2*s.fee*p.quantity};
           s.pending=null; s.balance -= s.fee*p.quantity;
           // With an intrabar entry, a target touch may have preceded the fill.
           // Do not award it; stops still apply conservatively.
@@ -174,7 +178,7 @@
     s.pending=null; s.actions.push({cursor:s.cursor,kind:'cancel'}); s.notice='Pending order cancelled.';
   }
   function snapshot(s) {
-    const keys=['id','name','symbol','interval','source','strategyId','strategySnapshot','createdAt','updatedAt','startBalance','multiplier','fee','slippage','candles','initialCursor','cursor','actions','notes','drawings','description','challenge','annotations','reviews','indicators','checklist'];
+    const keys=['id','name','symbol','interval','source','strategyId','strategySnapshot','createdAt','updatedAt','startBalance','multiplier','fxMode','fee','slippage','candles','initialCursor','cursor','actions','notes','drawings','description','challenge','annotations','reviews','indicators','checklist'];
     return Object.fromEntries(keys.map(k=>[k,s[k]]));
   }
   function restore(raw) {
@@ -211,5 +215,5 @@
     const equity=s.balance+unrealized(s);
     return {trades:s.trades.length,wins:wins.length,losses:losses.length,breakeven:s.trades.length-wins.length-losses.length,winRate:s.trades.length ? wins.length/s.trades.length*100 : null,profitFactor:grossLoss>0 ? grossWin/grossLoss : grossWin>0 ? Infinity : null,drawdown,realized,unrealized:unrealized(s),equity,returnPct:(equity/s.startBalance-1)*100,expectancy:s.trades.length ? realized/s.trades.length : null};
   }
-  return {id,tradeKey,cleanAnnotations,cleanChallenge,challengeState,validateBars,parseCSV,createSession,placeOrder,step,requestClose,cancelOrder,snapshot,restore,unrealized,metrics};
+  return {id,tradeKey,cashMultiplier,cleanAnnotations,cleanChallenge,challengeState,validateBars,parseCSV,createSession,placeOrder,step,requestClose,cancelOrder,snapshot,restore,unrealized,metrics};
 });
