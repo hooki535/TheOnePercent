@@ -37,6 +37,40 @@ class SharedBacktestingTests(unittest.TestCase):
         with patch.dict(os.environ, {"TWELVE_DATA_EXTERNAL_DISPLAY_APPROVED": "false"}):
             self.assertFalse(history.enabled())
 
+    @patch.object(history, "forex_catalog", return_value=[{"symbol": "EUR/USD"}])
+    @patch.object(history, "_get_json")
+    def test_old_start_is_forwarded_and_cache_isolated(self, fetch, _):
+        fetch.return_value = self.payload(100)
+        base = "/api/backtesting/candles?symbol=EUR/USD&interval=1H&limit=100&end=2024-01-01T00:00"
+        first = client.get(base + "&start=2023-11-14T00:00")
+        self.assertEqual(first.status_code, 200, first.text)
+        self.assertIn("start_date=2023-11-14+00%3A00%3A00", fetch.call_args_list[0].args[0])
+        second = client.get(base + "&start=2023-11-15T00:00")
+        self.assertEqual(second.status_code, 200, second.text)
+        self.assertEqual(fetch.call_count, 4)
+        boundary = datetime(2023,11,15,tzinfo=timezone.utc).timestamp()
+        self.assertLess(second.json()["candles"][0]["t"], boundary)
+        self.assertGreater(second.json()["candles"][-1]["t"], boundary)
+        for date in ("2024-02-30T00:00", "2025-01-01T00:00"):
+            self.assertEqual(client.get(base + "&start=" + date).status_code, 422)
+
+    @patch.object(history, "forex_catalog", return_value=[{"symbol": "EUR/USD"}])
+    @patch.object(history, "_get_json")
+    def test_coverage_is_interval_specific_cached_and_validated(self, fetch, _):
+        fetch.return_value = {"datetime": "2019-09-20 00:00:00"}
+        url = "/api/backtesting/coverage?symbol=EUR/USD&interval=1m"
+        response = client.get(url)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["earliest"], "2019-09-20T00:00:00+00:00")
+        self.assertNotIn("not-a-real-key", response.text)
+        client.get(url)
+        self.assertEqual(fetch.call_count, 1)
+        client.get(url.replace("1m", "1H"))
+        self.assertEqual(fetch.call_count, 2)
+        history._cache.clear()
+        fetch.return_value = {"datetime": "invalid"}
+        self.assertEqual(client.get(url).status_code, 502)
+
     @patch.object(history, "_get_json")
     def test_catalog_search_pagination_and_cache(self, fetch):
         fetch.return_value = {"data": [{"symbol": "EUR/USD"}, {"symbol": "GBP/JPY"}, {"symbol": "BAD"}]}

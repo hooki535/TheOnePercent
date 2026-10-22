@@ -1,6 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict'),F=require('../assets/backtest-frames.js'),E=require('../assets/backtest-workspace.js'),fs=require('node:fs'),crypto=require('node:crypto'),path=require('node:path');
 const start=Date.UTC(2026,7,11)/1000;
 const bars=Array.from({length:200},(_,i)=>({t:start+i*60,o:100+i,h:102+i,l:99+i,c:101+i}));
+test('old history requests retain the chosen UTC date for server-side context loading',()=>{
+ assert.equal(F.historyStart('', '1m'),'');
+ assert.equal(F.historyStart('2022-06-15T12:00','1m'),'2022-06-15T12:00');
+ assert.equal(F.historyStart('2022-06-15T12:00','1H'),'2022-06-15T12:00');
+ assert.throws(()=>F.historyStart('invalid','1m'));
+});
 test('timeframes aggregate the revealed prefix and never consume a future high or close',()=>{
  const s={interval:'1m',candles:bars,cursor:7},p=F.project(s,'5m');assert.equal(p.bars.length,2);assert.deepEqual(p.bars[0],{t:start,o:100,h:106,l:99,c:105});assert.deepEqual(p.bars[1],{t:start+300,o:105,h:109,l:104,c:108});
  const changed=bars.map((b,i)=>i>7?{...b,h:999999,c:999999}:b);assert.deepEqual(F.project({...s,candles:changed},'5m').bars,p.bars);

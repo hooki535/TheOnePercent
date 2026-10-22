@@ -16,5 +16,6 @@
   function toBase(i){const k=Math.floor(i);if(k<0)return starts[0]+i*ratio;if(k>=last)return starts[last]+(i-last)*ratio;return starts[k]+(i-k)*(starts[k+1]-starts[k]);}
   return {bars,toDisplay,toBase,bucket:t=>bucket(t,key)};
  }
- return {choices,seconds,base,available,selected,bucket,project};
+ function historyStart(start,interval){if(!start)return '';const t=Date.parse(start+'Z');if(!Number.isFinite(t)||!seconds(interval))throw Error('Choose a valid history start and interval.');return new Date(t).toISOString().slice(0,16);}
+ return {choices,seconds,base,available,selected,bucket,project,historyStart};
 });

@@ -112,10 +112,35 @@ def catalog(q: str = Query("", max_length=80), limit: int = Query(100, ge=1, le=
             "message": "Available history depends on provider coverage.", "intervals": list(INTERVALS)}
 
 
+@router.get("/coverage")
+def coverage(symbol: str = Query(..., min_length=7, max_length=7),
+             interval: str = Query("1H", max_length=8)):
+    if not enabled():
+        raise HTTPException(503, "Shared forex history is not configured. Included archives have their own date ranges.")
+    if not re.fullmatch(r"[A-Z]{3}/[A-Z]{3}", symbol) or interval not in INTERVALS:
+        raise HTTPException(422, "Choose a supported forex pair and interval.")
+    if not any(row["symbol"] == symbol for row in forex_catalog()):
+        raise HTTPException(404, "This pair is not listed by the configured provider.")
+
+    def fetch():
+        payload = provider_json("earliest_timestamp", {"symbol": symbol,
+                                "interval": INTERVALS[interval][0], "timezone": "UTC"})
+        try:
+            earliest = datetime.fromisoformat(payload["datetime"]).replace(tzinfo=timezone.utc)
+            if not 0 <= earliest.timestamp() <= time.time():
+                raise ValueError("invalid coverage date")
+        except (KeyError, TypeError, ValueError, OverflowError):
+            raise HTTPException(502, "Provider returned an invalid history coverage date.") from None
+        return {"symbol": symbol, "interval": interval, "earliest": earliest.isoformat(),
+                "provider": "twelve_data", "message": "Availability depends on provider access; gaps may exist."}
+
+    return cached(("coverage", symbol, interval), 86400, fetch)
+
+
 @router.get("/candles")
 def candles(response: Response, symbol: str = Query(..., min_length=7, max_length=7),
             interval: str = Query("1H", max_length=8), limit: int = Query(1000, ge=60, le=5000),
-            end: str = Query("", max_length=20)):
+            end: str = Query("", max_length=20), start: str = Query("", max_length=20)):
     if not enabled():
         raise HTTPException(503, "Shared forex history is not configured. Included sample archives remain available.")
     if not re.fullmatch(r"[A-Z]{3}/[A-Z]{3}", symbol) or interval not in INTERVALS:
@@ -132,17 +157,38 @@ def candles(response: Response, symbol: str = Query(..., min_length=7, max_lengt
             raise HTTPException(422, "History end must be a past UTC date.")
     else:
         cutoff = now // 60 * 60
+    beginning = None
+    if start:
+        try:
+            beginning = int(datetime.strptime(start, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc).timestamp())
+        except ValueError:
+            raise HTTPException(422, "History start must be YYYY-MM-DDTHH:MM in UTC.") from None
+        if beginning < 0 or beginning >= cutoff:
+            raise HTTPException(422, "History start must precede the history end.")
     provider_interval, seconds = INTERVALS[interval]
 
     def fetch():
-        payload = provider_json("time_series", {"symbol": symbol, "interval": provider_interval,
+        params = {"symbol": symbol, "interval": provider_interval,
             "outputsize": limit, "timezone": "UTC", "order": "ASC",
-            "end_date": datetime.fromtimestamp(cutoff, timezone.utc).strftime("%Y-%m-%d %H:%M:%S")})
+            "end_date": datetime.fromtimestamp(cutoff, timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}
+        if beginning is not None:
+            params["start_date"] = datetime.fromtimestamp(beginning, timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            params["outputsize"] = limit - min(100, limit // 2)
+        payload = provider_json("time_series", params)
         if payload.get("meta", {}).get("symbol") != symbol or not isinstance(payload.get("values"), list):
             raise HTTPException(502, "Provider returned an unexpected pair or history format.")
         bars = []
+        pages = [(payload, False)]
+        if beginning is not None:
+            context = provider_json("time_series", {"symbol": symbol, "interval": provider_interval,
+                "outputsize": min(100, limit // 2), "timezone": "UTC", "order": "DESC",
+                "end_date": datetime.fromtimestamp(beginning, timezone.utc).strftime("%Y-%m-%d %H:%M:%S")})
+            if context.get("meta", {}).get("symbol") != symbol or not isinstance(context.get("values"), list):
+                raise HTTPException(502, "Provider returned an unexpected context pair or format.")
+            pages.insert(0, (context, True))
         try:
-            for raw in payload["values"]:
+            for page, is_context in pages:
+              for raw in page["values"]:
                 timestamp = datetime.fromisoformat(raw["datetime"]).replace(tzinfo=timezone.utc)
                 t = int(timestamp.timestamp())
                 o, h, low, c = (float(raw[k]) for k in ("open", "high", "low", "close"))
@@ -151,7 +197,8 @@ def candles(response: Response, symbol: str = Query(..., min_length=7, max_lengt
                 # Conservative interval boundary: never return a forming/future bar.
                 if t < 0:
                     raise ValueError("invalid timestamp")
-                if t + seconds <= min(now, cutoff):
+                in_window = beginning is None or (t < beginning if is_context else t >= beginning)
+                if t + seconds <= min(now, cutoff) and in_window:
                     bars.append({"t": t, "o": o, "h": h, "l": low, "c": c})
             bars.sort(key=lambda b: b["t"])
             if any(a["t"] >= b["t"] for a, b in zip(bars, bars[1:])):
@@ -164,6 +211,6 @@ def candles(response: Response, symbol: str = Query(..., min_length=7, max_lengt
                 "provider": "twelve_data", "closed_only": True, "candles": bars,
                 "retrieved_at": datetime.now(timezone.utc).isoformat()}
 
-    result = cached((symbol, interval, limit, cutoff), 900, fetch)
+    result = cached((symbol, interval, limit, cutoff, beginning), 900, fetch)
     response.headers["Cache-Control"] = "public, max-age=60"
     return result
