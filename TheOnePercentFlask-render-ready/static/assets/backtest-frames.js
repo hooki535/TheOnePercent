@@ -17,5 +17,11 @@
   return {bars,toDisplay,toBase,bucket:t=>bucket(t,key)};
  }
  function historyStart(start,interval){if(!start)return '';const t=Date.parse(start+'Z');if(!Number.isFinite(t)||!seconds(interval))throw Error('Choose a valid history start and interval.');return new Date(t).toISOString().slice(0,16);}
- return {choices,seconds,base,available,selected,bucket,project,historyStart};
+ function coverage(s,key=selected(s)){
+  function count(frame){let n=0,last;for(let i=0;i<=s.cursor;i++){const t=bucket(s.candles[i].t,frame);if(t!==last){n++;last=t;}}return n;}
+  const candles=count(key),candidates=choices.filter(([frame,n])=>available(s,frame)&&n<(seconds(key)||base(s))).reverse();
+  const recommended=candles<30?(candidates.find(([frame])=>count(frame)>=30)?.[0]||null):null;
+  return {candles,recommended,first:s.candles[0].t,revealed:s.candles[s.cursor].t,last:s.candles.at(-1).t};
+ }
+ return {choices,seconds,base,available,selected,bucket,project,historyStart,coverage};
 });

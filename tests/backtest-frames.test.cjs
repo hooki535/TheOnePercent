@@ -18,6 +18,12 @@ test('source and aggregated drawing coordinates round trip without moving their 
 test('UTC weeks start Monday and months start on their actual calendar boundary',()=>{
  assert.equal(new Date(F.bucket(Date.UTC(2026,7,16)/1000,'1W')*1000).toISOString(),'2026-08-10T00:00:00.000Z');assert.equal(new Date(F.bucket(start,'1M')*1000).toISOString(),'2026-08-01T00:00:00.000Z');
 });
+test('sparse daily charts suggest a useful revealed timeframe without revealing future prices',()=>{
+ const extended=Array.from({length:7000},(_,i)=>({t:start+i*60,o:1,h:2,l:.5,c:1})),s={interval:'1m',candles:extended,cursor:1443,viewTimeframe:'1D'};
+ const c=F.coverage(s);assert.equal(c.candles,2);assert.equal(c.recommended,'45m');assert.equal(c.revealed,extended[1443].t);
+ const futureChanged=extended.map((b,i)=>i>s.cursor?{...b,h:999999}:b);assert.deepEqual(F.coverage({...s,candles:futureChanged}),c);
+ assert.equal(F.coverage({...s,viewTimeframe:'1m'}).recommended,null);assert.equal(F.coverage({...s,cursor:0}).recommended,null);
+});
 test('timeframe preferences and channel settings survive single and portfolio backups',()=>{
  const options={symbol:'EURUSD',interval:'1m',startBalance:10000,multiplier:1,fee:0,slippage:0};const s=E.createSession(options,bars);s.viewTimeframe='15m';s.annotations=[{id:'channel',type:'channel',points:[{i:10,p:110},{i:20,p:120}],offset:4,dash:'dashed'}];const restored=E.restore(E.snapshot(s));assert.equal(restored.viewTimeframe,'15m');assert.equal(restored.annotations[0].offset,4);assert.equal(restored.annotations[0].dash,'dashed');
  const p=E.createPortfolio(options,[{symbol:'EURUSD',interval:'1m',candles:bars},{symbol:'GBPUSD',interval:'1m',candles:bars}]);p.viewTimeframe='4H';assert.equal(E.restore(E.snapshot(p)).viewTimeframe,'4H');
