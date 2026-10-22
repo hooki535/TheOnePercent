@@ -52,6 +52,10 @@
   function parseCSV(text) {
     if (text.length > 2500000) throw Error('CSV must be smaller than 2.5 MB.');
     const rows = csvRows(text.replace(/^\uFEFF/, ''));
+    return parseCSVRecords(rows);
+  }
+  function parseCSVRecords(records, minimum = 60) {
+    const rows=records.slice();
     if (!rows.length) throw Error('The CSV is empty.');
     const header = rows.shift().map(v => v.trim().toLowerCase());
     const index = names => header.findIndex(v => names.includes(v));
@@ -71,7 +75,7 @@
       const values = columns.slice(1).map(j => r[j] == null || !r[j].trim() ? NaN : Number(r[j]));
       return {t, o:values[0], h:values[1], l:values[2], c:values[3]};
     }).sort((a,b) => a.t-b.t);
-    return validateBars(bars);
+    return validateBars(bars, minimum);
   }
   function createSession(options, bars) {
     const candles = validateBars(bars);
@@ -217,5 +221,5 @@
     const equity=s.balance+unrealized(s);
     return {trades:s.trades.length,wins:wins.length,losses:losses.length,breakeven:s.trades.length-wins.length-losses.length,winRate:s.trades.length ? wins.length/s.trades.length*100 : null,profitFactor:grossLoss>0 ? grossWin/grossLoss : grossWin>0 ? Infinity : null,drawdown,realized,unrealized:unrealized(s),equity,returnPct:(equity/s.startBalance-1)*100,expectancy:s.trades.length ? realized/s.trades.length : null};
   }
-  return {id,tradeKey,cashMultiplier,cleanFibLevels,cleanAnnotations,cleanChallenge,challengeState,validateBars,parseCSV,createSession,placeOrder,step,requestClose,cancelOrder,snapshot,restore,unrealized,metrics};
+  return {id,tradeKey,cashMultiplier,cleanFibLevels,cleanAnnotations,cleanChallenge,challengeState,validateBars,parseCSV,parseCSVRecords,createSession,placeOrder,step,requestClose,cancelOrder,snapshot,restore,unrealized,metrics};
 });
