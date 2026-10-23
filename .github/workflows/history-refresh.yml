@@ -1,0 +1,36 @@
+name: Daily market history refresh
+on:
+  schedule:
+    - cron: '20 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/history-refresh.yml'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: market-history-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify history conversion and upload validation
+        run: python -m unittest discover -s tests -p 'test_*history*.py'
+      - name: Check published source archives and upload verified candles
+        run: python tools/refresh-market-history.py --out "$RUNNER_TEMP/history-refresh"
+      - name: Keep the freshness and error report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-refresh-report
+          path: ${{ runner.temp }}/history-refresh/refresh-report.json
+          retention-days: 7
+          if-no-files-found: ignore
