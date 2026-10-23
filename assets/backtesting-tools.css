@@ -1,0 +1,48 @@
+/* TradingView-style drawing controls: independent of dashboard button styles. */
+.bt-chart-stage{grid-template-columns:52px minmax(0,1fr)}
+.bt-drawing-rail{background:#131722;border-right:1px solid #2a2e39;padding:5px 0;gap:2px;color:#b2b5be;align-self:stretch;overflow:visible}
+.bt-drawing-rail [hidden]{display:none!important}
+.bt-drawing-rail .bt-draw-button{box-sizing:border-box;display:grid;place-items:center;width:38px;height:36px;padding:7px;margin:0;border:0;border-radius:4px;background:transparent;color:#b2b5be;cursor:pointer;flex-shrink:0}
+.bt-drawing-rail .bt-draw-button svg,.bt-tv-menu svg,.bt-tool-favorites svg{width:24px;height:24px;stroke-width:1.35;flex-shrink:0;pointer-events:none}
+.bt-drawing-rail .bt-draw-button:hover{background:#2a2e39;color:#f0f3fa}
+.bt-drawing-rail .bt-draw-button.active,.bt-drawing-rail .bt-draw-button[aria-pressed=true]{color:#2962ff;background:#2962ff17}
+.bt-drawing-rail button:focus-visible,.bt-tv-menu button:focus-visible,.bt-tool-favorites button:focus-visible{outline:2px solid #2962ff;outline-offset:-2px}
+.bt-drawing-rail hr{width:30px;height:1px;border:0;background:#2a2e39;margin:6px 0;flex-shrink:0}
+.bt-tv-split{position:relative;display:flex;width:46px;height:36px;margin:0;align-items:center;border-radius:4px}
+.bt-tv-split .bt-tv-primary{width:35px;height:36px;padding:6px}
+.bt-tv-expand{width:11px;height:34px;margin:0;padding:0;border:0;background:none;color:#787b86;border-radius:3px;display:grid;place-items:center;cursor:pointer}
+.bt-tv-expand svg{width:10px;height:10px;stroke-width:1.6;pointer-events:none}
+.bt-tv-split:hover{background:#2a2e39}
+.bt-tv-split:hover .bt-tv-primary{background:none}
+.bt-tv-expand:hover,.bt-tv-expand[aria-expanded=true]{background:#363a45;color:#f0f3fa}
+.bt-tv-split:has(.bt-tv-primary.active) .bt-tv-expand{color:#2962ff}
+.bt-draw-menu-panel.bt-tv-menu{position:fixed;z-index:150;width:316px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);box-sizing:border-box;overflow-y:auto;padding:6px 0;background:#1e222d;color:#d1d4dc;border:1px solid #363a45;border-radius:4px;box-shadow:0 4px 18px #0007;font:13px/1.4 Arial,Helvetica,sans-serif;scrollbar-width:thin;scrollbar-color:#434651 transparent}
+.bt-tv-menu>strong{display:block;margin:0;padding:10px 14px 8px;color:#9598a1;font-size:11px;font-weight:400;letter-spacing:.02em}
+.bt-tv-menu-row{display:flex;align-items:center;min-height:39px;padding:0 7px;gap:0}
+.bt-tv-menu-row:hover,.bt-tv-menu-row:focus-within{background:#2a2e39}
+.bt-tv-menu .bt-tv-menu-row>button{display:flex;align-items:center;gap:13px;min-width:0;min-height:39px;padding:6px 7px;border:0;border-radius:0;background:none;color:inherit;cursor:pointer;font:13px/1.35 Arial,Helvetica,sans-serif;text-align:left}
+.bt-tv-menu .bt-tv-menu-row>button:first-child{flex:1}
+.bt-tv-menu .bt-tv-menu-row>button:first-child span{flex:1;white-space:nowrap}
+.bt-tv-menu .bt-tv-menu-row>button.active,.bt-tv-menu [aria-checked=true]{color:#5386ff;background:none}
+.bt-tv-menu .bt-tv-menu-row>button:hover{background:none;color:#f0f3fa}
+.bt-tv-menu .bt-tv-menu-row>button kbd{margin-left:auto;font:10px Arial,Helvetica,sans-serif;color:#787b86;white-space:nowrap}
+.bt-tv-menu .bt-tv-star{justify-content:center;width:27px;flex:0 0 27px;padding:4px!important;color:#787b86;opacity:0}
+.bt-tv-star svg{width:17px;height:17px}
+.bt-tv-menu-row:hover .bt-tv-star,.bt-tv-menu-row:focus-within .bt-tv-star,.bt-tv-star[aria-pressed=true]{opacity:1}
+.bt-tv-menu .bt-tv-star[aria-pressed=true]{color:#f7a600}
+.bt-tv-star[aria-pressed=true] svg{fill:currentColor;stroke:currentColor}
+.bt-tool-catalog.bt-tv-menu{width:340px;padding-top:8px}
+.bt-tool-catalog.bt-tv-menu>input{display:block;position:sticky;top:0;z-index:1;width:calc(100% - 20px);margin:2px 10px 8px;padding:10px 12px;border:1px solid #434651;border-radius:4px;background:#131722;color:#d1d4dc;font:13px Arial,Helvetica,sans-serif}
+.bt-canvas-box>.bt-tool-favorites{position:absolute;z-index:18;display:flex;flex-direction:row;gap:0;left:50%;top:65px;transform:translateX(-50%);padding:3px;background:#1e222d;border:1px solid #363a45;border-radius:5px;box-shadow:0 2px 8px #0005;max-width:calc(100% - 20px);max-height:none;overflow-x:auto}
+.bt-canvas-box>.bt-tool-favorites:empty{display:none}
+.bt-tool-favorites .bt-draw-button{display:grid;place-items:center;background:none;border:0;border-radius:3px;color:#b2b5be;width:34px;height:32px;min-width:34px;padding:5px;cursor:pointer}
+.bt-tool-favorites .bt-draw-button:hover{background:#2a2e39;color:#f0f3fa}
+.bt-drawing-edit{background:#1e222d;border:1px solid #363a45;border-radius:4px;color:#d1d4dc;box-shadow:0 3px 10px #0004}
+@media(max-width:760px){
+ .bt-chart-stage{grid-template-columns:45px minmax(0,1fr)}
+ .bt-tv-split{width:42px}.bt-tv-split .bt-tv-primary{width:31px}
+ .bt-drawing-rail .bt-draw-button{height:34px;width:34px}
+ .bt-drawing-rail .bt-draw-button svg{width:22px;height:22px}
+ .bt-draw-menu-panel.bt-tv-menu{width:300px}
+ .bt-canvas-box>.bt-tool-favorites{top:100px}
+}
