@@ -2,10 +2,10 @@
    The cursor identifies the last revealed CLOSED candle. New orders are first
    eligible on the next candle, so its close cannot be used as a known fill. */
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof module === 'object' && module.exports ? require('./backtest-drawing-suite.js') : root.BacktestDrawingSuite, typeof module === 'object' && module.exports ? require('./backtest-studies.js') : root.BacktestStudies);
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.BacktestEngine = api;
-})(typeof window !== 'undefined' ? window : globalThis, function () {
+})(typeof window !== 'undefined' ? window : globalThis, function (Suite, Studies) {
   'use strict';
   const finite = n => typeof n === 'number' && Number.isFinite(n);
   const id = () => 'bt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
@@ -13,7 +13,7 @@
   const tradeKey=t=>[t.symbol || '',t.entryTime,t.exitTime,t.side].join(':');
   function cleanFibLevels(raw){const values=Array.isArray(raw)?raw:typeof raw==='string'?raw.split(',').map(x=>x.trim()):[];if(values.length<2||values.length>20||values.some(x=>x===''||!Number.isFinite(Number(x))||Math.abs(Number(x))>10))throw Error('Use 2–20 comma-separated levels between -10 and 10.');const levels=[...new Set(values.map(Number))].sort((a,b)=>a-b);if(levels.length<2)throw Error('Use at least two distinct levels.');return levels;}
   function savedFibLevels(raw){try{return cleanFibLevels(raw);}catch(_){return [0,.236,.382,.5,.618,.786,1];}}
-  function cleanAnnotations(rows){return Array.isArray(rows)?rows.filter(a=>a && ['trend','ray','extended','arrow','horizontal','vertical','rectangle','ellipse','fib','long','short','text','measure','horizontalray','crossline','info','channel','triangle','pricerange','daterange'].includes(a.type) && Array.isArray(a.points) && a.points.length===2 && a.points.every(p=>finite(p.i)&&Math.abs(p.i)<100000000&&finite(p.p)&&p.p>0)).slice(0,60).map(a=>({id:/^[\w-]{1,100}$/.test(a.id)?a.id:id(),type:a.type,...(a.type==='fib'?{levels:savedFibLevels(a.levels),extendLeft:!!a.extendLeft,extendRight:!!a.extendRight,showPrices:a.showPrices!==false}:{}),points:a.points.map(p=>({i:p.i,p:p.p})),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#f8c344',width:[1,2,3,4].includes(a.width)?a.width:2,dash:['solid','dashed','dotted'].includes(a.dash)?a.dash:'solid',...(finite(a.offset)?{offset:a.offset}:{}),hidden:!!a.hidden,locked:!!a.locked,text:String(a.text||'Note').slice(0,200),...(finite(a.target)&&a.target>0?{target:a.target}:{})})):[];}
+  function cleanAnnotations(rows){return Array.isArray(rows)?rows.filter(a=>Suite.validate(a)).slice(0,200).map(a=>({id:/^[\w-]{1,100}$/.test(a.id)?a.id:id(),type:a.type,...(a.type==='fib'?{levels:savedFibLevels(a.levels),extendLeft:!!a.extendLeft,extendRight:!!a.extendRight,showPrices:a.showPrices!==false}:{}),points:a.points.map(p=>({i:p.i,p:p.p})),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#f8c344',width:[1,2,3,4].includes(a.width)?a.width:2,dash:['solid','dashed','dotted'].includes(a.dash)?a.dash:'solid',...(finite(a.offset)?{offset:a.offset}:{}),...(a.anchor&&[a.anchor.x,a.anchor.y].every(n=>finite(n)&&n>=0&&n<=1)?{anchor:{x:a.anchor.x,y:a.anchor.y}}:{}),hidden:!!a.hidden,locked:!!a.locked,text:String(a.text||'Note').slice(0,200),...(finite(a.target)&&a.target>0?{target:a.target}:{})})):[];}
   function cleanChallenge(c){if(!c || typeof c!=='object')return null;const rule={name:String(c.name || 'Practice challenge').slice(0,80),targetPct:Number(c.targetPct),dailyLossPct:Number(c.dailyLossPct),maxLossPct:Number(c.maxLossPct),minDays:Number(c.minDays),trailing:!!c.trailing};if(![rule.targetPct,rule.dailyLossPct,rule.maxLossPct].every(n=>finite(n)&&n>0&&n<=100)||!Number.isInteger(rule.minDays)||rule.minDays<1||rule.minDays>100)throw Error('Invalid practice challenge rules.');return rule;}
   function challengeState(s,marked=unrealized(s)){
     if(!s.challenge)return null;const r=s.challenge;let peak=s.startBalance,day=null,dayBase=s.startBalance,last=s.startBalance,failed=null;
@@ -30,6 +30,7 @@
       const row = {t: Number(b.t), o: Number(b.o), h: Number(b.h), l: Number(b.l), c: Number(b.c)};
       if (!Object.values(row).every(finite) || row.t <= previous || !Number.isInteger(row.t) || row.t < 0 || row.t > 253402300799 ||
           !(0 < row.l && row.l <= Math.min(row.o, row.c) && Math.max(row.o, row.c) <= row.h)) throw Error(`Invalid or duplicate OHLC row ${i + 1}.`);
+      if (b.v !== undefined && b.v !== null && b.v !== '') { if (!Number.isFinite(Number(b.v)) || Number(b.v)<0) throw Error(`Invalid volume row ${i+1}.`); row.v=Number(b.v); }
       previous = row.t;
       return row;
     });
@@ -73,7 +74,7 @@
         t = Date.parse(iso + (/Z$|[+-]\d{2}:?\d{2}$/.test(iso) || !iso.includes('T') ? '' : 'Z')) / 1000;
       }
       const values = columns.slice(1).map(j => r[j] == null || !r[j].trim() ? NaN : Number(r[j]));
-      return {t, o:values[0], h:values[1], l:values[2], c:values[3]};
+      const vi=index(['v','volume','tick_volume','tick volume']);return {t, o:values[0], h:values[1], l:values[2], c:values[3],...(vi>=0&&r[vi]?.trim()?{v:Number(r[vi])}:{})};
     }).sort((a,b) => a.t-b.t);
     return validateBars(bars, minimum);
   }
@@ -204,7 +205,7 @@
     s.id=String(raw.id || s.id).slice(0,100); s.notes=String(raw.notes || '').slice(0,10000);
     s.createdAt=typeof raw.createdAt === 'string' ? raw.createdAt : s.createdAt;
     s.updatedAt=typeof raw.updatedAt === 'string' ? raw.updatedAt : s.updatedAt;
-    s.indicators=Array.isArray(raw.indicators)?raw.indicators.filter(x=>['SMA20','EMA20','EMA50','EMA200','BB20','RSI14','ATR14'].includes(x)).slice(0,7):[];
+    s.indicators=Array.isArray(raw.indicators)?raw.indicators.filter(x=>['SMA20','EMA20','EMA50','EMA200','BB20','RSI14','ATR14','HIGHLOW52','AC','AD','ALMA9','AROON14','ADX14','AVGPRICE','AO','BOP','BBP20'].includes(x)).slice(0,20):[];
     s.viewTimeframe=typeof raw.viewTimeframe==='string'?raw.viewTimeframe.slice(0,12):undefined;s.annotations=cleanAnnotations(raw.annotations);
     const validKeys=new Set(s.trades.map(tradeKey));s.reviews={};
     if(raw.reviews && typeof raw.reviews==='object')for(const [k,v] of Object.entries(raw.reviews).slice(0,10000))if(validKeys.has(k) && v && typeof v==='object')s.reviews[k]={notes:String(v.notes||'').slice(0,4000),emotion:['confident','calm','neutral','anxious','frustrated'].includes(v.emotion)?v.emotion:'neutral'};

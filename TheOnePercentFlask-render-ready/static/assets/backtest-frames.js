@@ -10,7 +10,7 @@
  function project(s,key=selected(s)){
   if(!available(s,key)||seconds(key)===base(s))return {bars:s.candles.slice(0,s.cursor+1),toDisplay:i=>i,toBase:i=>i,bucket:t=>t};
   const bars=[],starts=[];
-  for(let i=0;i<=s.cursor;i++){const b=s.candles[i],t=bucket(b.t,key),last=bars.at(-1);if(last?.t===t){last.h=Math.max(last.h,b.h);last.l=Math.min(last.l,b.l);last.c=b.c;}else{starts.push(i);bars.push({...b,t});}}
+  for(let i=0;i<=s.cursor;i++){const b=s.candles[i],t=bucket(b.t,key),last=bars.at(-1);if(last?.t===t){last.h=Math.max(last.h,b.h);last.l=Math.min(last.l,b.l);last.c=b.c;if(Number.isFinite(last.v)&&Number.isFinite(b.v))last.v+=b.v;else delete last.v;}else{starts.push(i);bars.push({...b,t});}}
   const ratio=seconds(key)/base(s),last=starts.length-1;
   function toDisplay(i){if(i>=starts[last])return last+(i-starts[last])/ratio;let lo=0,hi=last;while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(starts[mid]<=i)lo=mid;else hi=mid-1;}return lo+(i-starts[lo])/(starts[lo+1]-starts[lo]);}
   function toBase(i){const k=Math.floor(i);if(k<0)return starts[0]+i*ratio;if(k>=last)return starts[last]+(i-last)*ratio;return starts[k]+(i-k)*(starts[k+1]-starts[k]);}

@@ -11,6 +11,8 @@
   const ma=chart.addSeries(L.LineSeries,{color:'#a390ff',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
   const extra=new Map();let markers=L.createSeriesMarkers?L.createSeriesMarkers(candles,[]):null;
   let previous=-1,sessionId=null,visible=0,lines=[],current=null,tool='cursor',first=null,selected=null,drag=null,frame=null,hover=null,magnet=false,hidden=false,suppressClick=false,lastMA=false;
+  const Suite=window.BacktestDrawingSuite;
+  let pending=[],freehand=null;
   let projection=null,keepMode=false;
   const histories=new Map(),redos=new Map();
   const snapshot=()=>JSON.stringify({annotations:current?.annotations||[],drawings:current?.drawings||[]});
@@ -27,8 +29,10 @@
   function text(x,y,label,fill,parent){const node=element('text',{x,y,fill,'font-size':10,'font-family':'system-ui','pointer-events':'none'},parent);node.textContent=label;}
   function drawAnnotation(a,isLive=false){
    const p=point(a.points[0]),q=point(a.points[1]);if([p.x,p.y,q.x,q.y].some(v=>v==null||!Number.isFinite(v)))return;
-   const group=element('g',{'data-annotation':isLive?'':a.id,'class':isLive?'bt-live-position':'bt-annotation'}),stroke=a.color||color('accent'),line=(x1,y1,x2,y2,c=stroke,dash=(a.dash==='dashed'?'7 4':a.dash==='dotted'?'2 4':''))=>element('line',{x1,y1,x2,y2,stroke:c,'stroke-width':selected===a.id?Math.max(2.5,a.width||2):a.width||2,'stroke-dasharray':dash,'pointer-events':isLive?'none':'stroke'},group);
-   if(['trend','ray','extended','arrow','info','channel'].includes(a.type)){
+   const group=element('g',{'data-annotation':isLive?'':a.id,'class':isLive?'bt-live-position':'bt-annotation','clip-path':'url(#bt-drawing-plot)'}),stroke=a.color||color('accent'),line=(x1,y1,x2,y2,c=stroke,dash=(a.dash==='dashed'?'7 4':a.dash==='dotted'?'2 4':''))=>element('line',{x1,y1,x2,y2,stroke:c,'stroke-width':selected===a.id?Math.max(2.5,a.width||2):a.width||2,'stroke-dasharray':dash,'pointer-events':isLive?'none':'stroke'},group);
+   const primitives=Suite.geometry(a,{map:point,bars:current.candles.slice(0,current.cursor+1),width:host.clientWidth-65,height:chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30});
+   if(primitives!==null){group.setAttribute('color',stroke);for(const shape of primitives){const node=element(shape.tag,{fill:shape.tag==='text'?stroke:'none',stroke:shape.tag==='text'?'none':stroke,'stroke-width':a.width||2,'stroke-dasharray':a.dash==='dashed'?'7 4':a.dash==='dotted'?'2 4':'','font-family':'system-ui','font-size':11,'pointer-events':isLive?'none':'visiblePainted',...shape.attrs},group);if(shape.text!==undefined)node.textContent=shape.text;}}
+   else if(['trend','ray','extended','arrow','info','channel'].includes(a.type)){
     let x1=p.x,y1=p.y,x2=q.x,y2=q.y;const slope=Math.abs(q.x-p.x)>1?(q.y-p.y)/(q.x-p.x):0;
     if(a.type==='ray'&&Math.abs(q.x-p.x)>1){x2=q.x>=p.x?host.clientWidth-65:0;y2=p.y+slope*(x2-p.x);}
     if(a.type==='extended'&&Math.abs(q.x-p.x)>1){x1=0;y1=p.y-slope*p.x;x2=host.clientWidth-65;y2=p.y+slope*(x2-p.x);}
@@ -62,41 +66,66 @@
       const anchors=a.points.map((v,i)=>({point:v,index:i}));
       if(a.type==='long'||a.type==='short')anchors.push({point:{i:a.points[1].i,p:a.target||a.points[0].p+(a.type==='long'?1:-1)*2*Math.abs(a.points[0].p-a.points[1].p)},index:'target'});
       if(a.type==='channel')anchors.push({point:{i:a.points[0].i,p:a.points[0].p+(a.offset??Math.max(Math.abs(a.points[1].p-a.points[0].p)*.5,a.points[0].p*.001))},index:'offset'});
-      anchors.forEach(({point:v,index:i})=>{const pos=point(v);if(pos.x==null||pos.y==null)return;const handle=element('circle',{cx:pos.x,cy:pos.y,r:5,fill:'#15171c',stroke:'#4385ff','stroke-width':2,'data-handle':i,'pointer-events':'all'},group);handle.onpointerdown=e=>{e.preventDefault();e.stopPropagation();drag={a,i,old:JSON.parse(JSON.stringify(a)),before:snapshot(),changed:false};svg.style.pointerEvents='all';svg.setPointerCapture(e.pointerId);};});
+      anchors.forEach(({point:v,index:i})=>{const pos=a.anchor?{x:a.anchor.x*(host.clientWidth-65),y:a.anchor.y*(chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30)}:point(v);if(pos.x==null||pos.y==null)return;const handle=element('circle',{cx:pos.x,cy:pos.y,r:5,fill:'#15171c',stroke:'#4385ff','stroke-width':2,'data-handle':i,'pointer-events':'all'},group);handle.onpointerdown=e=>{e.preventDefault();e.stopPropagation();drag={a,i,old:JSON.parse(JSON.stringify(a)),before:snapshot(),changed:false};svg.style.pointerEvents='all';svg.setPointerCapture(e.pointerId);};});
     }
    }
   }
   function repaint(){
-   if(!svg||!current)return;svg.replaceChildren();svg.setAttribute('viewBox','0 0 '+host.clientWidth+' '+host.clientHeight);svg.style.pointerEvents=tool==='cursor'?'none':'all';
+   if(!svg||!current)return;svg.replaceChildren();svg.setAttribute('viewBox','0 0 '+host.clientWidth+' '+host.clientHeight);svg.style.pointerEvents=tool==='cursor'?'none':'all';const defs=element('defs',{}),clip=element('clipPath',{id:'bt-drawing-plot'},defs);element('rect',{x:0,y:0,width:Math.max(0,host.clientWidth-65),height:chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30},clip);
    if(!hidden)for(const a of current.annotations||[])if(!a.hidden)drawAnnotation(a);
    const p=current.position||current.pending;if(p){const entry=p.entry||current.candles[current.cursor].c,i=Math.max(0,current.candles.findIndex(b=>b.t>=(p.entryTime||p.submittedAt)));drawAnnotation({type:p.side==='long'?'long':'short',points:[{i,p:entry},{i:Math.max(current.cursor+8,i+8),p:p.stop}],target:p.target},true);}
-   if(first&&hover)drawAnnotation({type:tool,points:[first,hover],color:color('accent'),target:['long','short'].includes(tool)?first.p+(tool==='long'?1:-1)*2*Math.abs(first.p-hover.p):undefined},true);
+   if(pending.length){const pts=[...pending,...(hover?[hover]:[])],def=Suite.spec(tool);if(def&&pts.length>=2&&(!def.points||pts.length>=Math.max(2,def.points)))drawAnnotation({type:tool,points:pts,color:color('accent'),target:['long','short'].includes(tool)?pts[0].p+(tool==='long'?1:-1)*2*Math.abs(pts[0].p-pts[1].p):undefined},true);else for(let i=1;i<pts.length;i++){const a=point(pts[i-1]),b=point(pts[i]);element('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:color('accent'),'stroke-dasharray':'4 4','pointer-events':'none'});}for(const v of pending){const p=point(v);element('circle',{cx:p.x,cy:p.y,r:4,fill:'#131722',stroke:color('accent'),'pointer-events':'none'});}}
    if(first){const pos=point(first);if(pos.x!=null&&pos.y!=null)element('circle',{cx:pos.x,cy:pos.y,r:5,fill:color('accent'),'pointer-events':'none'});}
   }
   function readPoint(event){if(!current)return null;const rect=svg.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top,mainHeight=chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30;if(x<0||x>host.clientWidth-65||y<25||y>mainHeight-5)return null;const logical=ts.coordinateToLogical(x),i=projection?projection.toBase(logical):logical,p=candles.coordinateToPrice(y);if(!Number.isFinite(i)||!Number.isFinite(p)||p<=0)return null;let result={i:Math.max(0,Math.min(current.cursor+100*Math.max(1,(window.BacktestFrames?.seconds(window.BacktestFrames.selected(current))||60)/(window.BacktestFrames?.base(current)||60)),i)),p};if(magnet){const index=Math.max(0,Math.min(current.cursor,Math.round(i))),bar=current.candles[index];result={i:index,p:[bar.o,bar.h,bar.l,bar.c].reduce((best,v)=>Math.abs(v-p)<Math.abs(best-p)?v:best,bar.o)};}return result;}
   if(svg){
    svg.onpointermove=e=>{
     const p=readPoint(e);if(!p)return;
-    if(!drag){if(first){hover=p;repaint();}return;}
+    if(freehand){const last=pending.at(-1);if(pending.length<400&&(!last||Math.hypot(point(last).x-point(p).x,point(last).y-point(p).y)>3)){pending.push(p);repaint();}return;}
+    if(!drag){if(pending.length){hover=p;repaint();}return;}
     const candidate=JSON.parse(JSON.stringify(drag.old));
     if(drag.i==='offset')candidate.offset=p.p-candidate.points[0].p;
     else if(drag.i==='target')candidate.target=p.p;
     else if(Number.isInteger(drag.i))candidate.points[drag.i]=p;
     else{const di=p.i-drag.start.i,dp=p.p-drag.start.p;candidate.points=candidate.points.map(v=>({i:v.i+di,p:v.p+dp}));if(candidate.target)candidate.target+=dp;}
+    if(candidate.anchor){const now=point(p),start=drag.start?point(drag.start):point(drag.old.points[drag.i]||drag.old.points[0]),w=host.clientWidth-65,h=chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30;candidate.anchor={x:Math.max(0,Math.min(1,drag.old.anchor.x+(now.x-start.x)/w)),y:Math.max(0,Math.min(1,drag.old.anchor.y+(now.y-start.y)/h))};}
     if(!valid(candidate))return;if(!drag.changed)remember(drag.before);drag.changed=true;Object.assign(drag.a,candidate);repaint();svg.style.pointerEvents='all';
    };
-   svg.onpointerup=e=>{if(!drag)return;const edited=drag.changed;drag=null;suppressClick=edited;try{svg.releasePointerCapture(e.pointerId);}catch(_){}if(edited)callbacks.onChange?.();repaint();};
-   svg.onclick=e=>{if(suppressClick){suppressClick=false;return;}if(drag)return;if(tool==='cursor'){if(e.target===svg){selected=null;callbacks.onSelect?.(null);repaint();}return;}const p=readPoint(e);if(!p)return;if(!first){first=p;hover=null;if(!['horizontal','horizontalray','vertical','crossline','text'].includes(tool)){repaint();return;}}const points=[first,tool==='text'?{i:p.i+8,p:p.p}:p];first=null;hover=null;
-    if(tool==='long'||tool==='short'){const distance=Math.abs(points[0].p-points[1].p);points[1].p=points[0].p+(tool==='long'?-1:1)*distance;if(points[1].p<=0||points[0].p+(tool==='long'?2:-2)*distance<=0){repaint();return;}}
-    const a={id:'draw-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),type:tool,points,color:color('accent'),width:2};if(tool==='long'||tool==='short')a.target=points[0].p+(tool==='long'?1:-1)*2*Math.abs(points[0].p-points[1].p);if(tool==='text')a.text='Note';if((current.annotations||[]).length>=60)return;remember();current.annotations??=[];current.annotations.push(a);selected=a.id;tool=keepMode&&!['long','short','text'].includes(a.type)?a.type:'cursor';callbacks.onChange?.();callbacks.onDrawing?.(a);callbacks.onSelect?.(a);repaint();};
+   function commitDrawing(){
+    const def=Suite.spec(tool);if(!def||!current||!pending.length)return;
+    const points=pending.map(p=>({...p}));if(points.length===1)points.push({...points[0],i:points[0].i+(tool==='text'?8:0)});
+    if(!Suite.validate({type:tool,points}))return;
+    if((current.annotations||[]).length>=200){callbacks.onError?.('This session has reached 200 drawings. Remove a drawing first.');return;}
+    if(!Suite.available(tool,current.candles.slice(0,current.cursor+1))){callbacks.onError?.('This tool requires real volume data in the selected history.');return;}
+    if(['long','short'].includes(tool)){const distance=Math.abs(points[0].p-points[1].p);if(!distance)return;points[1].p=points[0].p+(tool==='long'?-1:1)*distance;}
+    const a={id:'draw-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),type:tool,points,color:color('accent'),width:tool==='highlighter'?4:1};
+    if(['long','short'].includes(tool))a.target=points[0].p+(tool==='long'?1:-1)*2*Math.abs(points[0].p-points[1].p);
+    if(def.group==='notes')a.text='Note';
+    if(['anchoredtext','anchorednote'].includes(tool)){const pos=point(points[0]);a.anchor={x:Math.max(0,Math.min(1,pos.x/(host.clientWidth-65))),y:Math.max(0,Math.min(1,pos.y/(chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30)))};}
+    if(!valid(a)){callbacks.onError?.('Choose valid positive prices for this drawing.');pending=[];first=hover=null;repaint();return;}
+    remember();current.annotations??=[];current.annotations.push(a);selected=a.id;pending=[];first=hover=null;tool=keepMode&&def.group!=='notes'&&!['long','short'].includes(a.type)?a.type:'cursor';callbacks.onChange?.();callbacks.onDrawing?.(a);callbacks.onSelect?.(a);repaint();
+   }
+   svg.onpointerdown=e=>{if(!['brush','highlighter'].includes(tool))return;const p=readPoint(e);if(!p)return;pending=[p];first=p;freehand=e.pointerId;svg.setPointerCapture(e.pointerId);e.preventDefault();};
+   svg.onpointerup=e=>{if(freehand!==null){freehand=null;try{svg.releasePointerCapture(e.pointerId);}catch(_){}if(pending.length>1)commitDrawing();else{pending=[];first=null;repaint();}suppressClick=true;return;}if(!drag)return;const edited=drag.changed;drag=null;suppressClick=edited;try{svg.releasePointerCapture(e.pointerId);}catch(_){}if(edited)callbacks.onChange?.();repaint();};
+   svg.onpointercancel=()=>{freehand=null;drag=null;pending=[];first=hover=null;repaint();};
+   svg.onclick=e=>{if(suppressClick){suppressClick=false;return;}if(drag||freehand!==null)return;if(tool==='cursor'){if(e.target===svg){selected=null;callbacks.onSelect?.(null);repaint();}return;}const p=readPoint(e),def=Suite.spec(tool);if(!p||!def||['brush','highlighter'].includes(tool))return;
+    if(e.detail>1&&!def.points)return;pending.push(p);first=pending[0];hover=null;
+    if(def.points&&pending.length>=def.points)commitDrawing();else repaint();
+   };
+   svg.ondblclick=e=>{if(!Suite.spec(tool)?.points&&pending.length>=2){e.preventDefault();commitDrawing();}};
    ts.subscribeVisibleLogicalRangeChange?.(()=>{if(frame)cancelAnimationFrame(frame);frame=requestAnimationFrame(repaint);});
   }
   chart.subscribeCrosshairMove(p=>{const b=p.seriesData.get(candles);onCrosshair((b&&projection?.bars.find(row=>row.t===b.time))||current?.candles[current.cursor]);});
   chart.subscribeClick(p=>{if(!p.point||tool!=='cursor')return;const value=candles.coordinateToPrice(p.point.y);if(Number.isFinite(value)&&value>0)onLevel(value);});
   function updateStudies(s){
-   if(!Lab)return;const rows=(s.indicators||[]).filter(k=>k!=='SMA20').flatMap(key=>key==='BB20'?[{key:'BB-UP',type:'BB',period:20,color:'#4ba1fa'},{key:'BB-MID',type:'SMA',period:20,color:'#6b8bb0'},{key:'BB-LOW',type:'BBLOW',period:20,color:'#4ba1fa'}]:[{key,type:key.startsWith('EMA')?'EMA':key.startsWith('RSI')?'RSI':'ATR',period:Number(key.match(/\d+/)?.[0]||20),color:key.startsWith('EMA')?'#ffb74d':key.startsWith('RSI')?'#b18cff':'#59c5c8'}]),wanted=new Set(rows.map(r=>r.key)),bars=s.candles.slice(0,s.cursor+1);
-   for(const [key,series] of extra)if(!wanted.has(key)){chart.removeSeries(series);extra.delete(key);}
-   for(const row of rows){const pane=row.type==='RSI'||row.type==='ATR'?1:0;if(!extra.has(row.key))extra.set(row.key,chart.addSeries(L.LineSeries,{color:row.color,lineWidth:1,priceLineVisible:false,lastValueVisible:true,title:row.key},pane));extra.get(row.key).setData(Lab.study(bars,row.type,row.period));}
+   if(!Lab)return;const bars=s.candles.slice(0,s.cursor+1),rows=[];let oscillator=0;
+   for(const key of s.indicators||[]){if(key==='SMA20')continue;const definition=window.BacktestStudies.get(key);if(!definition||window.BacktestStudies.unavailable(key,bars))continue;const pane=definition.pane?++oscillator:0;
+    let channels=window.BacktestStudies.calculate(bars,key);
+    if(!channels.length){const period=Number(key.match(/\d+/)?.[0]||20);channels=key==='BB20'?[{key:'BB Upper',data:Lab.study(bars,'BB',20),color:'#4ba1fa'},{key:'BB Basis',data:Lab.study(bars,'SMA',20),color:'#6b8bb0'},{key:'BB Lower',data:Lab.study(bars,'BBLOW',20),color:'#4ba1fa'}]:[{key,data:Lab.study(bars,key.startsWith('EMA')?'EMA':key.startsWith('RSI')?'RSI':'ATR',period),color:'#b18cff'}];}
+    channels.forEach(c=>rows.push({...c,key:key+':'+c.key,pane}));
+   }
+   const wanted=new Set(rows.map(r=>r.key));for(const [key,series] of extra)if(!wanted.has(key)){chart.removeSeries(series);extra.delete(key);}
+   for(const row of rows){if(!extra.has(row.key))extra.set(row.key,chart.addSeries(L.LineSeries,{color:row.color||'#59c5c8',lineWidth:1,priceLineVisible:false,lastValueVisible:true,title:row.key},row.pane));const series=extra.get(row.key);series.moveToPane?.(row.pane);series.setData(row.data);}
   }
   return {
    render(s,showMA,barsVisible){
@@ -114,7 +143,7 @@
     if(markers){const rows=s.trades.filter(t=>!t.symbol||t.symbol===s.symbol).flatMap(t=>[{time:projection.bucket(t.entryTime),position:t.side==='long'?'belowBar':'aboveBar',color:'#4385ff',shape:t.side==='long'?'arrowUp':'arrowDown',text:t.side==='long'?'Buy':'Sell'},{time:projection.bucket(t.exitTime),position:'aboveBar',color:t.pnl>=0?'#45d5a2':'#ff7484',shape:'circle',text:t.pnl>=0?'Win':'Loss'}]);if(s.position)rows.push({time:projection.bucket(s.position.entryTime),position:'belowBar',color:'#4385ff',shape:'arrowUp',text:s.position.side==='long'?'Buy':'Sell'});markers.setMarkers(rows.sort((a,b)=>a.time-b.time));}
     previous=s.cursor;sessionId=identity;visible=barsVisible;onCrosshair(bars.at(-1));repaint();
    },
-   tool(value){tool=value;first=null;hover=null;selected=null;suppressClick=false;callbacks.onSelect?.(null);repaint();},
+   tool(value){if(value!=='cursor'&&!Suite.available(value,current?.candles.slice(0,current.cursor+1)||[])){callbacks.onError?.('This tool requires real volume data in the selected history.');return false;}tool=value;pending=[];freehand=null;first=null;hover=null;selected=null;suppressClick=false;callbacks.onSelect?.(null);repaint();return true;},
    keep(value){keepMode=!!value;return keepMode;},
    currentTool(){return tool;},
    allLocked(){return !!current?.annotations?.length&&current.annotations.every(a=>a.locked);},
@@ -129,6 +158,7 @@
    redo(){if(!current)return;const key=current.id+':'+current.symbol,r=redos.get(key);if(!r?.length)return;const h=histories.get(key)||[];h.push(snapshot());histories.set(key,h);const next=JSON.parse(r.pop());current.annotations=next.annotations;current.drawings=next.drawings;selected=null;callbacks.onSelect?.(null);changed();},
    selectDrawing(id){const a=current?.annotations?.find(a=>a.id===id);if(!a)return false;selected=id;callbacks.onSelect?.(a);repaint();return true;},
    removeLevel(index){if(!current||!Number.isInteger(index)||index<0||index>=current.drawings.length)return false;remember();current.drawings.splice(index,1);changed();return true;},
+   zoom(){const range=ts.getVisibleLogicalRange();if(range){const center=(range.from+range.to)/2,half=(range.to-range.from)/4;ts.setVisibleLogicalRange({from:center-half,to:center+half});}},
    fit(){ts.fitContent();},
    async image(){const canvas=chart.takeScreenshot();if(svg){const data=new XMLSerializer().serializeToString(svg),url=URL.createObjectURL(new Blob([data],{type:'image/svg+xml'})),img=new Image();try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);}finally{URL.revokeObjectURL(url);}}return canvas.toDataURL('image/png');},
    destroy(){observer?.disconnect();if(frame)cancelAnimationFrame(frame);markers?.detach();chart.remove();}
