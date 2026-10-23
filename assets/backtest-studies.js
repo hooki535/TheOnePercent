@@ -2,6 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.BacktestStudies=api;})(typeof window==='object'?window:globalThis,function(){
  'use strict';
  const definitions=[
+ ['DAYBREAK','Day Break Lines',0],['WEEKDAYS','Weekday Labels',0],
  ['HIGHLOW52','52 Week High/Low',0],['AC','Accelerator Oscillator',1],['AD','Accumulation/Distribution',1,'volume'],['ASI','Accumulative Swing Index',1,'limit'],['ADVDEC','Advance/Decline',1,'breadth'],['ALMA9','Arnaud Legoux Moving Average',0],['AROON14','Aroon',1],['ADX14','Average Directional Index',1],['AVGPRICE','Average Price',0],['ATR14','Average True Range',1],['AO','Awesome Oscillator',1],['BOP','Balance of Power',1],['BB20','Bollinger Bands',0],['BBP20','Bollinger Bands %B',1],['SMA20','Simple Moving Average · 20',0],['EMA20','Exponential Moving Average · 20',0],['EMA50','Exponential Moving Average · 50',0],['EMA200','Exponential Moving Average · 200',0],['RSI14','Relative Strength Index · 14',1]
  ].map(([id,label,pane,requires])=>({id,label,pane,requires}));
  const ids=definitions.map(d=>d.id),get=id=>definitions.find(d=>d.id===id);
@@ -21,5 +22,13 @@
   if(id==='BBP20'){const mean=sma(close,20);return [make('Bollinger %B',close.map((c,i)=>{if(i<19)return null;const sd=Math.sqrt(close.slice(i-19,i+1).reduce((s,v)=>s+(v-mean[i])**2,0)/20);return sd?(c-(mean[i]-2*sd))/(4*sd):.5;}),'#59c5c8')];}
   return out;
  }
- return {definitions,ids,get,unavailable,calculate};
+ function daySegments(bars,zone='UTC'){
+  let formatter;const options={timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',weekday:'long'};
+  try{formatter=new Intl.DateTimeFormat('en-US',options);}catch(_){formatter=new Intl.DateTimeFormat('en-US',{...options,timeZone:'UTC'});}
+  const segments=[];let last;
+  bars.forEach((bar,i)=>{const parts=Object.fromEntries(formatter.formatToParts(new Date(bar.t*1000)).map(p=>[p.type,p.value])),date=parts.year+'-'+parts.month+'-'+parts.day;
+   if(!last||last.date!==date){last={from:i,to:i+1,date,weekday:parts.weekday,boundary:i>0};segments.push(last);}else last.to=i+1;
+  });return segments;
+ }
+ return {definitions,ids,get,unavailable,calculate,daySegments};
 });

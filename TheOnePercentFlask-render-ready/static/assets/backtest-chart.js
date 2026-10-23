@@ -14,6 +14,7 @@
   const Suite=window.BacktestDrawingSuite;
   let pending=[],freehand=null;
   let projection=null,keepMode=false;
+  let calendarKey='',calendarSegments=[];
   const histories=new Map(),redos=new Map();
   const snapshot=()=>JSON.stringify({annotations:current?.annotations||[],drawings:current?.drawings||[]});
   function remember(value=snapshot()){if(!current)return;const key=current.id+':'+current.symbol;redos.set(key,[]);const h=histories.get(key)||[];if(h.at(-1)!==value)h.push(value);if(h.length>30)h.shift();histories.set(key,h);}
@@ -70,8 +71,20 @@
     }
    }
   }
+  function drawCalendar(){
+   const active=current.indicators||[],breaks=active.includes('DAYBREAK'),weekdays=active.includes('WEEKDAYS');if(!breaks&&!weekdays)return;
+   const frame=window.BacktestFrames?.selected(current)||current.interval,seconds=window.BacktestFrames?.seconds(frame)||window.BacktestFrames?.base(current);if(seconds>=86400)return;
+   const bars=projection?.bars||current.candles.slice(0,current.cursor+1),zone=window.BacktestDesk?.zone?.()||'UTC',key=[current.id,current.symbol,frame,zone,bars.length,bars[0]?.t,bars.at(-1)?.t].join(':');
+   if(key!==calendarKey){calendarKey=key;calendarSegments=window.BacktestStudies.daySegments(bars,zone);}
+   const width=host.clientWidth-65,height=chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30,group=element('g',{'class':'bt-day-calendar','clip-path':'url(#bt-drawing-plot)','pointer-events':'none','aria-label':'Trading days in '+zone});
+   for(const day of calendarSegments){const from=ts.logicalToCoordinate(day.from),to=ts.logicalToCoordinate(day.to);if(from==null||to==null||to<0||from>width)continue;
+    if(breaks&&day.boundary&&from>=0&&from<=width)element('line',{x1:from,y1:0,x2:from,y2:height,stroke:'#868993','stroke-opacity':.45,'stroke-width':1,'stroke-dasharray':'3 5','data-day-break':day.date},group);
+    const left=Math.max(0,from),right=Math.min(width,to),span=right-left;if(weekdays&&span>=34){const label=element('text',{x:(left+right)/2,y:height-12,fill:'#b2b5be',stroke:'#15171c','stroke-width':3,'paint-order':'stroke','text-anchor':'middle','font-size':10,'font-weight':500,'font-family':'system-ui','letter-spacing':.5,'data-weekday':day.weekday,'data-date':day.date,'aria-label':day.weekday+' '+day.date},group);label.textContent=(span>=86?day.weekday:day.weekday.slice(0,3)).toUpperCase();}
+   }
+  }
   function repaint(){
    if(!svg||!current)return;svg.replaceChildren();svg.setAttribute('viewBox','0 0 '+host.clientWidth+' '+host.clientHeight);svg.style.pointerEvents=tool==='cursor'?'none':'all';const defs=element('defs',{}),clip=element('clipPath',{id:'bt-drawing-plot'},defs);element('rect',{x:0,y:0,width:Math.max(0,host.clientWidth-65),height:chart.panes?.()[0]?.getHeight?.()||host.clientHeight-30},clip);
+   drawCalendar();
    if(!hidden)for(const a of current.annotations||[])if(!a.hidden)drawAnnotation(a);
    const p=current.position||current.pending;if(p){const entry=p.entry||current.candles[current.cursor].c,i=Math.max(0,current.candles.findIndex(b=>b.t>=(p.entryTime||p.submittedAt)));drawAnnotation({type:p.side==='long'?'long':'short',points:[{i,p:entry},{i:Math.max(current.cursor+8,i+8),p:p.stop}],target:p.target},true);}
    if(pending.length){const pts=[...pending,...(hover?[hover]:[])],def=Suite.spec(tool);if(def&&pts.length>=2&&(!def.points||pts.length>=Math.max(2,def.points)))drawAnnotation({type:tool,points:pts,color:color('accent'),target:['long','short'].includes(tool)?pts[0].p+(tool==='long'?1:-1)*2*Math.abs(pts[0].p-pts[1].p):undefined},true);else for(let i=1;i<pts.length;i++){const a=point(pts[i-1]),b=point(pts[i]);element('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:color('accent'),'stroke-dasharray':'4 4','pointer-events':'none'});}for(const v of pending){const p=point(v);element('circle',{cx:p.x,cy:p.y,r:4,fill:'#131722',stroke:color('accent'),'pointer-events':'none'});}}
@@ -119,7 +132,7 @@
   chart.subscribeClick(p=>{if(!p.point||tool!=='cursor')return;const value=candles.coordinateToPrice(p.point.y);if(Number.isFinite(value)&&value>0)onLevel(value);});
   function updateStudies(s){
    if(!Lab)return;const bars=s.candles.slice(0,s.cursor+1),rows=[];let oscillator=0;
-   for(const key of s.indicators||[]){if(key==='SMA20')continue;const definition=window.BacktestStudies.get(key);if(!definition||window.BacktestStudies.unavailable(key,bars))continue;const pane=definition.pane?++oscillator:0;
+   for(const key of s.indicators||[]){if(['SMA20','DAYBREAK','WEEKDAYS'].includes(key))continue;const definition=window.BacktestStudies.get(key);if(!definition||window.BacktestStudies.unavailable(key,bars))continue;const pane=definition.pane?++oscillator:0;
     let channels=window.BacktestStudies.calculate(bars,key);
     if(!channels.length){const period=Number(key.match(/\d+/)?.[0]||20);channels=key==='BB20'?[{key:'BB Upper',data:Lab.study(bars,'BB',20),color:'#4ba1fa'},{key:'BB Basis',data:Lab.study(bars,'SMA',20),color:'#6b8bb0'},{key:'BB Lower',data:Lab.study(bars,'BBLOW',20),color:'#4ba1fa'}]:[{key,data:Lab.study(bars,key.startsWith('EMA')?'EMA':key.startsWith('RSI')?'RSI':'ATR',period),color:'#b18cff'}];}
     channels.forEach(c=>rows.push({...c,key:key+':'+c.key,pane}));
