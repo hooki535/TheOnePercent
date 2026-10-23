@@ -1,0 +1,25 @@
+const test=require('node:test'),assert=require('node:assert/strict'),M=require('../assets/backtest-settings-model.js'),Catalog=require('../assets/backtest-settings-schemas.js'),Suite=require('../assets/backtest-drawing-suite.js'),E=require('../assets/backtest-engine.js');
+test('supplied definitions register without the missing external dialog and map to real tools',()=>{
+ assert.equal(Catalog.DRAWING_TOOLS.length,79);assert.equal(Catalog.INDICATORS.length,25);assert.ok(M.audit().some(x=>x.id==='fibextension'));assert.ok(M.audit().some(x=>x.id==='headshoulders'));
+ for(const d of Suite.specs.values()){const fields=M.fields(d.id);assert.ok(fields.length,d.id);assert.equal(new Set(fields.map(f=>f.key)).size,fields.length,d.id);assert.doesNotThrow(()=>M.clean(d.id,M.defaults(d.id)),d.id);}
+});
+test('Fibonacci colors, switches, negative/custom ratios and fills validate independently',()=>{
+ const settings=M.defaults('fib');settings.levels=[{v:-.27,c:'#ff00ff',on:true},{v:.5,c:'#089981',on:false},{v:1.618,c:'#2962ff',on:true},{v:1.618,c:'#2962ff',on:false}];const clean=M.clean('fib',settings);assert.equal(clean.levels.length,3);assert.equal(clean.levels.at(-1).on,true);assert.equal(clean.levels[1].on,false);
+ assert.throws(()=>M.clean('fib',{levels:[{v:Infinity,c:'#123456',on:true}]}),/Level/);assert.throws(()=>M.clean('fib',{levels:[{v:0,c:'url(javascript:x)',on:true}]}),/color/);assert.throws(()=>M.clean('fib',{background:{on:true,color:'#123456',opacity:1.1}}),/Opacity/);
+ const raw=JSON.parse('{"__proto__":{"polluted":true},"line":{"on":true,"color":"#123456","width":2,"dash":"solid"}}');assert.equal(M.clean('rectangle',raw).polluted,undefined);assert.equal({}.polluted,undefined);
+});
+test('drawing settings and timeframe visibility survive restoration',()=>{
+ const bars=Array.from({length:100},(_,i)=>({t:1700000100+i*60,o:100,h:102,l:99,c:101})),s=E.createSession({symbol:'EURUSD',interval:'1m',startBalance:10000,multiplier:1},bars),settings=M.defaults('fib');settings.levels[0].c='#ff00ff';settings.reverse=true;s.annotations=[{id:'fib-settings',type:'fib',points:[{i:30,p:100},{i:50,p:102}],settings,visibility:['1m','1H']}];const restored=E.restore(E.snapshot(s)).annotations[0];assert.deepEqual(restored.settings,settings);assert.deepEqual(restored.visibility,['1m','1H']);assert.throws(()=>M.visibility(['bad']),/timeframes/);assert.deepEqual(M.visibility([]),[]);assert.equal(M.visibility(null),null);
+});
+test('existing drawing styles are reflected in the dialog and unsupported controls are omitted',()=>{
+ const a={type:'fib',points:[{i:0,p:1},{i:1,p:2}],color:'#abcdef',width:3,dash:'dotted',levels:[0,.236,1]};const settings=M.fromAnnotation(a);assert.ok(settings.levels.filter(r=>r.on).every(r=>a.levels.includes(r.v)));assert.ok(settings.levels.every(r=>r.c==='#abcdef'));assert.equal(settings.levelsLine.width,3);assert.equal(settings.levelsLine.dash,'dotted');assert.ok(!M.fields('long').some(f=>f.key==='accountSize'));assert.ok(!M.fields('regression').some(f=>f.key==='source'));
+});
+test('settings change freehand, icon and text geometry rather than only saved metadata',()=>{
+ const context={map:p=>({x:p.i*8,y:p.p*10}),bars:[],width:900,height:500},points=[{i:10,p:10},{i:20,p:12}];const highlight=Suite.geometry({type:'highlighter',points,settings:{width:42,opacity:.6}},context);assert.equal(highlight[0].attrs['stroke-width'],42);assert.equal(highlight[0].attrs.opacity,.6);
+ const icon=Suite.geometry({type:'symbol_0',points,settings:{size:96}},context);assert.equal(icon[0].attrs['font-size'],96);
+ const text=Suite.geometry({type:'text',points,text:'Several words to wrap onto multiple lines in this drawing',settings:{text:'Several words to wrap onto multiple lines in this drawing',font:{size:22,color:'#abcdef',bold:true,italic:true},wrap:true}},context);assert.ok(text.filter(p=>p.tag==='text').length>1);assert.ok(text.filter(p=>p.tag==='text').every(p=>p.attrs['font-size']===22&&p.attrs['font-weight']===700));
+});
+test('static and Flask drawing properties code matches and loads before the engine',()=>{
+ const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..');for(const name of ['backtest-settings-schemas.js','backtest-settings-model.js','backtest-settings-dialog.js','backtest-settings-dialog.css','backtest-engine.js','backtest-drawing-suite.js','backtest-chart.js','backtest-tools.js','backtesting.js'])assert.ok(fs.readFileSync(path.join(root,'assets',name)).equals(fs.readFileSync(path.join(root,'TheOnePercentFlask-render-ready/static/assets',name))),name);
+ for(const file of ['pages/backtesting.html','TheOnePercentFlask-render-ready/templates/pages/backtesting.html']){const html=fs.readFileSync(path.join(root,file),'utf8');assert.ok(html.indexOf('backtest-settings-schemas.js')<html.indexOf('backtest-settings-model.js'));assert.ok(html.indexOf('backtest-settings-model.js')<html.indexOf('backtest-engine.js'));assert.ok(html.indexOf('backtest-settings-dialog.js')<html.indexOf('backtesting.js'));}
+});
