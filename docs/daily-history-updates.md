@@ -8,7 +8,7 @@ The initial completed H1/D1 snapshot contains 8,968 monthly compressed chunks ac
 
 The small compressed H1/D1 collection fits the free database allowance. `history_chunk_payloads` stores gzip bytes as `bytea`; `history_chunks` stores their immutable hash, identity and actual UTC coverage. Atomic batch RPCs avoid thousands of small Storage writes. The earlier Storage pilot remains private and is not removed. M1 originals and ZIP provenance remain on the user's computer; this rollout does not upload the multi-gigabyte minute collection.
 
-Files remain **unpublished** and sources retain `website_display_approved=false`. This is a private cloud archive, not yet a claim that all downloaded history is available to website visitors. Existing source-approval and publication policies remain in force. `history_read_payload` is a security-invoker reader: signed-in users can read only payloads whose metadata and source pass those policies. Browsers cannot call the batch-write, hash inventory or quota RPCs.
+Files remain **unpublished** and sources retain `website_display_approved=false`. The website connection now lets specifically assigned accounts use the private archive through owner-isolated `history_account_access` grants. Existing source-approval and publication policies remain in force for general distribution. `history_read_payload` is a security-invoker reader: signed-in users can read only payloads permitted by those policies or their personal archive assignment. Browsers cannot call the batch-write, hash inventory or quota RPCs. See [website history connection](website-history-connection.md).
 
 ## Daily cloud job
 
