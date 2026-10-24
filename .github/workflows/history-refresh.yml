@@ -24,6 +24,11 @@ jobs:
           python-version: '3.12'
       - name: Verify history conversion and upload validation
         run: python -m unittest discover -s tests -p 'test_*history*.py'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify signed cloud-worker authentication
+        run: node --test tests/history-ingest-auth.test.cjs
       - name: Check published source archives and upload verified candles
         run: python tools/refresh-market-history.py --out "$RUNNER_TEMP/history-refresh"
       - name: Keep the freshness and error report

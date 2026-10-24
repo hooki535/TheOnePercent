@@ -33,6 +33,13 @@ class PackageTests(unittest.TestCase):
             root=Path(folder);row=['2025-01-01T00:00:00Z','1','2','1','2'];path=self.source(root,[row,row])
             with self.assertRaises(ValueError):module.package_file(path,'histdata','EURUSD','H1',root/'out')
 
+    def test_source_price_padding_is_removed_without_changing_precision(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);path=self.source(root,[['2004-03-07T22:00:00Z','1.2397    ','1.2397    ','1.2365    ','1.2368    ']])
+            chunks=module.package_file(path,'histdata','EURUSD','H1',root/'out')
+            body=json.loads(gzip.decompress((root/'out'/chunks[0]['object_path']).read_bytes()))
+            self.assertEqual(body['candles'][0][1:],['1.2397','1.2397','1.2365','1.2368'])
+
     def test_unsafe_identity_rejected(self):
         with self.assertRaises(ValueError):module.package_file(Path('unused'),'../','EURUSD','H1',Path('unused'))
 

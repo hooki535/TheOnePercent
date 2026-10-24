@@ -18,7 +18,7 @@ The job checks recent HistData monthly source archives, converts fixed EST (UTCâ
 
 US30 separately checks Dukascopy's missing monthly H1 periods from September 2013 and refreshes recent periods. It stops on rate limiting instead of repeatedly hammering the provider. An interruption is recorded in `history_update_runs`; the next job resumes based on uploaded inventory. The scheduled workflow does not download the full M1 collection or automatically retry old HistData years outside its recent window.
 
-The cloud worker obtains a short-lived GitHub OIDC token bound to this repository, `main`, this exact workflow and its audience. The Edge Function verifies its signature/issuer/expiry/claims, then uses its built-in server credentials. No service-role secret is committed, shipped to the browser or stored as a GitHub Actions secret. A separate initial-upload token expires after two days; its plaintext exists only in the local workspace's private helper directory outside the repository. The committed Edge source contains placeholders, which disable that local route on an ordinary redeployment.
+The cloud worker obtains a short-lived GitHub OIDC token bound to this repository, `main`, this exact workflow, its audience, and fixed repository/owner IDs. Both GitHub legacy and immutable subject formats are accepted only for those same IDs. The Edge Function verifies its signature/issuer/expiry/claims, then uses its built-in server credentials. No service-role secret is committed, shipped to the browser or stored as a GitHub Actions secret. A separate initial-upload token expires after two days; its plaintext exists only in the local workspace's private helper directory outside the repository. The committed Edge source contains placeholders, which disable that local route on an ordinary redeployment.
 
 ## Integrity, budget and recovery
 
@@ -30,6 +30,6 @@ Local upload: `python tools/upload-market-history.py --package PACKAGE_DIR --tok
 
 ## Validation
 
-Nine Python tests cover fixed-EST conversion, duplicate/conflict handling, decimal aggregation, partial-hour exclusion, US30 scaling, packaging hashes, safe paths and workflow configuration. Initial real cloud tests verified exact upload/download hashes, rejected missing/forged authentication and corrupt bytes, and confirmed anonymous/signed-in users cannot call the batch writer. Database RLS keeps unpublished candles unavailable to ordinary website accounts.
+Twelve Python tests and three signed-token tests cover fixed-EST conversion, duplicate/conflict handling, decimal aggregation, source price padding, partial-hour exclusion, US30 scaling, bounded transient-error retries, packaging hashes, safe paths and workflow configuration. Provider rate limits stop requests immediately. Initial real cloud tests verified exact upload/download hashes, rejected missing/forged authentication and corrupt bytes, and confirmed anonymous/signed-in users cannot call the batch writer. Database RLS keeps unpublished candles unavailable to ordinary website accounts.
 
 References: [Supabase free-plan usage](https://supabase.com/docs/guides/platform/billing-on-supabase), [HistData time zone and data format](https://www.histdata.com/f-a-q/), [GitHub OIDC reference](https://docs.github.com/en/actions/reference/security/oidc).

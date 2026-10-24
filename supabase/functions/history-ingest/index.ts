@@ -21,7 +21,8 @@ async function authenticate(req: Request) {
   if (extra || !head || !body || !sig) return null;
   const h = JSON.parse(new TextDecoder().decode(decode(head))), p = JSON.parse(new TextDecoder().decode(decode(body))), now = Date.now()/1000;
   if (h.alg !== 'RS256' || typeof h.kid !== 'string' || p.iss !== 'https://token.actions.githubusercontent.com' || p.aud !== AUDIENCE || !Number.isFinite(p.exp) || p.exp < now || !Number.isFinite(p.iat) || p.iat > now+30 || now-p.iat > 600 || (p.nbf && p.nbf > now+30)) return null;
-  if (p.sub !== 'repo:hooki535/TheOnePercent:ref:refs/heads/main' || p.repository !== 'hooki535/TheOnePercent' || p.ref !== 'refs/heads/main' || p.workflow_ref !== 'hooki535/TheOnePercent/.github/workflows/history-refresh.yml@refs/heads/main' || !['schedule','workflow_dispatch','push'].includes(p.event_name)) return null;
+  const subjects=['repo:hooki535/TheOnePercent:ref:refs/heads/main','repo:hooki535@228179110/TheOnePercent@1367073159:ref:refs/heads/main'];
+  if (!subjects.includes(p.sub) || String(p.repository_id)!=='1367073159' || String(p.repository_owner_id)!=='228179110' || p.repository !== 'hooki535/TheOnePercent' || p.ref !== 'refs/heads/main' || p.workflow_ref !== 'hooki535/TheOnePercent/.github/workflows/history-refresh.yml@refs/heads/main' || !['schedule','workflow_dispatch','push'].includes(p.event_name)) return null;
   if (!jwks || Date.now()-jwksAt > 300000 || !jwks.keys.some((k: any) => k.kid === h.kid)) {
    const r = await fetch('https://token.actions.githubusercontent.com/.well-known/jwks');if (!r.ok) return null;jwks = await r.json();jwksAt = Date.now();
   }

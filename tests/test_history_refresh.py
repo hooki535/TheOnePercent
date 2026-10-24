@@ -1,4 +1,6 @@
 import importlib.util,io,json,struct,lzma,unittest,zipfile,tempfile
+from unittest.mock import patch,Mock
+from urllib.error import HTTPError,URLError
 from pathlib import Path
 from datetime import datetime,timezone
 ROOT=Path(__file__).resolve().parents[1]
@@ -8,6 +10,20 @@ def archive(text):
  with zipfile.ZipFile(out,'w') as z:z.writestr('source.csv',text)
  return out.getvalue()
 class RefreshTests(unittest.TestCase):
+ def test_transient_source_errors_retry_then_succeed(self):
+  source=R.Source()
+  for error in (HTTPError('https://example.test',503,'Unavailable',{},None),URLError('temporary DNS failure'),TimeoutError()):
+   with self.subTest(error=type(error).__name__),patch.object(source,'_get',side_effect=[error,b'candles']) as request,patch.object(R.time,'sleep'):
+    self.assertEqual(source.get('https://example.test'),b'candles');self.assertEqual(request.call_count,2)
+ def test_source_retry_is_bounded_and_rate_limits_stop(self):
+  source=R.Source()
+  with patch.object(source,'_get',side_effect=TimeoutError()) as request,patch.object(R.time,'sleep'):
+   with self.assertRaises(TimeoutError):source.get('https://example.test')
+   self.assertEqual(request.call_count,3)
+  source.opener.open=Mock(side_effect=HTTPError('https://example.test',429,'Rate limited',{},None))
+  with patch.object(R.time,'sleep'):
+   with self.assertRaises(R.Upload.RateLimited):source.get('https://example.test')
+  self.assertEqual(source.opener.open.call_count,1)
  def test_fixed_est_duplicate_conflicts_and_future_cutoff(self):
   raw=archive('20260101 000000;1;2;1;2;0\n20260101 000000;1;2;1;2;0\n20260101 000100;1;3;1;2;0\n20260101 000100;1;4;1;2;0\n20260101 000200;2;1;1;2;0\n20270101 000000;1;2;1;2;0\n')
   rows,quality=R.minute_rows(raw,int(datetime(2026,10,23,tzinfo=timezone.utc).timestamp()));t=int(datetime(2026,1,1,5,tzinfo=timezone.utc).timestamp());self.assertEqual(rows,{t:('1','2','1','2')});self.assertEqual(quality,{'invalid':1,'conflicting_minutes':1,'duplicates':1})

@@ -16,7 +16,7 @@ def package_file(path,provider,symbol,frame,out):
         for row in csv.DictReader(stream):
             dt=datetime.fromisoformat(row['Date'].replace('Z','+00:00'))
             if dt.utcoffset()!=timezone.utc.utcoffset(dt):raise ValueError('Input must use UTC timestamps')
-            stamp=int(dt.timestamp());values=[row[k] for k in ('Open','High','Low','Close')]
+            stamp=int(dt.timestamp());values=[row[k].strip() for k in ('Open','High','Low','Close')]
             o,h,l,c=map(Decimal,values)
             if not all(v.is_finite() for v in (o,h,l,c)) or not (0<l<=min(o,c)<=max(o,c)<=h) or stamp<=previous:
                 raise ValueError('Invalid, duplicate or unordered candle')

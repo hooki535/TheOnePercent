@@ -8,7 +8,7 @@ from decimal import Decimal,InvalidOperation
 from html.parser import HTMLParser
 from http.cookiejar import CookieJar
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError,URLError
 from urllib.parse import urlencode
 from urllib.request import Request,build_opener,HTTPCookieProcessor
 
@@ -26,6 +26,14 @@ class Form(HTMLParser):
 class Source:
  def __init__(self):self.opener=build_opener(HTTPCookieProcessor(CookieJar()));self.last=0
  def get(self,url,data=None,referer=None,maximum=15000000):
+  for attempt in range(3):
+   try:return self._get(url,data,referer,maximum)
+   except HTTPError as e:
+    if e.code not in (408,500,502,503,504) or attempt==2:raise
+   except (URLError,TimeoutError,ConnectionError):
+    if attempt==2:raise
+   time.sleep(5*(attempt+1))
+ def _get(self,url,data=None,referer=None,maximum=15000000):
   time.sleep(max(0,2-(time.monotonic()-self.last)));self.last=time.monotonic()
   headers={'User-Agent':'Mozilla/5.0 (TheOnePercent historical research)','Accept':'*/*'}
   if referer:headers['Referer']=referer
