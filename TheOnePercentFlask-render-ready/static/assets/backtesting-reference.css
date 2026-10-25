@@ -58,3 +58,37 @@
 @media(max-width:760px){.bt-canvas-box{height:var(--bt-chart-height,580px)}.bt-drawing-edit{max-width:calc(100% - 12px);right:5px}.bt-drawing-edit select{max-width:61px}.bt-tool-favorites{max-height:95px;overflow:auto}.bt-chart-toolbar .bt-actions{gap:4px}}
 
 #bt-new-form>.bt-form-grid>#bt-cloud-field>small{display:block;margin-top:8px;line-height:1.5}
+
+/* Session creation follows the compact account/pairs/dates reference. */
+.bt-dialog[data-kind="session"]:has(#bt-new-form){width:352px;max-width:calc(100vw - 24px);max-height:min(482px,calc(100dvh - 40px));border-radius:10px;color-scheme:dark}
+.bt-dialog[data-kind="session"] .bt-dialog-body{padding:20px}
+.bt-dialog[data-kind="session"] .bt-dialog-head{top:-20px;margin:-20px -20px 19px;padding:17px 19px;border-bottom:1px solid #22252b}
+.bt-dialog[data-kind="session"] .bt-dialog-head h2{font-size:14px}
+.bt-dialog[data-kind="session"] .bt-session-intro{display:none}
+#bt-new-form>.bt-form-grid{gap:13px}
+#bt-new-form>.bt-form-grid>.bt-field>.bt-input,#bt-new-form>.bt-form-grid>.bt-field>.bt-select{height:45px;border-radius:14px;padding-top:18px;font-size:11px}
+#bt-new-form>.bt-form-grid>.bt-field>.bt-textarea{height:98px;border-radius:14px}
+#bt-new-form .bt-pair-picker{border-radius:14px;background:#222428}
+#bt-new-form .bt-pair-picker>summary{display:flex;align-items:center;justify-content:space-between;padding:14px 19px;min-height:45px;box-sizing:border-box;list-style:none;font-weight:400}
+#bt-new-form .bt-pair-picker>summary::-webkit-details-marker{display:none}
+#bt-new-form .bt-pair-picker>summary:after{content:'';width:7px;height:7px;border-right:1px solid #aeb4bc;border-bottom:1px solid #aeb4bc;transform:rotate(45deg);margin-right:3px}
+#bt-new-form .bt-pair-picker[open]>summary{color:var(--bt-accent)}
+#bt-new-form .bt-pair-picker[open]>summary:after{transform:rotate(225deg)}
+#bt-new-form .bt-pair-list{padding:7px;background:#222428;border-top:6px solid #15171c}
+#bt-new-form #bt-archive-search{height:31px;border-radius:11px;font-size:11px}
+#bt-new-form #bt-extra-options{max-height:184px;padding:8px 5px 0;scrollbar-width:thin}
+#bt-new-form .bt-extra-row{padding:8px 6px;min-height:32px;box-sizing:border-box}
+#bt-new-form .bt-extra-row b{font-size:11px;font-weight:400}
+#bt-new-form .bt-extra-row input[type=checkbox]{appearance:none;width:13px;height:13px;border:1px solid #a78635;border-radius:3px;background:transparent;flex:none;display:grid;place-content:center}
+#bt-new-form .bt-extra-row input[type=checkbox]:checked{background:var(--bt-accent);border-color:var(--bt-accent)}
+#bt-new-form .bt-extra-row input[type=checkbox]:checked:after{content:'✓';font-size:11px;color:#15171c}
+#bt-new-form .bt-extra-row input[type=checkbox]:focus-visible{outline:2px solid #5b78ff;outline-offset:3px}
+#bt-new-form .bt-session-more{font-size:10px;color:var(--bt-muted)}
+#bt-new-form .bt-session-more>summary{cursor:pointer;padding:4px 0}
+#bt-new-form .bt-session-more .bt-archive-coverage{font-size:10px;line-height:1.6}
+#bt-new-form .bt-session-actions{justify-content:flex-end;gap:9px;padding:13px 0 0;margin:0}
+#bt-new-form .bt-session-actions .bt-button{border-radius:24px;padding:12px 14px;font-size:11px;font-weight:400}
+
+#bt-new-form>.bt-form-grid>.bt-pair-picker,#bt-new-form>.bt-form-grid>.bt-session-more{grid-column:1/-1}
+#bt-new-form .bt-session-actions{position:static}
+#bt-new-form input[type=datetime-local]{font-size:10px!important;padding-left:12px!important;padding-right:8px!important;letter-spacing:-.15px}
