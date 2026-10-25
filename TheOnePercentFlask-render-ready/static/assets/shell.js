@@ -41,7 +41,6 @@ window.Shell = (() => {
     dashboard: "/dashboard",
     journal: "/journal",
     charts: "/charts",
-    backtesting: "/backtesting",
     calculators: "/calculators",
     settings: "/settings",
     learn: "/learn",
@@ -219,7 +218,6 @@ window.Shell = (() => {
     { id: "dashboard", label: "Dashboard", href: P.dashboard },
     { id: "journal", label: "Journal", href: P.journal },
     { id: "charts", label: "Charts", href: P.charts },
-    { id: "backtesting", label: "Backtesting", href: P.backtesting },
     { id: "calculators", label: "Calculators", href: P.calculators },
     { id: "learn", label: "Learn", href: P.learn },
   ];

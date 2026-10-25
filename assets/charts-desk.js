@@ -137,14 +137,14 @@
   switchTab(initialPanel);
 
   const footer = document.createElement('footer'); footer.className = 'desk-bottom';
-  footer.innerHTML = '<div class="desk-bottom-actions"><button type="button" data-desk-bottom="position">Position planner</button><button type="button" data-desk-bottom="journal">Journal</button><button type="button" data-desk-bottom="alerts">Alerts</button><a href="backtesting.html#sessions">Backtesting <span aria-hidden="true">↗</span></a></div><div class="desk-feed-status" id="deskFeedStatus" role="status"></div>';
+  footer.innerHTML = '<div class="desk-bottom-actions"><button type="button" data-desk-bottom="position">Position planner</button><button type="button" data-desk-bottom="journal">Journal</button><button type="button" data-desk-bottom="alerts">Alerts</button></div><div class="desk-feed-status" id="deskFeedStatus" role="status"></div>';
   document.querySelector('.cshell').after(footer);
   const badgeHost = byId('deskFeedStatus'); badgeHost.append(byId('feedBadge'));
   const blindStatus = document.createElement('span'); blindStatus.textContent = 'Blind replay · symbol and date hidden'; blindStatus.hidden = true; badgeHost.append(blindStatus);
   const riskPill = byId('riskPill'); if (riskPill) footer.querySelector('.desk-bottom-actions').after(riskPill);
   const empty = document.createElement('section'); empty.className = 'desk-empty'; empty.hidden = true;
   empty.setAttribute('aria-label','Choose chart data');
-  empty.innerHTML = '<span class="desk-empty-symbol" aria-hidden="true">' + svg('data') + '</span><h1>Choose your chart data</h1><p id="deskEmptyMessage">Historical candles are not available for this instrument. Search for a supported market, or explore the chart tools with clearly labeled demo candles.</p><div><button type="button" class="desk-empty-primary">Search markets</button><button type="button" class="desk-empty-demo">Use demo candles</button></div><a href="' + (window.OP_FLASK ? '/backtesting#sessions' : 'backtesting.html#sessions') + '">Practice with archived history in Backtesting ↗</a>';
+  empty.innerHTML = '<span class="desk-empty-symbol" aria-hidden="true">' + svg('data') + '</span><h1>Choose your chart data</h1><p id="deskEmptyMessage">Historical candles are not available for this instrument. Search for a supported market, or explore the chart tools with clearly labeled demo candles.</p><div><button type="button" class="desk-empty-primary">Search markets</button><button type="button" class="desk-empty-demo">Use demo candles</button></div>';
   empty.querySelector('.desk-empty-primary').addEventListener('click', () => command('symBtn'));
   empty.querySelector('.desk-empty-demo').addEventListener('click', () => { if (!Feed.isDemoMode()) command('dataModeToggle'); });
   document.querySelector('.cmid').append(empty);

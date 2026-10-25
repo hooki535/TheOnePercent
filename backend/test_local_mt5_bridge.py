@@ -111,7 +111,7 @@ class LocalMT5BridgeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("supabase-js", response.text)
         self.assertNotIn("assets/cloud.js", response.text)
-        self.assertIn("vendor/lightweight-charts.standalone.production.js", response.text)
+        self.assertIn("TheOnePercent-Backtesting/pages/backtesting.html", response.text)
         self.assertIn("connect-src 'self'", response.headers["content-security-policy"])
 
     def test_unknown_symbol_and_interval_are_not_guessed(self):
