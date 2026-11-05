@@ -84,7 +84,7 @@ def aggregate(rows,seconds):
  return out
 
 def package(rows,provider,symbol,frame,folder,now):
- seconds={'H1':3600,'D1':86400}[frame];rows={t:v for t,v in rows.items() if t+seconds<=now}
+ seconds={'M1':60,'H1':3600,'D1':86400}[frame];rows={t:v for t,v in rows.items() if t+seconds<=now}
  if not rows:return []
  path=folder/(symbol+'-'+frame+'.csv')
  with path.open('w',newline='',encoding='utf8') as f:
@@ -125,7 +125,7 @@ def run(client,folder,pairs,us30=True):
   rows={t:v for t,v in rows.items() if (datetime.fromtimestamp(t,UTC).year,datetime.fromtimestamp(t,UTC).month) in allowed}
   if not rows:continue
   chunks=[]
-  for frame,seconds in [('H1',3600),('D1',86400)]:chunks.extend(package(aggregate(rows,seconds),'histdata',pair,frame,folder,now))
+  for frame,seconds in [('M1',60),('H1',3600),('D1',86400)]:chunks.extend(package(aggregate(rows,seconds),'histdata',pair,frame,folder,now))
   client.upload(chunks,folder);report['pairs'].append({'symbol':pair,'chunks':len(chunks),'last_candle':max((c['last_utc'] for c in chunks),default=None),'quality':quality});print(json.dumps(report['pairs'][-1]),flush=True)
  client.request('/run',{'provider':'histdata','status':'failed' if report['errors'] else 'complete','details':report})
  if us30:

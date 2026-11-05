@@ -30,6 +30,10 @@ class RefreshTests(unittest.TestCase):
  def test_decimal_aggregation_preserves_actual_extremes(self):
   result=R.aggregate({0:('1.123456789','1.2','1.0','1.15'),60:('1.15','1.300000001','1.05','1.2')},3600)
   self.assertEqual(result,{0:['1.123456789','1.300000001','1.0','1.2']})
+ def test_closed_minutes_are_packaged_without_inventing_a_future_minute(self):
+  with tempfile.TemporaryDirectory() as folder:
+   chunks=R.package({0:['1','2','1','2'],60:['1','2','1','2']},'histdata','EURUSD','M1',Path(folder),61)
+   self.assertEqual(chunks[0]['timeframe'],'M1');self.assertEqual(chunks[0]['candle_count'],1);self.assertFalse(chunks[0]['published'])
  def test_partial_hour_is_not_packaged(self):
   with tempfile.TemporaryDirectory() as folder:
    chunks=R.package({0:['1','2','1','2'],3600:['1','2','1','2']},'histdata','EURUSD','H1',Path(folder),4000)
