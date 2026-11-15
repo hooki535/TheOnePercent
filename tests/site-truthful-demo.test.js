@@ -7,21 +7,24 @@ const chartsPage = fs.readFileSync("pages/charts.html", "utf8");
 const charts = fs.readFileSync("assets/charts.js", "utf8");
 const chartEngine = fs.readFileSync("assets/charts-engine.js", "utf8");
 
-test("homepage identifies every changing quote as simulated sample data", () => {
-  assert.match(home, /SIMULATED MARKET DATA/);
-  assert.match(home, /not a live feed/);
-  assert.match(home, /aria-label="Simulated market ticker"/);
-  assert.match(home, /Synthetic demo candles/);
-  assert.doesNotMatch(home, /Live market ticker|Live preview|Live snapshot|updated just now|Prices\s+refresh in place/);
+test("homepage labels its preview snapshot and distinguishes missing real data", () => {
+  const script = fs.readFileSync("assets/home.js", "utf8");
+  assert.match(home, /Illustrative data/);
+  assert.match(home, /Preview data/);
+  assert.match(home, /Sample prices, events and articles are clearly labelled/);
+  assert.match(script, /No verified quote available/);
+  assert.match(script, /No verified history is available/);
+  assert.doesNotMatch(home, /Live market ticker|Live preview|updated just now/);
 });
 
-test("static calendar and idea examples are not presented as current or community posts", () => {
-  assert.match(home, /Sample calendar events/);
-  assert.match(home, /not a current economic calendar/);
+test("static calendar, news and ideas remain labelled examples", () => {
+  assert.match(home, /Sample events/);
+  assert.match(home, /No live schedule or release values are connected/);
+  assert.match(home, /Example editorials/);
+  assert.match(home, /A live news provider is not connected/);
+  assert.match(home, /Educational examples/);
+  assert.match(home, /Community publishing will be designed separately/);
   assert.doesNotMatch(home, /pages\/markets\.html/);
-  assert.match(home, /Illustrative trade examples/);
-  assert.match(home, /not published community trades, recommendations, or live posts/);
-  assert.doesNotMatch(home, /Achieng K\.|Simon P\.|Moses N\.|2h ago|5h ago/);
 });
 
 test("chart details and tour are available on demand without auto-opening", () => {
