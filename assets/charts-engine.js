@@ -1336,6 +1336,7 @@ class Chart {
   study(s) {
     const S = STUDIES[s.id];
     if (S.custom || !S.calc) return null;
+    if (window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() && (S.fam === "vol" || ["vwap","cvd"].includes(s.id))) return null;
     const d = this.data;
     const sig =
       this.key +
@@ -2015,7 +2016,7 @@ class Chart {
       .filter((s) => s.visible && STUDIES[s.id].where === "price")
       .forEach((s) => this.drawPriceStudy(c, s, i0, i1));
     /* volume profile of the visible range */
-    if (this.cfg.vp) this.volProfile(c, d, i0, i1);
+    if (this.cfg.vp && !(window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode())) this.volProfile(c, d, i0, i1);
     /* price series */
     this.drawSeries(c, d, i0, i1, cw, up, dn, pr);
     /* compare overlays */
@@ -3185,7 +3186,7 @@ class Chart {
       .map((s) => {
         const S2 = STUDIES[s.id],
           r = this.study(s);
-        let v = "";
+        let v = window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() && (S2.fam === "vol" || ["vwap","cvd"].includes(s.id)) ? "No volume in archive" : "";
         if (r && r.lines && r.lines.length)
           v = r.lines
             .map((L) =>
@@ -3225,7 +3226,7 @@ class Chart {
       .join("");
     this.leg.classList.toggle("expanded", this.legExpanded);
     this.leg.innerHTML = `
-      <div class="leg-1"><span class="leg-sym">${blind ? "······" : this.cfg.sym}</span><span class="leg-int">${this.cfg.iv} · ${blind ? "hidden in blind mode" : S.venue}</span>
+      <div class="leg-1"><span class="leg-sym">${blind ? "······" : this.cfg.sym}</span><span class="leg-int">${this.cfg.iv} · ${blind ? "hidden in blind mode" : window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "Database history" : S.venue}</span>
         <span class="${cls} mono">${ch >= 0 ? "+" : "−"}${Math.abs(ch).toFixed(S.digits)} (${ch >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(2)}%)</span>
         <button class="leg-toggle" type="button" data-act="details" aria-expanded="${this.legExpanded}" aria-label="${this.legExpanded ? "Hide" : "Show"} OHLC and indicator details">${this.legExpanded ? "Details ▴" : "Details ▾"}</button></div>
       <div class="leg-o"><span>O <b>${fmt(b.o, this.cfg.sym)}</b></span><span>H <b>${fmt(b.h, this.cfg.sym)}</b></span>
@@ -3369,7 +3370,7 @@ class Chart {
           "%",
       ],
       ["Range", S.tick > 0 ? (Math.abs(b.h - b.l) / S.tick).toFixed(0) + " " + S.tickName : Math.abs(b.h - b.l).toFixed(S.digits) + " price units"],
-      ["Volume", compact(b.v, true)],
+      ["Volume", window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "Unavailable in archive" : compact(b.v, true)],
     ];
     /* A line is usually already named after its study, so joining the two
        produced "EMA EMA 21" and "RSI RSI 14" down the whole window. */

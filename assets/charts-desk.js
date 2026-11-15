@@ -16,7 +16,7 @@
     layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M14 3v18"/>'
   };
   const svg = name => '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + icons[name] + '</svg>';
-  const labels = {watchlist: 'Watchlist', alerts: 'Price alerts', objects: 'Drawing layers', data: 'Crosshair data', position: 'Position planner', journal: 'Trade journal'};
+  const labels = {watchlist: 'Watchlist', alerts: 'Price alerts', objects: 'Object Tree', data: 'Crosshair data', position: 'Position planner', journal: 'Trade journal'};
   function command(id) { byId(id)?.click(); }
   document.querySelectorAll('[data-desk-action]').forEach(button => button.addEventListener('click', () => command(button.dataset.deskAction)));
 
@@ -146,6 +146,7 @@
   empty.setAttribute('aria-label','Choose chart data');
   empty.innerHTML = '<span class="desk-empty-symbol" aria-hidden="true">' + svg('data') + '</span><h1>Choose your chart data</h1><p id="deskEmptyMessage">Historical candles are not available for this instrument. Search for a supported market, or explore the chart tools with clearly labeled demo candles.</p><div><button type="button" class="desk-empty-primary">Search markets</button><button type="button" class="desk-empty-demo">Use demo candles</button></div>';
   empty.querySelector('.desk-empty-primary').addEventListener('click', () => command('symBtn'));
+  if (window.THEONEPERCENT_CHART_ARCHIVE) { empty.querySelector('.desk-empty-demo').hidden = true; const login = document.createElement('a'); login.href='login.html';login.className='desk-empty-primary';login.textContent='Sign in for archive access';empty.querySelector('div').append(login); }
   empty.querySelector('.desk-empty-demo').addEventListener('click', () => { if (!Feed.isDemoMode()) command('dataModeToggle'); });
   document.querySelector('.cmid').append(empty);
   footer.querySelectorAll('[data-desk-bottom]').forEach(b => b.addEventListener('click', () => openPanel(b.dataset.deskBottom)));

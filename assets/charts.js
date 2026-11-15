@@ -709,6 +709,7 @@ function draw() {
       const next = Feed.badge({ compact: true, symbol: active.sym, interval: active.iv });
       if (badge.innerHTML !== next) badge.innerHTML = next;
     }
+    document.dispatchEvent(new Event("chart-render"));
   });
 }
 addEventListener("resize", draw);
@@ -1104,7 +1105,7 @@ function paintSymCard() {
     day = new Date(d[d.length - 1].t).getUTCDate();
   const lastBar = d[d.length - 1];
   const source = Feed.historicalSource(sym, "15m") || (Feed.isDemoMode() ? "Synthetic Demo mode" : "Provider history");
-  const closeTime = new Date(lastBar.t * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  const closeTime = new Date(lastBar.t).toISOString().replace("T", " ").slice(0, 16) + " UTC";
   let lo = Infinity,
     hi = -Infinity;
   for (let i = d.length - 1; i >= 0; i--) {
@@ -1126,9 +1127,9 @@ function paintSymCard() {
      <div class="sc-price-note">Last candle close · ${source} · ${closeTime}</div>
      <div class="sc-p ${up ? "up" : "dn"}"><span>${head}</span><i>${tail}</i>
        <em>${S.quote || ""}</em></div>
-     <div class="sc-c ${up ? "up" : "dn"}" title="Change from the first available 15-minute candle for the current UTC date">${up ? "+" : "−"}${Math.abs(q.chg).toFixed(dg)}
+     <div class="sc-c ${up ? "up" : "dn"}" title="Change from the first available 15-minute candle on the archive’s last UTC date">${up ? "+" : "−"}${Math.abs(q.chg).toFixed(dg)}
        <span>${up ? "+" : "−"}${Math.abs(q.chgPct).toFixed(2)}%</span>
-       <b>UTC day</b></div>
+       <b>Last stored UTC day</b></div>
      <div class="sc-rg" title="Where the last price sits between the session low and the session high">
        <span class="sc-rl">${lo.toFixed(dg)}</span>
        <span class="sc-rt"><i style="left:${at.toFixed(1)}%"></i></span>
@@ -1362,6 +1363,10 @@ function paintCompare() {
 }
 
 /* ── objects tree ────────────────────────────────────────────── */
+function objectIcon(name) {
+  const paths = {eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',hidden:'<path d="m3 3 18 18M9 5a12 12 0 0 1 13 7s-4 7-10 7a10 10 0 0 1-5-1M5 6a18 18 0 0 0-3 6l3 4"/>',lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/>',unlock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0"/>',set:'<path d="M3 7h18M3 17h18"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>',del:'<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>'};
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[name]+'</svg>';
+}
 function paintObjects() {
   const c = charts[state.sel];
   if (!c || !$("#objs")) return;
@@ -1371,24 +1376,26 @@ function paintObjects() {
     ? list
         .map(
           (o, i) => `
-    <div class="ob ${o.id === state.selObj ? "sel" : ""}" data-o="${o.id}">
+    <div class="ob ${o.id === state.selObj ? "sel" : ""}" data-o="${o.id}" tabindex="0" aria-label="${DRAW[o.t] ? DRAW[o.t].name : o.t}">
+      <span class="ob-icon" aria-hidden="true">${typeof svgIcon === "function" ? svgIcon(o.t) : ""}</span>
       <span class="ob-n">${DRAW[o.t] ? DRAW[o.t].name : o.t}</span>
       <span class="ob-v mono">${o.pts[0].p != null ? fmt(o.pts[0].p, c.cfg.sym) : "—"}</span>
-      <button data-a="eye" title="${o.hidden ? "Show" : "Hide"}">${o.hidden ? "◎" : "◉"}</button>
-      <button data-a="lock" title="${o.locked ? "Unlock" : "Lock"}">${o.locked ? "🔒" : "🔓"}</button>
-      <button data-a="set" title="Settings">⚙</button>
-      <button data-a="del" title="Remove">✕</button>
+      <button data-a="eye" title="${o.hidden ? "Show" : "Hide"}" aria-label="${o.hidden ? "Show" : "Hide"} drawing" aria-pressed="${!!o.hidden}">${objectIcon(o.hidden ? "hidden" : "eye")}</button>
+      <button data-a="lock" title="${o.locked ? "Unlock" : "Lock"}" aria-label="${o.locked ? "Unlock" : "Lock"} drawing" aria-pressed="${!!o.locked}">${objectIcon(o.locked ? "lock" : "unlock")}</button>
+      <button data-a="set" title="Drawing settings" aria-label="Drawing settings">${objectIcon("set")}</button>
+      <button data-a="del" title="Remove drawing" aria-label="Remove drawing">${objectIcon("del")}</button>
     </div>`,
         )
         .join("")
     : `<div class="empty">No drawings on this chart yet. Pick a tool on the left rail.</div>`;
   $$("#objs .ob").forEach((el) => {
     el.onclick = (e) => {
-      if (e.target.dataset.a) return;
+      if (e.target.closest("[data-a]")) return;
       state.selObj = el.dataset.o;
       paintObjects();
       draw();
     };
+    el.onkeydown = e => { if (e.target === el && (e.key === "Enter" || e.key === " ")) {e.preventDefault();el.click();} };
     el.querySelectorAll("[data-a]").forEach(
       (b) =>
         (b.onclick = (e) => {
@@ -1815,7 +1822,7 @@ function paintSettings() {
     </div>
     <div class="set-g"><span class="lbl">This chart</span>
       ${row("Volume profile of the visible range", `<label class="sw2"><input type="checkbox" data-vp ${cfg.vp ? "checked" : ""}><i></i></label>`)}
-      ${row("Live simulated ticks", `<label class="sw2"><input type="checkbox" data-live ${state.live ? "checked" : ""}><i></i></label>`, "the last bar moves; history never changes")}
+      ${!window.THEONEPERCENT_CHART_ARCHIVE ? row("Live simulated ticks", `<label class="sw2"><input type="checkbox" data-live ${state.live ? "checked" : ""}><i></i></label>`, "the last bar moves; history never changes") : `<p class="hint">Stored database candles are read-only. These archives contain bid OHLC without volume; this is not a live execution feed.</p>`}
     </div>`;
   $$("#setBody [data-look]").forEach((f) => {
     f.onchange = () => {

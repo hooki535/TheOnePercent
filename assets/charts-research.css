@@ -1,0 +1,65 @@
+/* Compact research desk from the approved video reference. */
+body[data-page="charts"] [hidden] { display:none!important; }
+body[data-page="charts"] .ctoolbar { flex:0 0 48px;height:48px;gap:5px;background:var(--term-bg)!important;padding:0 9px;z-index:80; }
+body[data-page="charts"] .desk-brand { font-size:16px;font-weight:700;letter-spacing:-.6px;gap:8px;padding-right:15px;margin-right:3px;border-right:1px solid var(--term-line);flex-shrink:0; }
+body[data-page="charts"] .desk-brand img { width:24px;height:30px; }
+html[data-theme="dark"] .desk-brand img { filter:brightness(0) invert(1); }
+body[data-page="charts"] .ctoolbar svg { width:19px;height:19px;flex-shrink:0; }
+body[data-page="charts"] .ctoolbar .tb-btn { display:inline-flex;align-items:center;gap:6px;min-height:32px;color:var(--term-text)!important;font-size:12px; }
+body[data-page="charts"] .ctoolbar .sym { background:var(--term-bg)!important;min-width:90px; }
+body[data-page="charts"] .ctoolbar #intervals { display:flex!important;flex-shrink:0; }
+body[data-page="charts"] .ctoolbar .sym-meta { display:none; }
+body[data-page="charts"] .ctoolbar .ct-l { overflow:visible;flex-shrink:1; }
+body[data-page="charts"] .ctoolbar .chip { padding:5px 6px; }
+body[data-page="charts"] .ctoolbar #journalBtn { display:none!important; }
+body[data-page="charts"] .ctoolbar .desk-save { color:var(--term-accent);font-size:12px;padding:5px; }
+body[data-page="charts"] .ctoolbar .desk-options summary { border:0;font-size:12px; }
+body[data-page="charts"] .ctoolbar .toolbar-workspace { gap:0; }
+body[data-page="charts"] .desk-layout summary { min-width:29px; }
+body[data-page="charts"] .desk-layout summary>span,.ctoolbar .desk-replay+span { display:none; }
+body[data-page="charts"] .research-profile { display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--term-raised);color:var(--term-text);overflow:hidden;flex-shrink:0;margin-left:4px; }
+body[data-page="charts"] .research-profile img { width:100%;height:100%;object-fit:cover; }
+body[data-page="charts"] .research-extra { display:flex;flex-direction:column;align-items:stretch; }
+body[data-page="charts"] .research-extra .menu-wrap { position:relative; }
+body[data-page="charts"] .cmid { position:relative; }
+body[data-page="charts"] .research-favorites,body[data-page="charts"] .research-editbar { display:flex;align-items:center;gap:3px;padding:4px 6px;border:1px solid var(--term-line);border-radius:6px;background:var(--term-bg);box-shadow:0 3px 12px rgb(0 0 0 / 10%);z-index:15;position:absolute;left:50%;transform:translateX(-50%);max-width:calc(100% - 40px); }
+body[data-page="charts"] .research-favorites { top:62px;overflow-x:auto; }
+body[data-page="charts"] .research-editbar { top:112px; }
+body[data-page="charts"] :is(.research-favorites,.research-editbar) button { display:grid;place-items:center;flex-shrink:0;width:30px;height:30px;border:0;border-radius:3px;background:transparent;color:var(--term-text);cursor:pointer; }
+body[data-page="charts"] :is(.research-favorites,.research-editbar) button:hover { background:var(--term-hover); }
+body[data-page="charts"] :is(.research-favorites,.research-editbar) button[aria-pressed="true"] { background:var(--term-accent-soft);color:var(--term-accent); }
+body[data-page="charts"] :is(.research-favorites,.research-editbar) svg { width:20px;height:20px; }
+body[data-page="charts"] .research-grip { color:var(--term-faint);font-size:16px;padding-right:3px; }
+body[data-page="charts"] .research-editbar input { width:27px;height:26px;border:0;background:transparent;padding:0; }
+body[data-page="charts"] .research-editbar select { background:var(--term-bg);color:var(--term-text);border:0;font-size:11px; }
+body[data-page="charts"] .crail { width:44px;flex-basis:44px;background:var(--term-bg)!important; }
+body[data-page="charts"] .rtool { border-radius:4px; }
+body[data-page="charts"] .desk-activity { width:42px;flex-basis:42px;background:var(--term-bg); }
+body[data-page="charts"] .desk-panel-heading { min-height:40px; }
+body[data-page="charts"] .desk-panel-heading strong { font-size:12px; }
+body[data-page="charts"] .panel .tabs { gap:0;overflow:auto;background:var(--term-bg); }
+body[data-page="charts"] .panel .tab { font-size:10px;white-space:nowrap;padding:10px 7px;border-radius:0; }
+body[data-page="charts"] .panel .tab.active { background:transparent;color:var(--term-accent);box-shadow:inset 0 -2px var(--term-accent); }
+body[data-page="charts"] .ob { display:grid;grid-template-columns:22px minmax(60px,1fr) repeat(4,24px);gap:3px;align-items:center;padding:8px 4px;border:0;border-radius:4px; }
+body[data-page="charts"] .ob .ob-v { display:none; }
+body[data-page="charts"] .ob svg { width:17px;height:17px;pointer-events:none; }
+body[data-page="charts"] .ob button { width:24px;height:26px;padding:3px;display:grid;place-items:center;background:transparent;border:0;color:var(--term-muted); }
+body[data-page="charts"] .ob-n { font:500 11px 'IBM Plex Sans',sans-serif; }
+body[data-page="charts"] .ob.sel { background:var(--term-accent-soft);color:var(--term-text); }
+body[data-page="charts"] .desk-bottom { min-height:34px;flex-basis:34px;background:var(--term-bg); }
+body[data-page="charts"] .desk-feed-status { max-width:55%; }
+body[data-page="charts"] .desk-feed-status .feed-badge { white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%; }
+body[data-page="charts"] #setModal .sheet { width:min(820px,95vw); }
+body[data-page="charts"] #setBody { display:grid;grid-template-columns:175px minmax(0,1fr);gap:24px;min-height:360px; }
+body[data-page="charts"] .research-settings-nav { display:flex;flex-direction:column;gap:5px;border-right:1px solid var(--term-line);padding-right:15px; }
+body[data-page="charts"] .research-settings-nav button { padding:12px 10px;text-align:left;background:transparent;color:var(--term-text);border:0;border-radius:4px;cursor:pointer; }
+body[data-page="charts"] .research-settings-nav button[aria-pressed="true"] { background:var(--term-accent-soft);color:var(--term-accent); }
+body[data-page="charts"] :is(button,a,input,select):focus-visible { outline:2px solid var(--term-accent);outline-offset:2px; }
+@media(min-width:1200px){body[data-page="charts"] .toolbar-workspace #workspacePanelToggle{display:none!important;}}
+@media(max-width:1199px){body[data-page="charts"] .desk-brand span{display:none;}body[data-page="charts"] .desk-brand{padding-right:6px;}body[data-page="charts"] .ctoolbar .desk-camera{display:none;}body[data-page="charts"] .research-history{display:none!important;}}
+@media(max-width:900px){body[data-page="charts"] .ctoolbar{height:auto;min-height:48px;flex-wrap:wrap;flex-basis:auto;padding-block:5px;}body[data-page="charts"] .ctoolbar .ct-l{order:2;flex:1 0 100%;overflow-x:auto;overflow-y:hidden;}body[data-page="charts"] .ctoolbar .spacer{display:none;}body[data-page="charts"] .ctoolbar .ct-r{margin-left:auto;}body[data-page="charts"] .research-favorites{top:70px;}body[data-page="charts"] .research-editbar{top:110px;}body[data-page="charts"] .desk-feed-status{max-width:100%;}body[data-page="charts"] .desk-bottom{min-height:56px;}}
+@media(max-width:560px){body[data-page="charts"] #setBody{grid-template-columns:1fr;gap:10px;}body[data-page="charts"] .research-settings-nav{flex-direction:row;overflow:auto;border:0;padding:0;}body[data-page="charts"] .research-settings-nav button{white-space:nowrap;padding:8px;}body[data-page="charts"] .desk-bottom .risk-pill{display:none!important;}body[data-page="charts"] .research-favorites button{width:27px;}body[data-page="charts"] .research-favorites{max-width:calc(100% - 16px);}}
+body[data-page="charts"] .desk-empty a.desk-empty-primary { display:inline-flex;align-items:center;justify-content:center;border-radius:4px;padding:10px 14px;text-decoration:none;font-size:11px;line-height:1.5; }
+@media(min-width:901px){body[data-page="charts"] .ctoolbar #mobPanel{display:none!important;}}
+@media(min-width:901px){body[data-page="charts"] .ctoolbar .ct-l{flex:0 0 auto;}}
+@media(max-width:1400px){body[data-page="charts"] .research-history{display:none!important;}}
