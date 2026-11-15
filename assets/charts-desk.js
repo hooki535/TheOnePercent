@@ -158,7 +158,7 @@
     const blind = state.replay.on && state.replay.blind;
     const series = charts[state.sel]?.data;
     empty.hidden = !!series?.length || Feed.isDemoMode();
-    empty.querySelector('#deskEmptyMessage').textContent = window.THEONEPERCENT_LOCAL_MT5
+    if (!window.THEONEPERCENT_CHART_ARCHIVE) empty.querySelector('#deskEmptyMessage').textContent = window.THEONEPERCENT_LOCAL_MT5
       ? 'No broker candles are available for this instrument. Check your local MT5 connection, search for the exact broker symbol, or explore the tools with clearly labeled demo candles.'
       : 'Historical candles are not available for this instrument. Search for a supported market, or explore the chart tools with clearly labeled demo candles.';
     // No quote is synthesized for navigation, and blind replay does not expose symbols.

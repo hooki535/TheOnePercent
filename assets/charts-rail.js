@@ -16,12 +16,12 @@
    One path each, on an 18×18 grid, stroked not filled unless noted. Kept
    deliberately plain: at 17px a detailed glyph is a smudge. */
 const ICON = {
-  cursor: "M4 2l11 8.4-4.7.6L13 16.6l-1.9.9-2.6-5.3L4 15.6z",
+  cursor: "M9 1v5M9 12v5M1 9h5M12 9h5",
   cursordot: "M9 9h.01M9 2v3M9 13v3M2 9h3M13 9h3",
   cursorarrow: "M4 2l9 7-3.6.4 2 4.4-1.6.8-2-4.4L4 13z",
   eraser: "M3 13l7-7 5 5-4 4H5zM2 16h14",
 
-  trend: "M2 15L15 3",
+  trend: "M3 14 14 3M2 13h2v2H2zM13 2h2v2h-2z",
   ray: "M2 15L15 3M15 3h.01",
   infoline: "M2 15L15 3M4 6h6M4 9h4",
   xline: "M1 16L17 2",
@@ -36,7 +36,7 @@ const ICON = {
   flatchannel: "M2 5h13M2 13h13M2 5v8M15 5v8",
   pitchfork: "M3 15L15 3M8 10l4 4M6 8l4 4M10 12l4 4",
 
-  fib: "M2 4h14M2 8h14M2 12h14M2 16h9",
+  fib: "M2 3h14M2 7h14M2 11h14M2 15h14M4 15 14 3",
   fibext: "M2 3h14M2 7h9M2 11h14M2 15h6",
   fibchannel: "M2 12L14 4M3 15L15 7M1 9L13 1",
   fibtime: "M3 2v14M6 2v14M11 2v14M16 2v14",
@@ -45,7 +45,7 @@ const ICON = {
   gannbox: "M2.5 2.5h13v13h-13zM2.5 7h13M2.5 11h13M7 2.5v13M11 2.5v13",
   gannfan: "M2 16L16 2M2 16L16 9M2 16L9 2M2 16h14M2 16V2",
 
-  rect: "M2.5 4.5h13v9h-13z",
+  rect: "M3 4h12v10H3zM2 3h2v2H2zM14 3h2v2h-2zM2 13h2v2H2zM14 13h2v2h-2z",
   ellipse: "M9 9a6.5 4.5 0 100 .01",
   triangle: "M9 3l6.5 12h-13z",
   arrow: "M2 15L15 3M15 3h-5M15 3v5",
@@ -57,13 +57,13 @@ const ICON = {
   pricelabel: "M2 9h8l3-3h4v6h-4l-3-3",
   flag: "M5 16V3l9 3-9 3",
 
-  measure: "M2 12l6-6 3 3 5-5M2 12v3h3",
+  measure: "M2 12 12 2l4 4L6 16zM5 9l2 2M8 6l2 2M11 3l2 2",
   prange: "M4 4h10M4 14h10M9 4v10",
   drange: "M4 4v10M14 4v10M4 9h10",
   dprange: "M3 3h12v12H3zM3 9h12M9 3v12",
 
   abcd: "M2 15l4-8 4 6 6-10",
-  xabcd: "M2 4l3 9 3-5 3 6 4-9",
+  xabcd: "M2 4l3 9 4-8 3 9 4-10M1 3h2v2H1zM4 12h2v2H4zM8 4h2v2H8zM11 13h2v2h-2zM15 3h2v2h-2z",
   elliott: "M2 16l2-4 2 2 3-7 2 3 4-8",
   headshoulders: "M2 14l3-3 2 2 2-8 2 8 2-2 3 3",
 
@@ -73,12 +73,12 @@ const ICON = {
     "M9 2a5 5 0 00-5 5c0 4-2 5-2 5h14s-2-1-2-5a5 5 0 00-5-5zM7 15a2 2 0 004 0",
   replayhere: "M4 3v12l10-6z",
 
-  magnet: "M4 3v6a5 5 0 0010 0V3h-3v6a2 2 0 01-4 0V3z",
-  keep: "M3 9a6 6 0 0110.5-4L16 7M16 3v4h-4M15 9a6 6 0 01-10.5 4L2 11m0 4v-4h4",
+  magnet: "M3 3v6a6 6 0 0 0 12 0V3h-3v6a3 3 0 0 1-6 0V3zM3 6h3M12 6h3",
+  keep: "M3 12 11 4l3 3-8 8H3zM10 5l3 3M11 12h5v5h-5zM12 12v-1a1.5 1.5 0 0 1 3 0v1",
   trades: "M2 14l4-5 3 2 4-6 3 3",
-  lock: "M4 8h10v7H4zM6 8V5.5a3 3 0 016 0V8",
+  lock: "M4 8h10v8H4zM6 8V5a3 3 0 0 1 6 0v3M9 11v2",
   hide: "M1 9s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5zM9 7a2 2 0 100 4 2 2 0 000-4",
-  trash: "M4 5h10l-1 10H5zM7 5V3h4v2",
+  trash: "M3 5h12M5 5l1 11h6l1-11M7 5V2h4v3M8 8v5M10 8v5",
   zoomrect: "M2.5 4.5h9v7h-9zM11 11l5 5M6 8h3M7.5 6.5v3",
   close: "M4 4l10 10M14 4L4 14",
 };
@@ -305,7 +305,7 @@ function groupOf(tool) {
 /* ── markup ────────────────────────────────────────────────────── */
 
 function svgIcon(id) {
-  return `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON[id] || ICON.cursor}"/></svg>`;
+  return `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON[id] || ICON.cursor}"/></svg>`;
 }
 
 function railHTML() {
@@ -400,12 +400,12 @@ function flyoutHTML() {
       <span class="fly-star ${fav ? "on" : ""}" role="button" tabindex="0" data-fav="${id}"
         aria-pressed="${fav}"
         aria-label="${fav ? "Remove" : "Add"} ${toolName(id)} ${fav ? "from" : "to"} favourites"
-        title="${fav ? "Remove from favourites" : "Add to favourites — gives it its own rail button"}">${fav ? "★" : "☆"}</span>
+        title="${fav ? "Remove from favourites" : "Add to favourites — gives it its own rail button"}"><svg viewBox="0 0 18 18" fill="${fav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="m9 1.5 2.2 4.7 5.2.6-3.8 3.6 1 5.1L9 13l-4.6 2.5 1-5.1L1.6 6.8l5.2-.6Z"/></svg></span>
     </div>`;
   };
   return `<div class="rfly" id="rfly" role="menu" aria-label="${g.name}" data-tool-group="${g.id}">
     <div class="fly-h"><span>${g.name}</span><button class="fly-close" type="button" data-fly-close aria-label="Close ${g.name.toLowerCase()} tools" title="Close tools (Esc)">${svgIcon("close")}</button></div>
-    <label class="fly-search"><span aria-hidden="true">⌕</span><input type="search" data-tool-search placeholder="Search ${g.name.toLowerCase()}" autocomplete="off" aria-label="Search ${g.name.toLowerCase()}" /></label>
+    <label class="fly-search"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="7.5" cy="7.5" r="4.5"/><path d="m11 11 5 5"/></svg><input type="search" data-tool-search placeholder="Search ${g.name.toLowerCase()}" autocomplete="off" aria-label="Search ${g.name.toLowerCase()}" /></label>
     <div class="fly-results">
     ${g.sections
       .map(

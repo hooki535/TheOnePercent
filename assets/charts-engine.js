@@ -1870,6 +1870,7 @@ class Chart {
       this.el.classList.add("data-unavailable");
       this.leg.innerHTML = "";
       this.dw.innerHTML = "";
+      this.bdg.innerHTML = "";
       if (/^#[0-9a-f]{6}$/i.test(state.look.background || "")) {
         c.fillStyle = state.look.background;
         c.fillRect(0, 0, W, H);
@@ -1878,6 +1879,7 @@ class Chart {
       c.textAlign = "center";
       c.textBaseline = "middle";
       c.font = '600 14px "IBM Plex Sans",sans-serif';
+      if (window.THEONEPERCENT_CHART_ARCHIVE) return;
       c.fillText("No real candle history available", W / 2, H / 2 - 12);
       c.font = '12px "IBM Plex Sans",sans-serif';
       c.fillText("Choose a supported real instrument or explicitly enable Demo mode.", W / 2, H / 2 + 12);
@@ -2136,7 +2138,7 @@ class Chart {
         x = this.x(i),
         rising = b.c >= b.o,
         col = rising ? up : dn;
-      c.strokeStyle = rising ? (state.look.wickUp || (state.look.wickMatch ? col : css("--txt3"))) : (state.look.wickDn || (state.look.wickMatch ? col : css("--txt3")));
+      c.strokeStyle = rising ? (state.look.wickMatch ? col : state.look.wickUp || css("--txt3")) : (state.look.wickMatch ? col : state.look.wickDn || css("--txt3"));
       c.fillStyle = col;
       c.lineWidth = 1;
       const yo = this.y(b.o),
@@ -2157,7 +2159,7 @@ class Chart {
         c.beginPath();
         c.moveTo(Math.round(x) + 0.5, yh);
         c.lineTo(Math.round(x) + 0.5, yl);
-        c.stroke();
+        if (state.look.candleWicks !== false) c.stroke();
         const top = Math.min(yo, yc),
           h = Math.max(1, Math.abs(yc - yo));
         if (T === "hollow" && rising) {
@@ -2169,7 +2171,7 @@ class Chart {
             Math.round(h),
           );
         } else {
-          c.fillRect(
+          if (state.look.candleBodies !== false) c.fillRect(
             Math.round(x - cw / 2),
             Math.round(top),
             Math.round(cw),
@@ -3225,6 +3227,8 @@ class Chart {
       )
       .join("");
     this.leg.classList.toggle("expanded", this.legExpanded);
+    this.leg.classList.toggle("hide-ohlc", state.look.showOhlc === false);
+    this.leg.classList.toggle("hide-studies", state.look.showStudyLegend === false);
     this.leg.innerHTML = `
       <div class="leg-1"><span class="leg-sym">${blind ? "······" : this.cfg.sym}</span><span class="leg-int">${this.cfg.iv} · ${blind ? "hidden in blind mode" : window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "Database history" : S.venue}</span>
         <span class="${cls} mono">${ch >= 0 ? "+" : "−"}${Math.abs(ch).toFixed(S.digits)} (${ch >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(2)}%)</span>
@@ -3344,6 +3348,7 @@ class Chart {
         spare the room. Below that it hides rather than cover the price. */
     if (!state.look.dataWin || this.W < 760) {
       this.dw.innerHTML = "";
+      this.bdg.innerHTML = "";
       this.dw.hidden = true;
       return;
     }

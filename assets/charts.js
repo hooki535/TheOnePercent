@@ -1776,58 +1776,48 @@ function paintSettings() {
   const row = (label, ctrl, note) =>
     `<div class="set-r"><div><b>${label}</b>${note ? `<span>${note}</span>` : ""}</div>${ctrl}</div>`;
   const chk = (k, on) =>
-    `<label class="sw2"><input type="checkbox" data-look="${k}" ${on ? "checked" : ""}><i></i></label>`;
+    `<label class="sw2"><input type="checkbox" aria-label="${k.replace(/([A-Z])/g, " $1")}" data-look="${k}" ${on ? "checked" : ""}><i></i></label>`;
+  const colour = (key, label, fallback) => `<input type="color" data-look="${key}" aria-label="${label}" title="${label}" value="${L[key] || fallback}">`;
+  const pair = (key, label) => `<span class="settings-colours">${colour(key+"Up", "Rising "+label,L.up||hexOf("--up"))}${colour(key+"Dn","Falling "+label,L.dn||hexOf("--dn"))}</span>`;
   $("#setBody").innerHTML = `
-    <div class="set-g"><span class="lbl">Candles</span>
-      ${row("Up colour", `<input type="color" data-look="up" value="${L.up || hexOf("--up")}">`)}
-      ${row("Down colour", `<input type="color" data-look="dn" value="${L.dn || hexOf("--dn")}">`)}
-      ${row("Wicks match the body", chk("wickMatch", L.wickMatch))}
-    </div>
-    <div class="set-g"><span class="lbl">Grid and axes</span>
-      ${row("Horizontal grid", chk("gridH", L.gridH))}
-      ${row("Vertical grid", chk("gridV", L.gridV))}
-      ${row("Session breaks", chk("sessions", L.sessions), "dotted line at each new day")}
-      ${row("Countdown to bar close", chk("countdown", L.countdown))}
-      ${row(
-        "Price scale",
-        `<select data-scale="mode">${[
-          ["normal", "Regular"],
-          ["log", "Logarithmic"],
-          ["pct", "Percent"],
-        ]
-          .map(
-            ([v, n]) =>
-              `<option value="${v}" ${cfg.scale.mode === v ? "selected" : ""}>${n}</option>`,
-          )
-          .join("")}</select>`,
-      )}
-      ${row("Invert the price scale", `<label class="sw2"><input type="checkbox" data-invert ${cfg.scale.invert ? "checked" : ""}><i></i></label>`, "up is down — a chart you cannot read as a rising line is the fastest bias check there is")}
-    </div>
-    <div class="set-g"><span class="lbl">Cursor</span>
-      ${row(
-        "Crosshair",
-        `<select data-look="cross">${[
-          ["free", "Free"],
-          ["bar", "Snap to bar"],
-        ]
-          .map(
-            ([v, n]) =>
-              `<option value="${v}" ${L.cross === v ? "selected" : ""}>${n}</option>`,
-          )
-          .join("")}</select>`,
-      )}
-      ${row("Data window", chk("dataWin", L.dataWin), "OHLC and every study value under the cursor")}
-      ${row("Sync crosshair across the layout", chk("syncCross", L.syncCross))}
-      ${row("Sync symbol across the layout", chk("syncSymbol", L.syncSymbol))}
-    </div>
-    <div class="set-g"><span class="lbl">This chart</span>
-      ${row("Volume profile of the visible range", `<label class="sw2"><input type="checkbox" data-vp ${cfg.vp ? "checked" : ""}><i></i></label>`)}
-      ${!window.THEONEPERCENT_CHART_ARCHIVE ? row("Live simulated ticks", `<label class="sw2"><input type="checkbox" data-live ${state.live ? "checked" : ""}><i></i></label>`, "the last bar moves; history never changes") : `<p class="hint">Stored database candles are read-only. These archives contain bid OHLC without volume; this is not a live execution feed.</p>`}
-    </div>`;
+    <section class="set-g" data-settings-section="Symbol"><h3 class="settings-section-title">Candles</h3>
+      ${row("Body", `<span class="settings-colours">${chk("candleBodies", L.candleBodies !== false)}${colour("up","Rising candle body",hexOf("--up"))}${colour("dn","Falling candle body",hexOf("--dn"))}</span>`)}
+      ${row("Borders", `<span class="settings-colours">${chk("candleBorders",L.candleBorders !== false)}${pair("border","border")}</span>`)}
+      ${row("Wicks", `<span class="settings-colours">${chk("candleWicks",L.candleWicks !== false)}${pair("wick","wick")}</span>`)}
+      ${row("Wicks match body",chk("wickMatch",L.wickMatch))}
+      ${row("Candle width", `<input aria-label="Candle width" type="range" min="0.2" max="0.95" step="0.05" data-look="candleWidth" value="${L.candleWidth||0.68}">`)}
+      <p class="settings-help">Colours apply to this workspace. Save the workspace to keep your appearance.</p>
+    </section>
+    <section class="set-g" data-settings-section="Status line"><h3 class="settings-section-title">Chart information</h3>
+      ${row("OHLC values",chk("showOhlc",L.showOhlc!==false),"Shown when the chart’s Details row is expanded")}
+      ${row("Indicator legend",chk("showStudyLegend",L.showStudyLegend!==false))}
+      ${row("Data window",chk("dataWin",L.dataWin),"OHLC and study values under the crosshair")}
+      ${row("Countdown to bar close",chk("countdown",L.countdown))}
+    </section>
+    <section class="set-g" data-settings-section="Scales and lines"><h3 class="settings-section-title">Price and time scales</h3>
+      ${row("Price scale",`<select aria-label="Price scale" data-scale="mode">${[["normal","Regular"],["log","Logarithmic"],["pct","Percent"]].map(([v,n])=>`<option value="${v}" ${cfg.scale.mode===v?"selected":""}>${n}</option>`).join("")}</select>`)}
+      ${row("Invert price scale",`<label class="sw2"><input type="checkbox" data-invert ${cfg.scale.invert?"checked":""} aria-label="Invert price scale"><i></i></label>`)}
+      ${row("Use UTC time",chk("utc",L.utc!==false),"Switch off to use your browser’s local timezone")}
+      ${row("Sync crosshair",chk("syncCross",L.syncCross))}
+      ${row("Sync symbol",chk("syncSymbol",L.syncSymbol))}
+    </section>
+    <section class="set-g" data-settings-section="Canvas"><h3 class="settings-section-title">Background and grid</h3>
+      ${row("Background",colour("background","Chart background",hexOf("--bg")))}
+      ${row("Horizontal grid",chk("gridH",L.gridH))}
+      ${row("Vertical grid",chk("gridV",L.gridV))}
+      ${row("Session breaks",chk("sessions",L.sessions),"A divider at the start of each UTC day")}
+      ${row("Crosshair",`<select data-look="cross" aria-label="Crosshair mode">${[["free","Free"],["bar","Snap to candle"]].map(([v,n])=>`<option value="${v}" ${L.cross===v?"selected":""}>${n}</option>`).join("")}</select>`)}
+    </section>
+    <section class="set-g" data-settings-section="Studies"><h3 class="settings-section-title">Studies and source</h3>
+      ${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode()?'<p class="settings-help">Your database stores bid OHLC candles without volume. Volume-based studies and profiles are unavailable for these archives.</p>':row("Visible-range volume profile",`<label class="sw2"><input type="checkbox" data-vp ${cfg.vp?"checked":""} aria-label="Visible-range volume profile"><i></i></label>`)}
+      <p class="settings-help">Add or configure indicators from the Indicators button. Alerts are managed in the right-side panel.</p>
+    </section>`;
   $$("#setBody [data-look]").forEach((f) => {
     f.onchange = () => {
       const k = f.dataset.look;
-      state.look[k] = f.type === "checkbox" ? f.checked : f.value;
+      state.look[k] = f.type === "checkbox" ? f.checked : f.type === "range" ? Number(f.value) : f.value;
+      if (k === "wickUp" || k === "wickDn") {state.look.wickMatch=false;$('#setBody [data-look="wickMatch"]').checked=false;}
+      if (k === "utc") { Store.settings.patch({chartsUtc:state.look.utc}); paintClock(); }
       draw();
     };
   });

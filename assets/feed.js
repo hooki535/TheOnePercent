@@ -1098,6 +1098,7 @@ window.Feed = (() => {
     list,
     history,
     loadHistory,
+    retryHistory(sym, iv) { failedKeys.delete(String(sym).toUpperCase()+"|"+iv); loadHistory(sym,iv); notify(); },
     setDemoMode,
     isDemoMode: () => demoMode,
     last,
