@@ -404,7 +404,7 @@ window.Feed = (() => {
     (Store.settings.get().chartsCatalogSymbols || []).forEach((record) => registerCatalogInstrument(record));
 
   async function searchCatalog(query = "", limit = 50, offset = 0, market = "") {
-    if (ARCHIVE) return {data:[],total:0,has_more:false,catalog_status:"database",catalog_warning:"Charts uses your account’s database archives. Search the local instrument list; archive availability is checked when selected."};
+    if (ARCHIVE) return {data:[],total:0,has_more:false,catalog_status:"stored"};
     if (!API_ENABLED || !window.fetch) return { data: [], total: 0, has_more: false };
     const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset), market });
     try {
@@ -1081,6 +1081,7 @@ window.Feed = (() => {
     get DEMO() { return demoMode; },
     LIVE_API,
     API_ENABLED,
+    hasStoredHistory: sym => archiveSymbols.has(String(sym).toUpperCase()),
     isHistorical: (sym, iv) => realKeys.has(String(sym).toUpperCase() + "|" + iv),
     historicalSource: (sym, iv) => historicalSources[String(sym).toUpperCase() + "|" + iv] || null,
     streamState,

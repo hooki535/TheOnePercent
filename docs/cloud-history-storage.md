@@ -1,5 +1,7 @@
 # Cloud history and account records
 
+Current Charts guest-access rollout: see [charts-database-workspace.md](charts-database-workspace.md). Recent published candles now allow read-only guest access; older unselected archives retain their existing account access. The notes below describe the earlier archive rollout.
+
 Current rollout: see [daily-history-updates.md](daily-history-updates.md) for the
 compressed database payloads, protected uploader and daily GitHub workflow. The
 setup notes below describe the earlier private Storage pilot; they are not the

@@ -172,12 +172,7 @@ const state = {
   layout: 1,
   sel: 0,
   charts: [
-    newChart("EURUSD", "15m", [
-      makeStudy("ema", { length: 21 }),
-      makeStudy("ema", { length: 55 }),
-      makeStudy("vol"),
-      makeStudy("rsi"),
-    ]),
+    newChart("AUDNZD", "5m", []),
     newChart("GBPJPY", "15m"),
     newChart("XAUUSD", "1H"),
     newChart("NAS100", "15m"),
@@ -210,7 +205,7 @@ const state = {
     gridV: true,
     sessions: true,
     countdown: true,
-    dataWin: true,
+    dataWin: false,
     cross: "free",
     cursor: "cross",
     /* UTC by default: a chart of a global market read by someone in Kampala
@@ -744,7 +739,7 @@ function select(slot) {
    Favourites live in state and travel with a saved workspace. */
 function ivFavs() {
   if (!state.ivFavs)
-    state.ivFavs = (Feed.IV_DEFAULT_FAVS || INTERVALS.slice(0, 7)).slice();
+    state.ivFavs = (window.THEONEPERCENT_CHART_ARCHIVE ? ["5m","15m","30m","1H","4H","1D"] : Feed.IV_DEFAULT_FAVS || INTERVALS.slice(0, 7)).slice();
   return state.ivFavs;
 }
 function setInterval_(iv) {
@@ -763,7 +758,7 @@ function paintIntervals() {
     .map(
       (i) =>
         `<button class="chip ${cur === i ? "on" : ""} ${favs.includes(i) ? "" : "ghost"}" data-iv="${i}"
-      title="${favs.includes(i) ? i : i + " — not a favourite, showing because it is selected"}">${i}</button>`,
+      title="${favs.includes(i) ? i : i + " — not a favourite, showing because it is selected"}">${window.THEONEPERCENT_CHART_ARCHIVE ? i.replace("H","h").replace("1D","D") : i}</button>`,
     )
     .join("");
   $$("#intervals .chip").forEach(
@@ -1047,7 +1042,9 @@ function paintDataModeToggle() {
 }
 function paintTypeBtn() {
   const t = TYPES.find((x) => x[0] === state.type);
-  $("#typeBtn").firstChild.textContent = (t ? t[1] : "Candles") + " ";
+  const typeButton=$("#typeBtn");
+  if (typeButton.querySelector("svg")) typeButton.setAttribute("aria-label", "Chart type: " + (t ? t[1] : "Candles"));
+  else typeButton.firstChild.textContent = (t ? t[1] : "Candles") + " ";
   $$("#typeMenu button").forEach((b) =>
     b.classList.toggle("on", b.dataset.t === state.type),
   );
@@ -1058,7 +1055,7 @@ function paintLayoutBtn() {
   );
 }
 function paintIndCount() {
-  $("#indCount").textContent = state.charts[state.sel].studies.length;
+  const count=$("#indCount");if(count)count.textContent = state.charts[state.sel].studies.length;
 }
 function setSymbol(sym) {
   /* Every route to a symbol — search, watchlist, compare chip, a journal row,
@@ -1792,7 +1789,7 @@ function paintSettings() {
       ${row("OHLC values",chk("showOhlc",L.showOhlc!==false),"Shown when the chart’s Details row is expanded")}
       ${row("Indicator legend",chk("showStudyLegend",L.showStudyLegend!==false))}
       ${row("Data window",chk("dataWin",L.dataWin),"OHLC and study values under the crosshair")}
-      ${row("Countdown to bar close",chk("countdown",L.countdown))}
+      ${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "" : row("Countdown to bar close",chk("countdown",L.countdown))}
     </section>
     <section class="set-g" data-settings-section="Scales and lines"><h3 class="settings-section-title">Price and time scales</h3>
       ${row("Price scale",`<select aria-label="Price scale" data-scale="mode">${[["normal","Regular"],["log","Logarithmic"],["pct","Percent"]].map(([v,n])=>`<option value="${v}" ${cfg.scale.mode===v?"selected":""}>${n}</option>`).join("")}</select>`)}
@@ -1925,20 +1922,21 @@ function makeSymbolSearchRow(symbol, instrument, index, options = {}) {
   const market = document.createElement("span"); market.className = "sr-market";
   market.textContent = String(instrument.cls || instrument.market || "Instrument").replaceAll("_", " ");
   const provider = instrument.provider;
+  const stored = window.THEONEPERCENT_CHART_ARCHIVE && Feed.hasStoredHistory(symbol);
   const source = document.createElement("span"); source.className = "sr-source";
   source.dataset.source = options.unavailableSource?.id || provider || "reference";
   if (options.unavailableSource) row.dataset.provider = options.unavailableSource.id;
   const venue = String(instrument.venue || "MT5").split(" · ").at(-1);
-  source.textContent = options.unavailableSource
+  source.textContent = stored ? "Candles" : options.unavailableSource
     ? options.unavailableSource.name
     : provider === "binance" ? "Binance · spot" : provider === "exness_mt5" ? `Exness · ${venue}` : "Reference";
   const status = document.createElement("span");
-  status.className = `sr-access ${provider && !options.unavailableSource ? "available" : "unavailable"}`;
+  status.className = `sr-access ${(stored || provider) && !options.unavailableSource ? "available" : "unavailable"}`;
   status.title = options.conflict
     ? "Cannot select: source identity conflicts"
     : options.unavailableSource
       ? `${options.unavailableSource.name} feed is not connected; instrument coverage is unverified.`
-      : provider ? "Historical candles available from this source" : "Reference instrument; no verified market feed connected";
+      : stored ? "Stored candles available without sign-in" : provider ? "Historical candles available from this source" : "Reference instrument; no verified market feed connected";
   status.setAttribute("aria-label", status.title);
   const statusDot = document.createElement("span"); statusDot.className = "sr-status-dot"; statusDot.setAttribute("aria-hidden", "true");
   status.appendChild(statusDot);
@@ -2030,6 +2028,7 @@ function paintSymSearch(q = "") {
   /* A class tab narrows the list; typing searches across everything, because
      a ticker you can spell is a stronger signal than a tab you last clicked. */
   let rows = Object.entries(SYMBOLS);
+  if (window.THEONEPERCENT_CHART_ARCHIVE) rows=rows.filter(([symbol])=>Feed.hasStoredHistory(symbol));
   if (!supportedCategories.has(symCls) && !["recent", "watch"].includes(symCls)) rows = [];
   if (s)
     rows = rows.filter(([k, S]) =>
@@ -2057,6 +2056,7 @@ function paintSymSearch(q = "") {
         rank(a) - rank(b) || known(a) - known(b) || a[0].localeCompare(b[0])
       );
     });
+  if (window.THEONEPERCENT_CHART_ARCHIVE) rows=rows.filter(([symbol])=>Feed.hasStoredHistory(symbol));
   symRows = rows.map(([k]) => k);
   symSel = Math.max(0, Math.min(symSel, symRows.length - 1));
 
@@ -2066,7 +2066,7 @@ function paintSymSearch(q = "") {
   const sourceChoices = symSource === "all"
     ? FOREX_SOURCE_CHOICES
     : FOREX_SOURCE_CHOICES.filter((source) => source.id === symSource);
-  const brokerRows = s.length >= 3
+  const brokerRows = !window.THEONEPERCENT_CHART_ARCHIVE && s.length >= 3
     ? matchingRows
       .filter(([, instrument]) => instrument.cls === "Forex")
       .slice(0, 5)
@@ -3000,6 +3000,10 @@ const writeWS = (w) => {
   } catch (e) {}
 };
 async function saveWorkspace() {
+  if (window.THEONEPERCENT_CHART_ARCHIVE && (!window.Cloud || !await Cloud.ready)) {
+    document.dispatchEvent(new Event("chart-save-signin"));
+    return;
+  }
   const name = await ask(
     "Save workspace",
     "Name this workspace",
@@ -3016,6 +3020,7 @@ async function saveWorkspace() {
     type: state.type,
   });
   writeWS(w.slice(0, 20));
+  document.dispatchEvent(new CustomEvent("chart-workspace-saved",{detail:{name}}));
   toast(
     "Workspace saved",
     "Symbols, intervals, studies with their parameters, drawings and the layout. Stored on this device only.",
@@ -3046,6 +3051,7 @@ function paintWorkspaces() {
         applySnap(JSON.stringify(x.data));
         hide("#wsModal");
         toast("Workspace loaded", x.name);
+        document.dispatchEvent(new CustomEvent("chart-workspace-saved",{detail:{name:x.name}}));
       }),
   );
   $$("#wsList [data-del]").forEach(
@@ -3381,7 +3387,8 @@ function paintWorkspaceData() {
   const bar = data[index];
   if (!bar) return;
   const cfg = state.charts[state.sel];
-  const rows = [["Time", clock(bar.t)], ["Open", fmt(bar.o, cfg.sym)],
+  const provenance = window.ChartHistory?.status(cfg.sym,cfg.iv);
+  const rows = [...(provenance?.state === "ready" ? [["Source", provenance.source], ["Last stored candle", provenance.lastLabel], ["Feed", "Historical · not live"], ["Volume", "Unavailable in this archive"]] : []), ["Time", clock(bar.t)], ["Open", fmt(bar.o, cfg.sym)],
     ["High", fmt(bar.h, cfg.sym)], ["Low", fmt(bar.l, cfg.sym)],
     ["Close", fmt(bar.c, cfg.sym)]];
   (chart.studies || []).filter(s => s.visible).forEach(study => {
@@ -3498,7 +3505,7 @@ Feed.subscribe(() => {
   }
 });
 setInterval(() => {
-  if (state.look.countdown && !state.replay.on) draw();
+  if (state.look.countdown && !state.replay.on && !(window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode())) draw();
 }, 1000);
 
 /* ══════════════════════════════════════════════════════════════

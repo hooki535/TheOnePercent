@@ -1,4 +1,4 @@
-/* Read-only adapter for the existing account-scoped history RPCs.
+/* Read-only adapter for the existing RLS-protected history RPCs.
    No admin key, public archive copy, synthetic fallback or database writes. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory;
@@ -9,9 +9,10 @@
   const monthsCache = new Map(), payloads = new Map(), statuses = new Map();
   const fail = message => { throw new Error(message); };
   async function rpc(name, args) {
-    if (!cloud?.client || !await cloud.ready) fail('Sign in to your TheOnePercent account to read database history.');
+    if (!cloud?.client) fail('Market history connection is unavailable. Please retry.');
+    if (cloud.ready) await cloud.ready;
     const { data, error } = await cloud.client.rpc(name, args || {});
-    if (error) fail('Database history could not be read. Check your account access or retry.');
+    if (error) fail('Market history could not be loaded. Please retry.');
     return data;
   }
   async function catalog() {
@@ -41,7 +42,7 @@
     return out;
   }
   async function decode(meta, encoded) {
-    if (typeof encoded !== 'string') fail('This archive is not accessible to your account.');
+    if (typeof encoded !== 'string') fail('These candles are not available for viewing.');
     const raw = Uint8Array.from(atob(encoded.replace(/\s/g,'')), c => c.charCodeAt(0));
     if (raw.length !== Number(meta.bytes) || raw.length > 50000000) fail('Archive size verification failed.');
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw)), x => x.toString(16).padStart(2,'0')).join('');
@@ -60,14 +61,14 @@
   }
   async function load(sym, iv, limit=620) {
     const key=sym+'|'+iv;
-    statuses.set(key,{state:'loading',message:'Loading database history…'});
+    statuses.set(key,{state:'loading',message:'Loading candles…'});
     try {
       const spec=intervalSpec(iv), rows=await catalog();
       const choices=rows.filter(r=>r.symbol===sym && r.timeframe===spec.frame).sort((a,b)=>Date.parse(b.last_utc)-Date.parse(a.last_utc) || a.provider.localeCompare(b.provider));
       // Higher timeframes can aggregate M1/H1 candles, never split larger bars.
       if (!choices.length && spec.frame !== 'M1') choices.push(...rows.filter(r=>r.symbol===sym && r.timeframe===(spec.frame==='D1'?'H1':'M1')).sort((a,b)=>Date.parse(b.last_utc)-Date.parse(a.last_utc)));
       const source=choices[0];
-      if (!source) fail(rows.length ? 'No database candles for '+sym+' at this interval.' : 'Your account has no assigned archive access.');
+      if (!source) fail(rows.length ? 'No stored candles for '+sym+' at this interval.' : 'No published market history is available.');
       const identity=source.provider+'|'+sym+'|'+source.timeframe;
       if (!monthsCache.has(identity)) monthsCache.set(identity,rpc('history_months',{source_provider:source.provider,source_symbol:sym,source_timeframe:source.timeframe}));
       let months;

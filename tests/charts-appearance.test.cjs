@@ -19,3 +19,11 @@ test('wick matching and independent rising/falling colours affect rendered strok
  assert.deepEqual(render({...custom,wickMatch:true}).filter(e=>e[0]==='wick').map(e=>e[1]),['#00aa00','#dd0000']);
  assert.deepEqual(render(custom).filter(e=>e[0]==='border').map(e=>e[1]),['#667788','#99aabb']);
 });
+test('stored historical closes never show a current bar countdown',()=>{
+ const method=source.slice(source.indexOf('  lastPrice(c,'),source.indexOf('  drawScopedObj(c,'));
+ let timers=0;const ctx={state:{look:{countdown:true}},window:{THEONEPERCENT_CHART_ARCHIVE:true},Feed:{isDemoMode:()=>false},css:()=> '#000',AX:60,fmt:v=>String(v),barCountdown:()=>{timers++;return '0:30';}};
+ vm.runInNewContext(`class Example {${method}};this.paint=Example.prototype.lastPrice;`,ctx);
+ const c={save(){},restore(){},setLineDash(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillRect(){},fillText(){}};
+ ctx.paint.call({y:x=>x,cfg:{sym:'AUDNZD',iv:'5m'}},c,[{o:1,c:2}],100);assert.equal(timers,0);
+ ctx.Feed.isDemoMode=()=>true;ctx.paint.call({y:x=>x,cfg:{sym:'AUDNZD',iv:'5m'}},c,[{o:1,c:2}],100);assert.equal(timers,1);
+});

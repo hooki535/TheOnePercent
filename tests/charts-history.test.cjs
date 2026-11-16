@@ -10,10 +10,10 @@ function fixture(){
  const raw=gzipSync(JSON.stringify(body));
  return {encoded:raw.toString('base64'),meta:{provider:body.provider,symbol:body.symbol,timeframe:body.timeframe,bytes:raw.length,sha256:crypto.createHash('sha256').update(raw).digest('hex'),candle_count:rows.length,first_utc:new Date(rows[0][0]*1000).toISOString(),last_utc:new Date(rows.at(-1)[0]*1000).toISOString(),month:'2026-11-01',object_path:'histdata/GBPJPY/M1/2026-11/test.json.gz'}};
 }
-function setup(overrides={}){
+function setup(overrides={},user={id:"test-account"}){
  const f=fixture(),calls=[];
  const data={history_catalog:[{provider:'histdata',symbol:'GBPJPY',timeframe:'M1',last_utc:f.meta.last_utc}],history_months:[f.meta],history_read_payload:f.encoded,...overrides};
- const reader=factory({ready:Promise.resolve({id:'test-account'}),client:{rpc:async(name,args)=>{calls.push({name,args});return {data:data[name],error:null};}}});return {reader,calls,f};
+ const reader=factory({ready:Promise.resolve(user),client:{rpc:async(name,args)=>{calls.push({name,args});return {data:data[name],error:null};}}});return {reader,calls,f};
 }
 test('private database candles retain verified OHLC and aggregate without invented prices or volume',async()=>{
  const {reader,calls}=setup();const {bars,info}=await reader.load('GBPJPY','15m');
@@ -28,14 +28,17 @@ test('checksum and metadata mismatches are rejected before candles reach the cha
  await assert.rejects(reader.decode({...f.meta,bytes:1},f.encoded),/size/);
  await assert.rejects(reader.decode({...f.meta,last_utc:'2026-11-03T00:00:00Z'},f.encoded),/coverage/);
 });
-test('guests and unassigned accounts cannot load private candles or fall back to samples',async()=>{
- let calls=0;const guest=factory({ready:Promise.resolve(null),client:{rpc(){calls++;}}});
- await assert.rejects(guest.load('GBPJPY','1H'),/Sign in/);assert.equal(calls,0);assert.equal(guest.status('GBPJPY','1H').state,'error');
- const {reader}=setup({history_catalog:[]});await assert.rejects(reader.load('GBPJPY','1H'),/no assigned archive access/);
+test('guests load published candles through the same read-only RPCs without sign-in',async()=>{
+ const {reader,calls}=setup({},null);const {bars}=await reader.load('GBPJPY','5m');
+ assert.ok(bars.length>0);assert.deepEqual(calls.map(x=>x.name),['history_catalog','history_months','history_read_payload']);
+});
+test('unpublished or failed market reads do not substitute private or sample candles',async()=>{
+ const {reader}=setup({history_catalog:[]},null);await assert.rejects(reader.load('GBPJPY','1H'),/No published market history/);
+ const denied=setup({history_read_payload:null},null);await assert.rejects(denied.reader.load('GBPJPY','5m'),/not available/);
 });
 test('hourly archives cannot be split into artificial minute candles',async()=>{
  const {reader,calls}=setup({history_catalog:[{provider:'histdata',symbol:'GBPJPY',timeframe:'H1',last_utc:'2026-11-06'}]});
- await assert.rejects(reader.load('GBPJPY','15m'),/No database candles/);assert.equal(calls.length,1);
+ await assert.rejects(reader.load('GBPJPY','15m'),/No stored candles/);assert.equal(calls.length,1);
  assert.throws(()=>reader.intervalSpec('5s'),/no second candles/);
 });
 test('weekly and monthly buckets follow UTC calendar boundaries',()=>{

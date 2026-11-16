@@ -2608,7 +2608,7 @@ class Chart {
     c.lineTo(pw, y);
     c.stroke();
     c.restore();
-    const cd = state.look.countdown ? barCountdown(this.cfg.iv) : null;
+    const cd = state.look.countdown && !(window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode()) ? barCountdown(this.cfg.iv) : null;
     const h = cd ? 26 : 16;
     c.fillStyle = col;
     c.fillRect(pw + 1, y - h / 2, AX - 2, h);
@@ -3230,12 +3230,12 @@ class Chart {
     this.leg.classList.toggle("hide-ohlc", state.look.showOhlc === false);
     this.leg.classList.toggle("hide-studies", state.look.showStudyLegend === false);
     this.leg.innerHTML = `
-      <div class="leg-1"><span class="leg-sym">${blind ? "······" : this.cfg.sym}</span><span class="leg-int">${this.cfg.iv} · ${blind ? "hidden in blind mode" : window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "Database history" : S.venue}</span>
+      <div class="leg-1"><span class="leg-sym">${blind ? "······" : this.cfg.sym}</span><span class="leg-int">${this.cfg.iv}${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() && !blind ? "" : " · "}${blind ? "hidden in blind mode" : window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "" : S.venue}</span>
         <span class="${cls} mono">${ch >= 0 ? "+" : "−"}${Math.abs(ch).toFixed(S.digits)} (${ch >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(2)}%)</span>
         <button class="leg-toggle" type="button" data-act="details" aria-expanded="${this.legExpanded}" aria-label="${this.legExpanded ? "Hide" : "Show"} OHLC and indicator details">${this.legExpanded ? "Details ▴" : "Details ▾"}</button></div>
       <div class="leg-o"><span>O <b>${fmt(b.o, this.cfg.sym)}</b></span><span>H <b>${fmt(b.h, this.cfg.sym)}</b></span>
         <span>L <b>${fmt(b.l, this.cfg.sym)}</b></span><span>C <b class="${cls}">${fmt(b.c, this.cfg.sym)}</b></span>
-        <span>V <b>${compact(b.v, true)}</b></span></div>
+        ${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "" : `<span>V <b>${compact(b.v, true)}</b></span>`}</div>
       ${this.quoteBadge(b, S, blind)}
       <div class="leg-i">${chips}${cmp}${
         this.hiddenPanes > 0
@@ -3326,7 +3326,8 @@ class Chart {
     }
     const historical = Feed.isHistorical(this.cfg.sym, this.cfg.iv);
     const stream = historical && typeof Feed.streamState === "function" ? Feed.streamState(this.cfg.sym, this.cfg.iv) : null;
-    const feedBadge = historical
+    const feedBadge = historical && window.THEONEPERCENT_CHART_ARCHIVE
+      ? "" : historical
       ? `<span class="bdg">${stream && stream.state === "connected" ? "Spot stream" : historical && stream && stream.state === "stale" ? "Spot stream stale" : historical && stream && stream.state === "reconnecting" ? "Spot reconnecting" : "Spot historical"}</span>`
       : Feed.isLive(this.cfg.sym)
         ? `<span class="bdg live">Quote connected</span>`
@@ -3348,7 +3349,6 @@ class Chart {
         spare the room. Below that it hides rather than cover the price. */
     if (!state.look.dataWin || this.W < 760) {
       this.dw.innerHTML = "";
-      this.bdg.innerHTML = "";
       this.dw.hidden = true;
       return;
     }

@@ -1,5 +1,7 @@
 # Use the downloaded history on the website
 
+Current Charts guest-access rollout: see [charts-database-workspace.md](charts-database-workspace.md). Recent published candles now allow read-only guest access; older unselected archives retain their existing account access. The notes below describe the earlier archive rollout.
+
 Sign in to an account assigned archive access and open **Backtesting → New session**. Downloaded history is selected automatically for an assigned account. Open **Pairs (0/5)**, search for instruments and select one to five pairs. The first selected pair is the primary chart. Account balance, side-by-side UTC dates, optional strategy, name and description appear in the compact form. Source, base timeframe and cost controls remain under **Advanced settings**; hourly is the default base timeframe.
 
 Choose a pair and base timeframe, then choose a start date inside its displayed coverage. The browser loads up to 5,000 actual candles around that date, including earlier context. Dates and coverage are UTC; gaps may exist. Leave dates blank for a recent window. Choose up to five pairs with the same base timeframe; their replay uses their shared date range. Cross-currency pairs require the existing fixed USD conversion setting.

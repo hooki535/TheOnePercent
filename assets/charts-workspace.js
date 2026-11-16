@@ -54,7 +54,7 @@
   }
   if (full) full.addEventListener("click", toggleFullscreen);
   document.addEventListener("fullscreenchange", () => {
-    if (full) { full.setAttribute("aria-pressed", String(!!document.fullscreenElement)); full.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; }
+    if (full) { full.setAttribute("aria-pressed", String(!!document.fullscreenElement)); const label=document.fullscreenElement ? "Exit full screen" : "Full screen"; full.setAttribute("aria-label",label);full.title=label;if(!full.querySelector("svg"))full.textContent=label; }
     requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
   });
   const appearance = $("workspaceChartAppearance");
@@ -132,7 +132,7 @@
     syncThemeButton();
   }
   const LOOK_KEY = "top.chartAppearance.v1";
-  const lookDefaults = { up: "#089981", dn: "#f23645", wickUp: "#089981", wickDn: "#f23645", borderUp: "#089981", borderDn: "#f23645", background: "#ffffff", candleWidth: 0.68, candleBorders: true, gridH: true, gridV: true, dataWin: true, countdown: true };
+  const lookDefaults = { up: "#089981", dn: "#f23645", wickUp: "#089981", wickDn: "#f23645", borderUp: "#089981", borderDn: "#f23645", background: "#ffffff", candleWidth: 0.68, candleBorders: true, gridH: true, gridV: true, dataWin: false, countdown: true };
   let lookPrefs;
   try { lookPrefs = Object.assign({}, lookDefaults, JSON.parse(localStorage.getItem(LOOK_KEY) || "{}")); }
   catch (_) { lookPrefs = Object.assign({}, lookDefaults); }

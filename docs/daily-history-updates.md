@@ -1,5 +1,7 @@
 # Private historical candles and daily refresh
 
+Current Charts guest-access rollout: see [charts-database-workspace.md](charts-database-workspace.md). Recent published candles now allow read-only guest access; older unselected archives retain their existing account access. The notes below describe the earlier archive rollout.
+
 The existing TheOnePercent Supabase project keeps user sessions/trades in its existing owner-isolated records. Historical candles use separate history tables. This rollout does not reset user accounts or user records.
 
 ## What is stored

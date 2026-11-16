@@ -35,7 +35,7 @@
   const dataButton=document.createElement('button');dataButton.type='button';dataButton.textContent='Data';dataButton.onclick=()=>{if(!body.classList.contains('workspace-panel-open'))command('workspacePanelToggle');switchTab('data');};document.querySelector('.desk-bottom-actions').append(dataButton);
   const profile=document.createElement('a');profile.className='research-profile';profile.href='settings.html';profile.innerHTML=icon('user');profile.title='Sign in to your account';profile.setAttribute('aria-label','Sign in to your account');toolbar.append(profile);
   if(window.Cloud) Cloud.ready.then(user=>{
-    if(!user){profile.href='login.html';return;}
+    if(!user){profile.href='login.html';profile.classList.add('is-guest');profile.textContent='Sign in';return;}
     const meta=user.user_metadata||{}, src=meta.avatar_url||meta.picture;
     if(typeof src==='string' && /^https:\/\//.test(src)){const im=new Image();im.src=src;im.alt='';im.onerror=()=>{profile.innerHTML=icon('user');};profile.replaceChildren(im);}
     profile.title=meta.full_name||meta.name||'Your account';profile.setAttribute('aria-label',profile.title);
@@ -79,12 +79,11 @@
       edit.querySelector('[aria-label="Lock or unlock drawing"]').setAttribute('aria-pressed',String(!!o.locked));}
     const cfg=state.charts[state.sel], status=ChartHistory.status(cfg.sym,cfg.iv), empty=document.querySelector('.desk-empty');
     if(!empty.hidden){
-      const guest=/Sign in/.test(status.message), loading=status.state==='loading';
-      empty.querySelector('h1').textContent=guest?'Sign in to load your charts':loading?'Loading database candles':'Database history unavailable';
-      empty.querySelector('p').textContent=guest?'Your candle history is private. Sign in with your TheOnePercent account to load it here. Your ChatGPT preview sign-in is separate.':status.message;
-      const login=empty.querySelector('a');if(login)login.hidden=!guest;
-      const retry=empty.querySelector('.research-retry');if(retry){retry.hidden=guest||loading;retry.disabled=loading;}
-      favorites.hidden=guest||loading;
+      const loading=status.state==='loading';
+      empty.querySelector('h1').textContent=loading?'Loading your chart':'Candles unavailable';
+      empty.querySelector('p').textContent=loading?'Loading stored candles. You can view charts without an account.':status.message;
+      const retry=empty.querySelector('.research-retry');if(retry){retry.hidden=loading;retry.disabled=loading;}
+      favorites.hidden=loading;
     }else favorites.hidden=false;
   }
   document.addEventListener('chart-render',update);document.addEventListener('click',()=>requestAnimationFrame(update));
@@ -103,8 +102,29 @@
   $('setModal').setAttribute('role','dialog');$('setModal').setAttribute('aria-label','Chart settings');$('setModal').setAttribute('aria-modal','true');
   // Use the existing safe post-login return mechanism.
   const empty=document.querySelector('.desk-empty');
-  empty.querySelector('a').addEventListener('click',()=>window.Cloud?.setReturn('charts',location.hash));
-  const retry=document.createElement('button');retry.type='button';retry.className='research-retry';retry.textContent='Retry database connection';retry.onclick=()=>{const cfg=state.charts[state.sel];Feed.retryHistory(cfg.sym,cfg.iv);draw();};empty.querySelector('div').append(retry);
-  ChartHistory.catalog().then(rows=>{ rows.forEach(row=>{const record=Feed.symbol(row.symbol);if(record) SYMBOLS[row.symbol]=record;}); }).catch(()=>{});
+  profile.addEventListener('click',()=>window.Cloud?.setReturn('charts',location.hash));
+  const retry=document.createElement('button');retry.type='button';retry.className='research-retry';retry.textContent='Retry loading candles';retry.onclick=()=>{const cfg=state.charts[state.sel];Feed.retryHistory(cfg.sym,cfg.iv);draw();};empty.querySelector('div').append(retry);
+  document.querySelector('.symbol-source-filter').hidden=true;$('symBrokerDirectoryBtn').hidden=true;
+  ChartHistory.catalog().then(rows=>{ rows.forEach(row=>{const record=Feed.symbol(row.symbol);if(record) SYMBOLS[row.symbol]=record;});if(!$('symModal').hidden)paintSymSearch($('symSearch').value); }).catch(()=>{});
+  const compare=document.createElement('button');compare.type='button';compare.className='tb-btn research-compare';compare.title='Compare instruments';compare.setAttribute('aria-label','Compare instruments');compare.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg>';compare.onclick=()=>{if(!body.classList.contains('workspace-panel-open'))command('workspacePanelToggle');switchTab('watchlist');switchWatchView('compare');};$('symBtn').after(compare);
+  const caret='<svg class="research-caret" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="m1 1 4 4 4-4" stroke="currentColor" stroke-width="1.3"/></svg>';
+  $('typeBtn').innerHTML=icon('candle')+caret;
+  $('indBtn').innerHTML=icon('indicator')+caret+'<span id="indCount" hidden></span>';$('indBtn').title='Indicators (I)';
+  $('alertBtn').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="13" r="8"/><path d="M11 8v5l3 2M3 3 1 6M19 3l2 3M18 4v6m-3-3h6"/></svg>';
+  const replay=document.querySelector('.desk-replay');replay.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="m11 5-8 7 8 7V5Zm10 0-8 7 8 7V5Z"/></svg>';replay.setAttribute('aria-label','Bar replay');
+  const layout=document.querySelector('.desk-layout'), camera=document.querySelector('.desk-camera'), full=$('workspaceFullscreen'), more=$('moreBtn').closest('.menu-wrap');
+  options.prepend(more);
+  const workspace=document.createElement('div');workspace.className='research-workspace';
+  const workspaceName=document.createElement('button');workspaceName.type='button';workspaceName.className='research-workspace-name';workspaceName.innerHTML='<span>Unnamed</span>'+caret;workspaceName.setAttribute('aria-label','Saved workspaces');workspaceName.onclick=()=>command('wsBtn');
+  const save=document.querySelector('.desk-save');save.removeAttribute('data-desk-action');
+  // Replace the desk proxy with a new button to avoid its old open-library handler.
+  const saveNow=document.createElement('button');saveNow.type='button';saveNow.className='research-save';saveNow.textContent='Save';saveNow.title='Save workspace (Ctrl+S)';saveNow.onclick=()=>saveWorkspace();save.remove();workspace.append(workspaceName,saveNow);
+  graphic('workspaceFullscreen','chevron');full.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></svg>';full.setAttribute('aria-label','Full screen');
+  const summary=document.querySelector('.desk-options summary');summary.innerHTML=icon('more');summary.title='More workspace options';
+  toolbar.append(layout,workspace,appearance,full,camera,document.querySelector('.desk-options'),profile);
+  document.addEventListener('chart-workspace-saved',e=>{workspaceName.querySelector('span').textContent=e.detail.name;});
+  const notice=document.createElement('dialog');notice.className='research-save-notice';notice.innerHTML='<h2>Save your workspace</h2><p>Sign in to keep your saved workspace with your account. You can keep using charts without signing in.</p><div><button type="button">Keep exploring</button><a href="login.html">Sign in</a></div>';
+  notice.querySelector('button').onclick=()=>notice.close();notice.querySelector('a').onclick=()=>window.Cloud?.setReturn('charts',location.hash);document.body.append(notice);
+  document.addEventListener('chart-save-signin',()=>{if(!notice.open)notice.showModal();});
   update();
 })();
