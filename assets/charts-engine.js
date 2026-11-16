@@ -1297,7 +1297,7 @@ class Chart {
           }
         }),
       );
-    if (state.pos && state.pos.key === this.key)
+    if (state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv)))
       [state.pos.entry, state.pos.stop, state.pos.target].forEach((p) => {
         lo = Math.min(lo, p);
         hi = Math.max(hi, p);
@@ -1538,6 +1538,7 @@ class Chart {
           const q = this.ptSnap(p),
             h = D.h;
           if (h.pos) {
+            if(!D.undoPushed){pushUndo();D.undoPushed=true;}
             movePos(h.k, q.p);
           } else {
             if (h.o.locked) return;
@@ -1603,7 +1604,7 @@ class Chart {
               this.key,
               a.p,
               b.p,
-              o.t === "shortpos" ? { side: "short" } : null,
+              {side:o.t==="shortpos"?"short":"long",startBar:a.i,endBar:b.i},
             );
           } else {
             this.drw.push(o);
@@ -1788,7 +1789,7 @@ class Chart {
     const inPrice = this.inPricePlot(p);
     if (inPrice && state.pos && state.pos.key === this.key && !state.pos.hidden && !state.pos.locked && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv)))
       for (const k of ["entry", "stop", "target"])
-        if (Math.abs(this.y(state.pos[k]) - p.y) < 5 && p.x > this.plotW * 0.35)
+        if (Math.abs(this.y(state.pos[k]) - p.y) < 5 && p.x >= this.positionBounds(state.pos).left-6 && p.x <= this.positionBounds(state.pos).right+6)
           return { pos: true, k };
     for (let n = this.drw.length - 1; n >= 0; n--) {
       const o = this.drw[n];
@@ -2691,7 +2692,12 @@ class Chart {
       c.textAlign = "left";
       c.fillText(s, x + 5, y);
     };
-    if (o.t === "hline") {
+    if(o.t==="position"||o.t==="shortpos"){
+      const geometry=positionPrices(o.pts[0].p,o.pts[1].p,o.t==='shortpos'?'short':'long',SYMBOLS[S].tick);
+      if(geometry){const x1=Math.min(P[0].x,P[1].x),x2=Math.max(x1+24,Math.max(P[0].x,P[1].x)),ye=this.y(geometry.entry),ys=this.y(geometry.stop),yt=this.y(geometry.target);
+        c.globalAlpha=.16;c.fillStyle=css('--up');c.fillRect(x1,Math.min(ye,yt),x2-x1,Math.abs(yt-ye));c.fillStyle=css('--dn');c.fillRect(x1,Math.min(ye,ys),x2-x1,Math.abs(ys-ye));
+        c.globalAlpha=.8;c.setLineDash([4,3]);[ye,ys,yt].forEach(y=>{c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.stroke();});}
+    }else if (o.t === "hline") {
       const y = P[0].y;
       c.setLineDash(dsh);
       c.beginPath();
@@ -2921,11 +2927,15 @@ class Chart {
     }
     c.restore();
   }
+  positionBounds(P){
+    if(Number.isFinite(P.startBar)&&Number.isFinite(P.endBar)){const a=this.x(P.startBar),b=this.x(P.endBar);return {left:Math.min(a,b),right:Math.max(a,b)};}
+    return {left:Math.max(20,this.plotW*.42),right:this.plotW};
+  }
   posTool(c) {
     const P = state.pos,
       S = SYMBOLS[this.cfg.sym],
       pw = this.plotW;
-    const xs = Math.max(20, this.plotW * 0.42),
+    const bounds=this.positionBounds(P),xs=bounds.left,xe=bounds.right,
       ye = this.y(P.entry),
       ys = this.y(P.stop),
       yt = this.y(P.target);
@@ -2934,9 +2944,9 @@ class Chart {
     c.save();
     c.globalAlpha=(P.style?.fill??14)/100;
     c.fillStyle = up;
-    c.fillRect(xs, Math.min(ye, yt), pw - xs, Math.abs(yt - ye));
+    c.fillRect(xs, Math.min(ye, yt), xe - xs, Math.abs(yt - ye));
     c.fillStyle = dn;
-    c.fillRect(xs, Math.min(ye, ys), pw - xs, Math.abs(ys - ye));
+    c.fillRect(xs, Math.min(ye, ys), xe - xs, Math.abs(ys - ye));
     c.globalAlpha=1;
     c.lineWidth = P.style?.width||1.5;
     c.font = '10px "IBM Plex Sans",sans-serif';
@@ -2944,9 +2954,9 @@ class Chart {
     const tight = this.W < 560;
     const rows = tight
       ? [
-          [yt, up, P.calc.r.toFixed(2) + "R"],
-          [ye, css("--txt"), P.calc.size + " " + S.unit],
-          [ys, dn, money(P.calc.risk)],
+          [yt, up, (P.calc?P.calc.r.toFixed(2):"—") + "R net"],
+          [ye, css("--txt"), (P.calc?P.calc.size:"—") + " " + S.unit],
+          [ys, dn, P.calc?money(P.calc.risk):"Size unavailable"],
         ]
       : [
           [
@@ -2955,16 +2965,16 @@ class Chart {
             "TARGET " +
               fmt(P.target, this.cfg.sym) +
               "  " +
-              P.calc.r.toFixed(2) +
-              "R",
+              (P.calc?P.calc.r.toFixed(2):"—") +
+              "R net",
           ],
           [
             ye,
             P.style?.color||css("--txt"),
-            "ENTRY " +
+            (P.entry>P.stop?"LONG ":"SHORT ")+"ENTRY " +
               fmt(P.entry, this.cfg.sym) +
               "  " +
-              P.calc.size +
+              (P.calc?P.calc.size:"—") +
               " " +
               S.unit,
           ],
@@ -2976,7 +2986,7 @@ class Chart {
               "  " +
               state.risk.pct.toFixed(1) +
               "% = " +
-              money(P.calc.risk),
+              (P.calc?money(P.calc.risk):"Size unavailable"),
           ],
         ];
     rows.forEach(([y, col, label]) => {
@@ -2984,18 +2994,18 @@ class Chart {
       c.setLineDash(P.style?.dash?DASHES[P.style.dash]:col === css("--txt") ? [] : [4, 3]);
       c.beginPath();
       c.moveTo(xs, y);
-      c.lineTo(pw, y);
+      c.lineTo(xe, y);
       c.stroke();
       if(P.style?.showLabels===false)return;
       const w = c.measureText(label).width + 10;
       c.setLineDash([]);
       c.fillStyle = col;
-      c.fillRect(pw - w - 2, y - 8, w, 16);
-      c.fillStyle = col === css("--txt") ? css("--bg") : "#04120C";
+      c.fillRect(xe - w - 2, y - 8, w, 16);
+      c.fillStyle = "#ffffff";
       c.textAlign = "left";
-      c.fillText(label, pw - w + 3, y);
+      c.fillText(label, xe - w + 3, y);
     });
-    if (P.calc.over) {
+    if (P.calc?.over) {
       const s = "over your " + state.risk.pct.toFixed(1) + "% rule";
       const w = c.measureText(s).width + 12;
       c.fillStyle = css("--warn");

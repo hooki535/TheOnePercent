@@ -389,24 +389,18 @@ function makePos(key, a, b, opts) {
     toast("Position sizing unavailable", "Verified instrument specifications are not available for this provider listing.");
     return;
   }
-  let entry = a,
-    stop = b;
-  /* The short-position tool forces the direction instead of reading it off
-     the drag, so dragging upward from entry still gives you a short. */
-  const want = opts && opts.side;
-  if (want === "short" && entry > stop) {
-    entry = b;
-    stop = a;
+  const want=opts?.side || (a>b?'long':'short');
+  const geometry=positionPrices(a,b,want,SYMBOLS[sym].tick);
+  if(!geometry){toast("Choose distinct entry and stop prices");return false;}
+  const {entry,stop,target}=geometry;
+  state.risk.side=want;
+  const drawingDefaults=Store.settings.get().chartsDrawingDefaults?.[want==='long'?'position':'shortpos']||{};
+  state.pos={...JSON.parse(JSON.stringify(drawingDefaults)),key,sym,side:want,entry,stop,target};
+  if(Number.isFinite(opts?.startBar)&&Number.isFinite(opts?.endBar)){
+    state.pos.startBar=Math.min(opts.startBar,opts.endBar);
+    state.pos.endBar=Math.max(state.pos.startBar+2,Math.max(opts.startBar,opts.endBar));
   }
-  if (want === "long" && entry < stop) {
-    entry = b;
-    stop = a;
-  }
-  const dist = Math.abs(entry - stop);
-  state.risk.side = entry > stop ? "long" : "short";
-  const target = entry > stop ? entry + dist * 2 : entry - dist * 2;
-  const drawingDefaults=Store.settings.get().chartsDrawingDefaults?.[entry>stop?"position":"shortpos"]||{};
-  state.pos = { key, sym, entry, stop, target, ...JSON.parse(JSON.stringify(drawingDefaults)) };
+  state.selObj=null;
   recalc();
   syncInputs();
   $$(".st").forEach((x) =>
@@ -418,15 +412,29 @@ function makePos(key, a, b, opts) {
       "Size, risk and R come from your balance and your rule — drag any line to resize.",
     );
 }
-function movePos(k, price) {
-  const P = state.pos;
-  P[k] = price;
-  state.risk.side = P.entry > P.stop ? "long" : "short";
-  recalc();
-  syncInputs();
-  $$(".st").forEach((x) =>
-    x.classList.toggle("on", x.dataset.side === state.risk.side),
-  );
+/* Direction remains fixed during editing. Moving entry translates the whole box. */
+function positionPrices(entry,second,side,tick=1e-8){
+  if(!Number.isFinite(entry)||!Number.isFinite(second))return null;
+  const distance=Math.abs(second-entry);
+  if(distance<Math.max(tick,1e-10))return null;
+  const sign=side==='short'?-1:1;
+  return {entry,stop:entry-sign*distance,target:entry+sign*distance*2};
+}
+function movedPosition(P,k,price,tick=1e-8){
+  if(!P||!Number.isFinite(price)||!['entry','stop','target'].includes(k))return null;
+  const next={...P},sign=(P.side|| (P.entry>P.stop?'long':'short'))==='short'?-1:1;
+  const gap=Math.max(tick,1e-10);
+  if(k==='entry'){const delta=price-P.entry;next.entry=price;next.stop+=delta;next.target+=delta;}
+  else if(k==='stop')next.stop=sign===1?Math.min(price,P.entry-gap):Math.max(price,P.entry+gap);
+  else next.target=sign===1?Math.max(price,P.entry+gap):Math.min(price,P.entry-gap);
+  return next;
+}
+function movePos(k,price){
+  const P=state.pos,next=movedPosition(P,k,price,SYMBOLS[P?.sym]?.tick);
+  if(!next)return;
+  Object.assign(P,next);state.risk.side=P.side||(P.entry>P.stop?'long':'short');
+  recalc();syncInputs();
+  $$(".st").forEach(x=>x.classList.toggle("on",x.dataset.side===state.risk.side));
 }
 /* The sizing answer comes from Instruments.positionSize — the same
    function behind the calculators screen. This used to be its own

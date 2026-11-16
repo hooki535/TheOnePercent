@@ -39,7 +39,7 @@ function editDrawing(chart,obj) {
 function editPositionSettings(chart) {
   if(!state.pos||state.pos.key!==chart.key)return;
   const p=state.pos;
-  const o={id:'position-planner',t:p.entry>p.stop?'position':'shortpos',pts:[{i:0,p:p.entry}],style:p.style||{},visibility:p.visibility,hidden:p.hidden,locked:p.locked,position:{entry:p.entry,stop:p.stop,target:p.target}};
+  const o={id:'position-planner',t:p.entry>p.stop?'position':'shortpos',pts:[{i:0,p:p.entry}],style:p.style||{},visibility:p.visibility,hidden:p.hidden,locked:p.locked,position:{entry:p.entry,stop:p.stop,target:p.target,startBar:Number.isFinite(p.startBar)?p.startBar:Math.round(chart.ix(chart.plotW*.42)),endBar:Number.isFinite(p.endBar)?p.endBar:Math.round(chart.ix(chart.plotW-12))}};
   editDrawing(chart,o);drawingSession.position=true;drawingSession.tab='Inputs';paintDrawingProperties();
 }
 function paintDrawingProperties() {
@@ -59,7 +59,8 @@ function paintDrawingProperties() {
   if(session.tab==='Inputs'&&p.position){
     body=['entry','stop','target'].map(k=>row(k[0].toUpperCase()+k.slice(1)+' price',number('position',k,o.position[k]))).join('');
     const risk=Math.abs(o.position.entry-o.position.stop),reward=Math.abs(o.position.target-o.position.entry);
-    body+=row('Risk / reward',`<output>${risk?(reward/risk).toFixed(2)+' R':'Set a valid stop'}</output>`)+`<p class="dp-help">Position size uses your existing balance, instrument specifications and risk rule.</p>`;
+    body+=row('Start bar',number('position','startBar',o.position.startBar))+row('End bar',number('position','endBar',o.position.endBar));
+    body+=row('Price risk / reward (gross)',`<output>${risk?(reward/risk).toFixed(2)+' R':'Set a valid stop'}</output>`)+`<p class="dp-help">Position size uses your existing balance, instrument specifications and risk rule.</p>`;
   }else if(session.tab==='Style'){
     body+=row(p.position?'Entry line':'Line',color('color',st.color)+select('dash',[['solid','━━━━'],['dash','┄┄┄┄'],['dot','········']],st.dash)+number('style','width',st.width,1,5,.5));
     if(p.fill)body+=row('Background opacity',number('style','fill',st.fill,0,100,1)+'<span>%</span>');
@@ -122,9 +123,9 @@ function paintDrawingProperties() {
     modal.querySelectorAll('[data-scope],[data-level],[data-point],[data-vis]').forEach(el=>{if(el.dataset.field!=='time'&&!el.disabled)el.onchange?.();});
     const invalid=DrawingProperties.validate(o);if(invalid)return error(invalid);
     if(!Number.isFinite(st.width)||st.width<1||st.width>5||!Number.isFinite(st.fill)||st.fill<0||st.fill>100||!Number.isFinite(st.font)||st.font<9||st.font>32)return error('Check line width, opacity and font size ranges.');
-    if(session.position){const {entry,stop,target}=o.position;if(![entry,stop,target].every(Number.isFinite)||entry===stop||(o.t==='position'?!(stop<entry&&target>entry):!(stop>entry&&target<entry)))return error('Stop and target must be on opposite sides of entry for this position direction.');}
+    if(session.position){const {entry,stop,target}=o.position;if(![entry,stop,target,o.position.startBar,o.position.endBar].every(Number.isFinite)||o.position.endBar<=o.position.startBar||entry===stop||(o.t==='position'?!(stop<entry&&target>entry):!(stop>entry&&target<entry)))return error('Stop and target must be on opposite sides of entry for this position direction.');}
     pushUndo();
-    if(session.position){Object.assign(state.pos,o.position,{style:DrawingProperties.clone(st),visibility:DrawingProperties.clone(o.visibility||{}),hidden:o.hidden,locked:o.locked});recalc();syncInputs();}
+    if(session.position){state.risk.side=o.t==='shortpos'?'short':'long';Object.assign(state.pos,o.position,{side:o.t==='shortpos'?'short':'long',style:DrawingProperties.clone(st),visibility:DrawingProperties.clone(o.visibility||{}),hidden:o.hidden,locked:o.locked});recalc();syncInputs();}
     else {Object.assign(session.original,DrawingProperties.clone(o));if(session.applyAll)session.chart.drw.filter(x=>x.t===o.t).forEach(x=>Object.assign(x,DrawingProperties.template(o)));}
     const settings=Store.settings.get(),patch={};
     if(session.savedTemplate){const all=DrawingProperties.clone(settings.chartsDrawingTemplates||{});all[o.t]||={};Object.defineProperty(all[o.t],session.savedTemplate.name,{value:session.savedTemplate.value,enumerable:true,writable:true,configurable:true});patch.chartsDrawingTemplates=all;}

@@ -308,6 +308,10 @@ function groupOf(tool) {
 /* ── markup ────────────────────────────────────────────────────── */
 
 function svgIcon(id) {
+  if(id==='position'||id==='shortpos'){
+    const long=id==='position',top=long?'#089981':'#f23645',bottom=long?'#f23645':'#089981';
+    return `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h10v12H2z"/><path d="M2 3h10v6H2z" fill="${top}" fill-opacity=".2" stroke="${top}"/><path d="M2 9h10v6H2z" fill="${bottom}" fill-opacity=".2" stroke="${bottom}"/><path d="M1 9h12M16 ${long?'14V3m-2 2 2-2 2 2':'3v11m-2-2 2 2 2-2'}"/></svg>`;
+  }
   return `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON[id] || ICON.cursor}"/></svg>`;
 }
 
