@@ -1288,7 +1288,7 @@ class Chart {
         });
       });
     this.drw
-      .filter((o) => !o.hidden)
+      .filter((o) => !o.hidden && (typeof DrawingProperties==="undefined" || DrawingProperties.visible(o,this.cfg.iv)))
       .forEach((o) =>
         o.pts.forEach((q) => {
           if (q.p != null) {
@@ -1703,6 +1703,8 @@ class Chart {
         draw();
         return;
       }
+      const positionHit = this.grab(p);
+      if(positionHit?.pos && typeof editPositionSettings === "function"){editPositionSettings(this);return;}
       const i = this.nearest(p);
       if (i >= 0) {
         /* double-click a drawing opens its settings */
@@ -1735,7 +1737,8 @@ class Chart {
       id: "o" + uidN++,
       t,
       pts,
-      style: drawStyle(),
+      ...JSON.parse(JSON.stringify((typeof Store!=="undefined" && Store.settings.get().chartsDrawingDefaults?.[t]) || {})),
+      style: {...drawStyle(), ...((typeof Store!=="undefined" && Store.settings.get().chartsDrawingDefaults?.[t]?.style) || {})},
       locked: false,
       hidden: false,
       text: "",
@@ -1783,13 +1786,13 @@ class Chart {
   grab(p) {
     if (!this.inChartBody(p)) return null;
     const inPrice = this.inPricePlot(p);
-    if (inPrice && state.pos && state.pos.key === this.key)
+    if (inPrice && state.pos && state.pos.key === this.key && !state.pos.hidden && !state.pos.locked && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv)))
       for (const k of ["entry", "stop", "target"])
         if (Math.abs(this.y(state.pos[k]) - p.y) < 5 && p.x > this.plotW * 0.35)
           return { pos: true, k };
     for (let n = this.drw.length - 1; n >= 0; n--) {
       const o = this.drw[n];
-      if (o.hidden || o.locked || (!inPrice && o.t !== "vline")) continue;
+      if (o.hidden || (typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(o,this.cfg.iv)) || o.locked || (!inPrice && o.t !== "vline")) continue;
       for (let k = 0; k < o.pts.length; k++) {
         const q = o.pts[k];
         const x = o.t === "hline" ? p.x : this.x(q.i),
@@ -1805,7 +1808,7 @@ class Chart {
     let bi = -1,
       bd = 8;
     this.drw.forEach((o, i) => {
-      if (o.hidden || (!inPrice && o.t !== "vline")) return;
+      if (o.hidden || (typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(o,this.cfg.iv)) || (!inPrice && o.t !== "vline")) return;
       let d = Infinity;
       if (o.t === "hline") d = Math.abs(this.y(o.pts[0].p) - p.y);
       else if (o.t === "vline") d = Math.abs(this.x(o.pts[0].i) - p.x);
@@ -2049,7 +2052,7 @@ class Chart {
       if (!o.hidden) this.drawScopedObj(c, o, false, o.id === state.selObj);
     });
     if (this.pending) this.drawScopedObj(c, this.pending, true);
-    if (state.pos && state.pos.key === this.key) {
+    if (state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv))) {
       c.save();
       try {
         const clip = new Path2D();
@@ -2625,6 +2628,7 @@ class Chart {
     }
   }
   drawScopedObj(c, o, ghost, sel) {
+    if(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(o,this.cfg.iv))return;
     const pr = this.panes.price;
     c.save();
     try {
@@ -2698,7 +2702,8 @@ class Chart {
         tag(pw + 1, y, fmt(o.pts[0].p, S), col, "#fff");
       if (o.text) {
         c.setLineDash([]);
-        c.fillStyle = col;
+        c.fillStyle = st.textColor||col;
+        c.font=(st.italic?"italic ":"")+(st.bold?"bold ":"")+(st.font||11)+'px "IBM Plex Sans",sans-serif';
         c.textAlign = "left";
         c.fillText(o.text, 4, y - 8);
       }
@@ -2727,8 +2732,8 @@ class Chart {
       c.setLineDash(dsh);
       if (o.t === "measure") {
         c.setLineDash(dashOf(o, [4, 3]));
-        c.strokeStyle = css("--warn");
-        c.fillStyle = css("--warn");
+        c.strokeStyle = col;
+        c.fillStyle = col;
       }
       c.beginPath();
       c.moveTo(a.x, a.y);
@@ -2744,7 +2749,8 @@ class Chart {
       }
       if (o.text && o.t !== "measure") {
         c.setLineDash([]);
-        c.fillStyle = col;
+        c.fillStyle = st.textColor||col;
+        c.font=(st.italic?"italic ":"")+(st.bold?"bold ":"")+(st.font||11)+'px "IBM Plex Sans",sans-serif';
         c.textAlign = "left";
         c.fillText(o.text, P[0].x + 6, P[0].y - 9);
       }
@@ -2799,11 +2805,11 @@ class Chart {
         pct = (dp / o.pts[0].p) * 100;
       const ticks = Math.abs(dp) / SYMBOLS[S].tick;
       c.setLineDash([]);
-      c.globalAlpha = 0.12;
+      c.globalAlpha = fillA(o,12);
       c.fillStyle = dp >= 0 ? css("--up") : css("--dn");
       c.fillRect(P[0].x, P[0].y, P[1].x - P[0].x, P[1].y - P[0].y);
       c.globalAlpha = 1;
-      c.strokeStyle = dp >= 0 ? css("--up") : css("--dn");
+      c.strokeStyle = col;
       c.strokeRect(P[0].x, P[0].y, P[1].x - P[0].x, P[1].y - P[0].y);
       c.font = '10px "IBM Plex Mono",monospace';
       const unitMove = SYMBOLS[S].tick > 0 ? ` · ${ticks.toFixed(0)} ${SYMBOLS[S].tickName}` : "";
@@ -2839,14 +2845,16 @@ class Chart {
       const a = o.pts[0].p,
         b = o.pts[1].p;
       const anchor = o.t === "fibext" && o.pts[2] ? o.pts[2].p : null;
-      const x1 = Math.min(P[0].x, P[1].x),
-        x2 = pw - 46;
+      const custom=Array.isArray(o.levelStyles);
+      const x1 = custom?(st.extendL?0:Math.min(P[0].x,P[1].x)):Math.min(P[0].x,P[1].x),
+        x2 = custom?(st.extendR?pw:Math.max(P[0].x,P[1].x)):pw-46;
+      if(st.trendLine && P[1]){c.strokeStyle=st.trendColor||col;c.setLineDash([5,4]);c.beginPath();c.moveTo(P[0].x,P[0].y);c.lineTo(P[1].x,P[1].y);c.stroke();}
       (typeof drawingLevelsFor === "function" ? drawingLevelsFor(o, FIBS) : FIBS).forEach((l) => {
         const p = anchor != null ? anchor + (b - a) * l : a + (b - a) * l,
           y = this.y(p);
-        c.strokeStyle = l === 0 || l === 1 ? "rgba(159,176,206,.8)" : col;
+        c.strokeStyle = typeof drawingLevelColor==="function"?drawingLevelColor(o,l,l===0||l===1?"rgba(159,176,206,.8)":col):col;
         c.globalAlpha = (ghost ? 0.6 : 1) * (l === 0 || l === 1 ? 1 : 0.7);
-        c.setLineDash(l === 0 || l === 1 ? [] : dashOf(o, [5, 4]));
+        c.setLineDash(custom?dashOf(o):l === 0 || l === 1 ? [] : dashOf(o, [5, 4]));
         c.beginPath();
         c.moveTo(x1, y);
         c.lineTo(x2, y);
@@ -2856,13 +2864,13 @@ class Chart {
         c.textAlign = "right";
         c.font = '9.5px "IBM Plex Mono",monospace';
         c.fillText(
-          l.toFixed(3).replace(/0+$/, "").replace(/\.$/, "") + "  " + fmt(p, S),
+          (st.showLevels!==false?String(l):"")+(st.showPrices!==false?"  "+fmt(p,S):""),
           x2 - 4,
           y - 6,
         );
       });
     } else if (o.t === "text") {
-      c.font = (st.font || 11) + 'px "IBM Plex Sans",sans-serif';
+      c.font = (st.italic?"italic ":"")+(st.bold?"bold ":"")+(st.font || 11) + 'px "IBM Plex Sans",sans-serif';
       const s = o.text || "Note",
         x = P[0].x,
         y = P[0].y,
@@ -2875,7 +2883,7 @@ class Chart {
       c.globalAlpha = 1;
       c.strokeStyle = col;
       c.strokeRect(x + 0.5, y - th / 2 + 0.5, w, th - 1);
-      c.fillStyle = css("--txt");
+      c.fillStyle = st.textColor||css("--txt");
       c.textAlign = "left";
       c.fillText(s, x + 6, y);
     } else if (typeof SHAPES !== "undefined" && SHAPES[o.t]) {
@@ -2891,6 +2899,9 @@ class Chart {
         ghost,
         sel,
       });
+    }
+    if(o.text && !["text","callout","pricelabel","flag","hline","trend","ray","xline","arrow","rect"].includes(o.t)){
+      c.setLineDash([]);c.globalAlpha=1;c.fillStyle=st.textColor||col;c.textAlign="left";c.font=(st.italic?"italic ":"")+(st.bold?"bold ":"")+(st.font||11)+'px "IBM Plex Sans",sans-serif';c.fillText(o.text,P[0].x+6,P[0].y-10);
     }
     /* selection handles */
     if (sel && !ghost) {
@@ -2918,14 +2929,16 @@ class Chart {
       ye = this.y(P.entry),
       ys = this.y(P.stop),
       yt = this.y(P.target);
-    const up = css("--up"),
-      dn = css("--dn");
+    const up = P.style?.targetColor||css("--up"),
+      dn = P.style?.stopColor||css("--dn");
     c.save();
-    c.fillStyle = "rgba(34,192,138,.14)";
+    c.globalAlpha=(P.style?.fill??14)/100;
+    c.fillStyle = up;
     c.fillRect(xs, Math.min(ye, yt), pw - xs, Math.abs(yt - ye));
-    c.fillStyle = "rgba(240,82,77,.16)";
+    c.fillStyle = dn;
     c.fillRect(xs, Math.min(ye, ys), pw - xs, Math.abs(ys - ye));
-    c.lineWidth = 1.5;
+    c.globalAlpha=1;
+    c.lineWidth = P.style?.width||1.5;
     c.font = '10px "IBM Plex Sans",sans-serif';
     c.textBaseline = "middle";
     const tight = this.W < 560;
@@ -2947,7 +2960,7 @@ class Chart {
           ],
           [
             ye,
-            css("--txt"),
+            P.style?.color||css("--txt"),
             "ENTRY " +
               fmt(P.entry, this.cfg.sym) +
               "  " +
@@ -2968,11 +2981,12 @@ class Chart {
         ];
     rows.forEach(([y, col, label]) => {
       c.strokeStyle = col;
-      c.setLineDash(col === css("--txt") ? [] : [4, 3]);
+      c.setLineDash(P.style?.dash?DASHES[P.style.dash]:col === css("--txt") ? [] : [4, 3]);
       c.beginPath();
       c.moveTo(xs, y);
       c.lineTo(pw, y);
       c.stroke();
+      if(P.style?.showLabels===false)return;
       const w = c.measureText(label).width + 10;
       c.setLineDash([]);
       c.fillStyle = col;

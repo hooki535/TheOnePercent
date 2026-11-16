@@ -132,9 +132,12 @@ function normalizeDrawingLevels(values) {
 }
 
 function drawingLevelsFor(obj, fallback) {
+  if(Array.isArray(obj?.levelStyles))return obj.levelStyles.filter(l=>l.enabled!==false&&Number.isFinite(l.value)).map(l=>l.value);
   const levels = normalizeDrawingLevels(obj && obj.levels);
   return levels.length ? levels : (Array.isArray(fallback) ? fallback : DRAWING_FIB_DEFAULTS).slice();
 }
+
+function drawingLevelColor(o,value,fallback){return o.levelStyles?.find(l=>l.value===value)?.color||fallback;}
 
 function drawingPathHitDistance(points, x, y, closed = false, filled = false) {
   if (!Array.isArray(points) || !points.length) return Infinity;
@@ -166,9 +169,9 @@ function drawingEllipseHitDistance(x1, y1, x2, y2, x, y) {
   return radial <= 1 ? 0 : (radial - 1) * Math.min(rx, ry);
 }
 
-function shapeLabel(c, x, y, text, bg, fg, align) {
+function shapeLabel(c, x, y, text, bg, fg, align, style) {
   c.save();
-  c.font = '9.5px "IBM Plex Mono",monospace';
+  c.font = style?((style.italic?"italic ":"")+(style.bold?"bold ":"")+(style.font||11)+'px "IBM Plex Sans",sans-serif'):'9.5px "IBM Plex Mono",monospace';
   c.textBaseline = "middle";
   const w = c.measureText(text).width + 9;
   const x0 = align === "right" ? x - w : x;
@@ -311,7 +314,8 @@ const SHAPES = {
       P[0].y,
       fmt(o.pts[0].p, H.S),
       H.col,
-      css("--on-brand") || "#fff",
+      H.st.textColor || css("--on-brand") || "#fff",
+      undefined,H.st,
     );
   },
 
@@ -359,8 +363,8 @@ const SHAPES = {
         yB = ch.y(p1 + sd * mult);
       c.save();
       c.globalAlpha = alpha;
-      c.setLineDash(mult === 0 ? [] : [5, 4]);
-      c.lineWidth = mult === 0 ? 1.8 : 1;
+      c.setLineDash(H.st.dash?H.dsh:mult === 0 ? [] : [5, 4]);
+      c.lineWidth = H.st.width|| (mult === 0 ? 1.8 : 1);
       c.beginPath();
       c.moveTo(x0, yA);
       c.lineTo(x1, yB);
@@ -419,7 +423,8 @@ const SHAPES = {
       yTop,
       fmt(a, H.S),
       H.col,
-      css("--on-brand") || "#fff",
+      H.st.textColor || css("--on-brand") || "#fff",
+      undefined,H.st,
     );
     shapeLabel(
       c,
@@ -427,7 +432,8 @@ const SHAPES = {
       yBot,
       fmt(b, H.S),
       H.col,
-      css("--on-brand") || "#fff",
+      H.st.textColor || css("--on-brand") || "#fff",
+      undefined,H.st,
     );
   },
 
@@ -498,9 +504,9 @@ const SHAPES = {
       const dy = off * l;
       const first = l === 0 || l === 1;
       c.save();
-      c.strokeStyle = first ? "rgba(159,176,206,.85)" : H.col;
+      c.strokeStyle = drawingLevelColor(o,l,first?"rgba(159,176,206,.85)":H.col);
       c.globalAlpha = (H.ghost ? 0.6 : 1) * (first ? 1 : 0.72);
-      c.setLineDash(first ? [] : dashOf(o, [5, 4]));
+      c.setLineDash(Array.isArray(o.levelStyles)?H.dsh:first?[]:dashOf(o,[5,4]));
       c.beginPath();
       c.moveTo(P[0].x, P[0].y + dy);
       c.lineTo(P[1].x, P[1].y + dy);
@@ -508,7 +514,7 @@ const SHAPES = {
       c.restore();
       c.fillStyle = css("--txt2");
       c.textAlign = "left";
-      c.fillText(String(l), Math.max(P[0].x, P[1].x) + 4, P[1].y + dy);
+      c.fillText(H.st.showLevels===false?"":String(l), Math.max(P[0].x, P[1].x) + 4, P[1].y + dy);
     });
   },
 
@@ -518,12 +524,13 @@ const SHAPES = {
       step = o.pts[1].i - o.pts[0].i;
     if (!step) return;
     c.font = '9.5px "IBM Plex Mono",monospace';
-    FIB_TIME.forEach((n, k) => {
+    drawingLevelsFor(o,FIB_TIME).forEach((n, k) => {
+      c.strokeStyle=drawingLevelColor(o,n,H.col);
       const x = ch.x(i0 + step * n);
       if (x < -20 || x > H.pw + 20) return;
       c.save();
       c.globalAlpha = (H.ghost ? 0.6 : 1) * (k < 2 ? 1 : 0.68);
-      c.setLineDash(k < 2 ? [] : dashOf(o, [4, 4]));
+      c.setLineDash(Array.isArray(o.levelStyles)?H.dsh:k<2?[]:dashOf(o,[4,4]));
       c.beginPath();
       c.moveTo(x, 0);
       c.lineTo(x, ch.axisY);
@@ -531,7 +538,7 @@ const SHAPES = {
       c.restore();
       c.fillStyle = css("--txt2");
       c.textAlign = "left";
-      c.fillText(String(n), x + 3, 10);
+      c.fillText(H.st.showLevels===false?"":String(n), x + 3, 10);
     });
   },
 
@@ -550,8 +557,8 @@ const SHAPES = {
     drawingLevelsFor(o, [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]).forEach((l) => {
       c.save();
       c.globalAlpha = (H.ghost ? 0.6 : 1) * (l === 0 || l === 1 ? 1 : 0.7);
-      c.setLineDash(l === 0 || l === 1 ? [] : dashOf(o, [5, 4]));
-      c.strokeStyle = H.col;
+      c.setLineDash(Array.isArray(o.levelStyles)?H.dsh:l===0||l===1?[]:dashOf(o,[5,4]));
+      c.strokeStyle = drawingLevelColor(o,l,H.col);
       lineThrough(c, x0, y0, x0 + dx, y0 + dy * l, H.pw, ch.axisY);
       c.restore();
       /* Placed well out along each ray so the labels fan out with the
@@ -563,7 +570,7 @@ const SHAPES = {
       if (ly > 8 && ly < ch.axisY - 8) {
         c.fillStyle = css("--txt2");
         c.textAlign = "left";
-        c.fillText(String(l), lx, ly - 6);
+        c.fillText(H.st.showLevels===false?"":String(l), lx, ly - 6);
       }
     });
   },
@@ -573,17 +580,18 @@ const SHAPES = {
     const r = Math.hypot(P[1].x - P[0].x, P[1].y - P[0].y);
     if (r < 2) return;
     c.font = '9.5px "IBM Plex Mono",monospace';
-    [0.382, 0.5, 0.618, 1, 1.618, 2.618].forEach((l) => {
+    drawingLevelsFor(o,[0.382, 0.5, 0.618, 1, 1.618, 2.618]).forEach((l) => {
+      c.strokeStyle=drawingLevelColor(o,l,H.col);
       c.save();
       c.globalAlpha = (H.ghost ? 0.6 : 1) * (l === 1 ? 1 : 0.65);
-      c.setLineDash(l === 1 ? [] : dashOf(o, [5, 4]));
+      c.setLineDash(Array.isArray(o.levelStyles)?H.dsh:l===1?[]:dashOf(o,[5,4]));
       c.beginPath();
       c.arc(P[0].x, P[0].y, r * l, 0, Math.PI * 2);
       c.stroke();
       c.restore();
       c.fillStyle = css("--txt2");
       c.textAlign = "center";
-      c.fillText(String(l), P[0].x, P[0].y - r * l - 5);
+      c.fillText(H.st.showLevels===false?"":String(l), P[0].x, P[0].y - r * l - 5);
     });
     c.save();
     c.globalAlpha = 0.5;
@@ -611,12 +619,13 @@ const SHAPES = {
     c.fillRect(x0, y0, w, h);
     c.restore();
     c.font = '9px "IBM Plex Mono",monospace';
-    for (let k = 0; k <= 8; k++) {
-      const f = k / 8;
+    for (const f of drawingLevelsFor(o,[0,.125,.25,.375,.5,.625,.75,.875,1])) {
+      const k=f*8;
+      c.strokeStyle=drawingLevelColor(o,f,H.col);
       const major = k === 0 || k === 8 || k === 4;
       c.save();
       c.globalAlpha = (H.ghost ? 0.6 : 1) * (major ? 0.95 : 0.4);
-      c.setLineDash(major ? [] : [3, 3]);
+      c.setLineDash(Array.isArray(o.levelStyles)?H.dsh:major?[]:[3,3]);
       c.beginPath();
       c.moveTo(x0 + w * f, y0);
       c.lineTo(x0 + w * f, y1);
@@ -627,7 +636,7 @@ const SHAPES = {
       if (k && k < 8) {
         c.fillStyle = css("--txt3");
         c.textAlign = "left";
-        c.fillText(k + "/8", x1 + 3, y0 + h * f);
+        c.fillText(H.st.showLevels===false?"":String(f), x1 + 3, y0 + h * f);
       }
     }
     c.save();
@@ -648,13 +657,13 @@ const SHAPES = {
       uy = P[1].y - y0;
     if (!ux) return;
     c.font = '9px "IBM Plex Mono",monospace';
-    GANN_RATIOS.forEach(([a, b]) => {
+    (Array.isArray(o.levelStyles)?drawingLevelsFor(o).filter(l=>l!==0).map(l=>[1,l]):GANN_RATIOS).forEach(([a,b])=>{
       const oneOne = a === 1 && b === 1;
       c.save();
       c.globalAlpha = (H.ghost ? 0.6 : 1) * (oneOne ? 1 : 0.6);
-      c.lineWidth = oneOne ? 1.8 : 1;
-      c.setLineDash(oneOne ? [] : [4, 4]);
-      c.strokeStyle = H.col;
+      c.lineWidth = H.st.width||(oneOne?1.8:1);
+      c.setLineDash(H.st.dash?H.dsh:oneOne?[]:[4,4]);
+      c.strokeStyle = drawingLevelColor(o,b/a,H.col);
       lineThrough(c, x0, y0, x0 + ux * (b / a), y0 + uy, H.pw, ch.axisY);
       c.restore();
       const t = (H.pw - x0) / (ux * (b / a));
@@ -662,7 +671,7 @@ const SHAPES = {
       if (ly > 8 && ly < ch.axisY - 8) {
         c.fillStyle = css("--txt3");
         c.textAlign = "right";
-        c.fillText(a + "×" + b, H.pw - 3, ly - 6);
+        c.fillText(H.st.showLevels===false?"":a+"×"+b, H.pw - 3, ly - 6);
       }
     });
   },
@@ -729,7 +738,7 @@ const SHAPES = {
     if (P.length < 2) return;
     c.save();
     c.setLineDash([]);
-    c.globalAlpha = 0.25;
+    c.globalAlpha = fillA(o,25);
     c.lineJoin = "round";
     c.lineCap = "round";
     c.lineWidth = ((o.style && o.style.width) || 2) * 9;
@@ -745,18 +754,18 @@ const SHAPES = {
   callout(ch, c, o, P, H) {
     const s = o.text || "Callout";
     const fs = (H.st.font || 11) + 0;
-    c.font = fs + 'px "IBM Plex Sans",sans-serif';
+    c.font = (H.st.italic?"italic ":"")+(H.st.bold?"bold ":"")+fs + 'px "IBM Plex Sans",sans-serif';
     const w = Math.max(48, c.measureText(s).width + 16),
       h = fs + 14;
     const bx = P[1].x,
       by = P[1].y - h / 2;
-    c.setLineDash([]);
+    c.setLineDash(H.dsh);
     c.beginPath();
     c.moveTo(P[0].x, P[0].y);
     c.lineTo(bx + (P[0].x < bx ? 0 : w), by + h / 2);
     c.stroke();
     c.save();
-    c.globalAlpha = (H.ghost ? 0.6 : 1) * 0.94;
+    c.globalAlpha = fillA(o,94);
     c.fillStyle = css("--surf2");
     c.beginPath();
     if (c.roundRect) c.roundRect(bx, by, w, h, 5);
@@ -768,7 +777,7 @@ const SHAPES = {
     if (c.roundRect) c.roundRect(bx + 0.5, by + 0.5, w - 1, h - 1, 5);
     else c.rect(bx + 0.5, by + 0.5, w - 1, h - 1);
     c.stroke();
-    c.fillStyle = css("--txt");
+    c.fillStyle = H.st.textColor||css("--txt");
     c.textAlign = "left";
     c.textBaseline = "middle";
     c.fillText(s, bx + 8, by + h / 2);
@@ -791,7 +800,8 @@ const SHAPES = {
       P[0].y - 11,
       txt,
       H.col,
-      css("--on-brand") || "#fff",
+      H.st.textColor || css("--on-brand") || "#fff",
+      undefined,H.st,
     );
     c.beginPath();
     c.arc(P[0].x, P[0].y, 3, 0, 7);
@@ -813,7 +823,8 @@ const SHAPES = {
     c.closePath();
     c.fill();
     if (o.text) {
-      c.fillStyle = css("--txt");
+      c.fillStyle = H.st.textColor||css("--txt");
+      c.font=(H.st.italic?"italic ":"")+(H.st.bold?"bold ":"")+(H.st.font||11)+'px "IBM Plex Sans",sans-serif';
       c.textAlign = "left";
       c.fillText(o.text, x + 20, y - 21);
     }
