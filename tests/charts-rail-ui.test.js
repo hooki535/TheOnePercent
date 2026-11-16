@@ -85,7 +85,7 @@ test("all drawing groups render into an unclipped desktop palette", () => {
   assert.ok(palette, "the menu is moved outside the scrollable rail");
   assert.equal(palette.style.position, "fixed");
   assert.equal(palette.style.left, "44px");
-  assert.equal(palette.style.width, "294px");
+  assert.equal(palette.style.width, "310px");
   assert.match(html, /data-grp-open="lines"/);
   assert.match(html, /data-grp-open="fib"/);
   assert.match(html, /data-grp-open="patterns"/);

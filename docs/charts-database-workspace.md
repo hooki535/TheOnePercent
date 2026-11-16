@@ -27,3 +27,11 @@ Market search lists instruments covered by the stored catalog, without unconnect
 - Physical mobile-device testing and signed-in workspace saving were not repeated in this change.
 
 The Charts work remains on its review branch and PR #8, stacked on homepage PR #7. No merge to main or GitHub Pages production deployment is included. The existing Sites preview remains owner-private; its ChatGPT access control is separate from TheOnePercent account sign-in.
+
+## Section 02 — drawing toolbar
+
+The drawing rail now uses original thin outline SVGs with distinct anchors and consistent sizing. Group chevrons are visible; the 310px flyout uses readable rows, persistent favourite stars and the existing searchable sections and keyboard navigation. Search text and menu scroll position survive starring tools. The custom drawing engine, tool IDs and existing saved drawing/favourite settings are retained.
+
+On the compact research page, starred tools appear once in the floating toolbar instead of also lengthening the rail. An empty favourites list stays empty. The star button shows/hides the strip (new additive `chartsFavoritesHidden` setting); drag to reorder or use Alt+Left/Right on a floating favourite. Other chart consumers retain the existing rail favourites. Existing stored candles remain available to guests.
+
+Validation: 57 Node checks pass, syntax and diff checks pass, and real anonymous history smoke verification passes. Browser QA verified the real candle chart while signed out, opening trend tools, search filtering, starring/unstarring, immediate floating strip updates, and keyboard navigation. Physical mobile device behaviour and signed-in saves were not tested in this section. Icons are original artwork styled to match the reference, not imported TradingView assets.

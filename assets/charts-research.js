@@ -55,11 +55,18 @@
     };
   }
   function paintFavorites(){
-    const ids=railFavs.length?railFavs:['trend','hline','rect','fib','text','measure'].filter(isRailTool);
+    const ids=railFavs;
     const sig=ids.join('|')+'|'+state.tool;
+    favorites.hidden=!!state.favoritesHidden || !ids.length;
     if(sig===favoriteSignature)return;favoriteSignature=sig;
     favorites.innerHTML='<span class="research-grip" title="Drag favourite tools" aria-hidden="true">'+icon('grip')+'</span>';wireDrag(favorites);
-    ids.forEach(id=>{const b=document.createElement('button');b.type='button';b.innerHTML=svgIcon(id);b.title=toolName(id);b.setAttribute('aria-label',toolName(id));b.setAttribute('aria-pressed',String(state.tool===id));b.onclick=()=>pickTool(id);favorites.append(b);});
+    ids.forEach(id=>{const b=document.createElement('button');b.type='button';b.innerHTML=svgIcon(id);b.title=toolName(id);b.setAttribute('aria-label',toolName(id));b.setAttribute('aria-pressed',String(state.tool===id));b.onclick=()=>pickTool(id);b.draggable=true;
+      b.onkeydown=e=>{if(e.altKey && ['ArrowLeft','ArrowRight'].includes(e.key)){const index=railFavs.indexOf(id),to=index+(e.key==='ArrowLeft'?-1:1);if(to>=0&&to<railFavs.length){e.preventDefault();reorderFavorite(id,railFavs[to]);paintFavorites();favorites.querySelector(`[data-favorite="${id}"]`)?.focus();}}};
+      b.dataset.favorite=id;b.setAttribute('aria-keyshortcuts','Alt+ArrowLeft Alt+ArrowRight');
+      b.ondragstart=e=>{e.dataTransfer.setData('text/plain',id);b.classList.add('dragging');};
+      b.ondragend=()=>b.classList.remove('dragging');b.ondragover=e=>e.preventDefault();
+      b.ondrop=e=>{e.preventDefault();reorderFavorite(e.dataTransfer.getData('text/plain'),id);paintFavorites();};
+      favorites.append(b);});
   }
   // A compact edit bar for the selected real drawing; engine keeps hit testing/handles.
   const edit=document.createElement('div');edit.className='research-editbar';edit.hidden=true;edit.setAttribute('role','toolbar');edit.setAttribute('aria-label','Selected drawing controls');
@@ -83,8 +90,8 @@
       empty.querySelector('h1').textContent=loading?'Loading your chart':'Candles unavailable';
       empty.querySelector('p').textContent=loading?'Loading stored candles. You can view charts without an account.':status.message;
       const retry=empty.querySelector('.research-retry');if(retry){retry.hidden=loading;retry.disabled=loading;}
-      favorites.hidden=loading;
-    }else favorites.hidden=false;
+      favorites.hidden=loading || !!state.favoritesHidden || !railFavs.length;
+    }else favorites.hidden=!!state.favoritesHidden || !railFavs.length;
   }
   document.addEventListener('chart-render',update);document.addEventListener('click',()=>requestAnimationFrame(update));
   // Category navigation operates on the native chart settings and handlers.
