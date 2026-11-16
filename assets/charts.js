@@ -400,7 +400,7 @@ function makePos(key, a, b, opts) {
     state.pos.startBar=Math.min(opts.startBar,opts.endBar);
     state.pos.endBar=Math.max(state.pos.startBar+2,Math.max(opts.startBar,opts.endBar));
   }
-  state.selObj=null;
+  state.selObj=null;state.posSelected=true;
   recalc();
   syncInputs();
   $$(".st").forEach((x) =>
@@ -428,6 +428,21 @@ function movedPosition(P,k,price,tick=1e-8){
   else if(k==='stop')next.stop=sign===1?Math.min(price,P.entry-gap):Math.max(price,P.entry+gap);
   else next.target=sign===1?Math.max(price,P.entry+gap):Math.min(price,P.entry-gap);
   return next;
+}
+/* All drag updates are derived from the original pointer-down snapshot. */
+function adjustedPosition(P,kind,delta,tick=1e-8){
+  if(!P)return null;
+  if(kind==='move'){
+    if(!Number.isFinite(delta.deltaPrice)||!Number.isFinite(delta.deltaBar))return null;
+    const next=movedPosition(P,'entry',P.entry+delta.deltaPrice,tick);
+    if(Number.isFinite(P.startBar)&&Number.isFinite(P.endBar)){next.startBar=P.startBar+delta.deltaBar;next.endBar=P.endBar+delta.deltaBar;}
+    return next;
+  }
+  if(kind==='startBar'||kind==='endBar'){
+    if(!Number.isFinite(delta.bar)||!Number.isFinite(P.startBar)||!Number.isFinite(P.endBar))return null;
+    return {...P,[kind]:kind==='startBar'?Math.min(delta.bar,P.endBar-2):Math.max(delta.bar,P.startBar+2)};
+  }
+  return movedPosition(P,kind,delta.price,tick);
 }
 function movePos(k,price){
   const P=state.pos,next=movedPosition(P,k,price,SYMBOLS[P?.sym]?.tick);

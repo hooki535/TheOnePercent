@@ -1260,6 +1260,7 @@ class Chart {
     return v;
   }
   scale() {
+    if(this.drag?.mode==="position" && this.drag.scale){Object.assign(this,this.drag.scale);return this;}
     const { d, i0, i1 } = this.bars();
     this.base = (d[Math.max(0, Math.min(d.length - 1, i0))] || d[0]).c;
     let lo = Infinity,
@@ -1390,6 +1391,13 @@ class Chart {
         return;
       }
       if (state.tool === "cursor") {
+        const position=this.positionHit(p,true);
+        if(position){
+          state.posSelected=true;state.selObj=null;paintObjects();
+          if(!state.pos.locked){this.drag={mode:'position',k:position.k,snapshot:{...JSON.parse(JSON.stringify(state.pos)),startBar:Number.isFinite(state.pos.startBar)?state.pos.startBar:this.ix(this.positionBounds(state.pos).left),endBar:Number.isFinite(state.pos.endBar)?state.pos.endBar:this.ix(this.positionBounds(state.pos).right)},start:{i:this.ix(p.x),price:this.py(p.y),x:p.x,y:p.y},scale:{tLo:this.tLo,tHi:this.tHi,lo:this.lo,hi:this.hi,base:this.base}};}
+          draw();return;
+        }
+        state.posSelected=false;
         const h = this.grab(p);
         if (h) {
           // Position handles are {pos:true,k}; drawing handles are {o,k}.
@@ -1534,6 +1542,11 @@ class Chart {
           this.pending.pts[1] = { i: q.i, p: q.p };
           if (this.pending.pts.length > 2)
             this.pending.pts[2] = { i: q.i, p: q.p };
+        } else if (D.mode === "position") {
+          if(!state.pos || state.pos.locked)return;
+          if(!D.undoPushed && Math.hypot(p.x-D.start.x,p.y-D.start.y)<3)return;
+          const next=adjustedPosition(D.snapshot,D.k,{deltaPrice:this.py(p.y)-D.start.price,deltaBar:this.ix(p.x)-D.start.i,price:this.py(p.y),bar:this.ix(p.x)},SYMBOLS[state.pos.sym]?.tick);
+          if(next){if(!D.undoPushed){pushUndo();D.undoPushed=true;}Object.assign(state.pos,next);recalc();syncInputs();}
         } else if (D.mode === "handle") {
           const q = this.ptSnap(p),
             h = D.h;
@@ -1561,6 +1574,8 @@ class Chart {
             ? "ns-resize"
             : p.y > this.axisY
               ? "ew-resize"
+              : this.positionHit(p)
+                ? (["startBar","endBar"].includes(this.positionHit(p).k)?"ew-resize":["stop","target"].includes(this.positionHit(p).k)?"ns-resize":"move")
               : this.grab(p)
                 ? "pointer"
                 : this.nearest(p) >= 0
@@ -1704,8 +1719,8 @@ class Chart {
         draw();
         return;
       }
-      const positionHit = this.grab(p);
-      if(positionHit?.pos && typeof editPositionSettings === "function"){editPositionSettings(this);return;}
+      const positionHit = this.positionHit(p,true);
+      if(positionHit && typeof editPositionSettings === "function"){editPositionSettings(this);return;}
       const i = this.nearest(p);
       if (i >= 0) {
         /* double-click a drawing opens its settings */
@@ -1787,10 +1802,8 @@ class Chart {
   grab(p) {
     if (!this.inChartBody(p)) return null;
     const inPrice = this.inPricePlot(p);
-    if (inPrice && state.pos && state.pos.key === this.key && !state.pos.hidden && !state.pos.locked && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv)))
-      for (const k of ["entry", "stop", "target"])
-        if (Math.abs(this.y(state.pos[k]) - p.y) < 5 && p.x >= this.positionBounds(state.pos).left-6 && p.x <= this.positionBounds(state.pos).right+6)
-          return { pos: true, k };
+    const position=this.positionHit(p);
+    if(position)return {pos:true,k:position.k};
     for (let n = this.drw.length - 1; n >= 0; n--) {
       const o = this.drw[n];
       if (o.hidden || (typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(o,this.cfg.iv)) || o.locked || (!inPrice && o.t !== "vline")) continue;
@@ -2927,6 +2940,17 @@ class Chart {
     }
     c.restore();
   }
+  positionHit(p,includeLocked=false){
+    const P=state.pos;
+    if(!P||P.key!==this.key||P.hidden||(!includeLocked&&P.locked)||!this.inPricePlot(p)||(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(P,this.cfg.iv)))return null;
+    const {left,right}=this.positionBounds(P),entry=this.y(P.entry),stop=this.y(P.stop),target=this.y(P.target),inside=p.x>=left-7&&p.x<=right+7;
+    if(!inside)return null;
+    if(state.posSelected&&!P.locked&&Math.abs(p.y-entry)<8){if(Math.abs(p.x-right)<8)return {k:'endBar'};if(Math.abs(p.x-left)<8)return {k:'startBar'};}
+    if(Math.abs(p.y-stop)<7)return {k:'stop'};
+    if(Math.abs(p.y-target)<7)return {k:'target'};
+    if(p.y>=Math.min(stop,target)&&p.y<=Math.max(stop,target))return {k:'move'};
+    return null;
+  }
   positionBounds(P){
     if(Number.isFinite(P.startBar)&&Number.isFinite(P.endBar)){const a=this.x(P.startBar),b=this.x(P.endBar);return {left:Math.min(a,b),right:Math.max(a,b)};}
     return {left:Math.max(20,this.plotW*.42),right:this.plotW};
@@ -3005,6 +3029,10 @@ class Chart {
       c.textAlign = "left";
       c.fillText(label, xe - w + 3, y);
     });
+    if(state.posSelected && !P.locked){
+      c.setLineDash([]);c.lineWidth=1.5;c.strokeStyle=css('--acc');c.fillStyle=css('--bg');
+      [[xs,ye],[xe,ye],[(xs+xe)/2,ys],[(xs+xe)/2,yt]].forEach(([x,y])=>{c.fillRect(x-3.5,y-3.5,7,7);c.strokeRect(x-3.5,y-3.5,7,7);});
+    }
     if (P.calc?.over) {
       const s = "over your " + state.risk.pct.toFixed(1) + "% rule";
       const w = c.measureText(s).width + 12;
