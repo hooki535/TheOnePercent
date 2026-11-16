@@ -1227,25 +1227,16 @@ class Chart {
     this.axisY = y;
   }
   bars() {
-    const d = this.data,
-      n = Math.max(12, Math.min(this.view.n, d.length));
-    const end = Math.max(
-      n,
-      Math.min(
-        d.length + this.view.fwd,
-        d.length - this.view.end + this.view.fwd,
-      ),
-    );
-    return { d, i0: end - n, i1: end, n };
+    const d=this.data,n=Math.max(12,Math.min(Math.round(this.view.n),d.length));
+    const end=Math.max(n,d.length-this.view.end+(this.view.fwd||0)),whole=Math.floor(end);
+    return {d,i0:whole-n,i1:whole,n,offset:end-whole};
   }
-  x(i) {
-    const { i0, n } = this.bars();
-    return (i - i0 + 0.5) * (this.plotW / n);
-  }
-  ix(px) {
-    const { i0, n } = this.bars();
-    return i0 + px / (this.plotW / n) - 0.5;
-  }
+  x(i) {const {i0,n,offset}=this.bars();return (i-i0+.5-offset)*(this.plotW/n);}
+  ix(px) {const {i0,n,offset}=this.bars();return i0+px/(this.plotW/n)-.5+offset;}
+  capturePriceRange(){return {tLo:this.tLo,tHi:this.tHi,base:this.base,mode:this.sc.mode,key:this.key};}
+  setTimeOffset(offset){const {n}=this.bars(),limit=Math.max(500,n*4),value=Math.max(n-this.data.length,Math.min(limit,offset));this.view.end=Math.max(0,-value);this.view.fwd=Math.max(0,value);}
+  zoomTime(n,anchor,fraction){this.view.n=Math.max(12,Math.min(2000,this.data.length,Math.round(n)));this.setTimeOffset(chartZoomTime(this.data.length,this.view.n,anchor,fraction));}
+  zoomPrice(factor,y){const range=this.capturePriceRange(),f=Math.max(0,Math.min(1,y/this.panes.price.h));this.sc.range=chartZoomPrice(range,factor,this.sc.invert?f:1-f);this.sc.auto=false;}
   /* price-space transform: normal, log or percent */
   tp(p) {
     const m = this.sc.mode;
@@ -1261,6 +1252,8 @@ class Chart {
   }
   scale() {
     if(this.drag?.mode==="position" && this.drag.scale){Object.assign(this,this.drag.scale);return this;}
+    if(!this.sc.auto && this.sc.range?.key===this.key && this.sc.range.mode===this.sc.mode){this.tLo=this.sc.range.tLo;this.tHi=this.sc.range.tHi;this.base=this.sc.range.base;this.lo=this.inv(this.tLo);this.hi=this.inv(this.tHi);return this;}
+    if(this.sc.range&&(this.sc.range.key!==this.key||this.sc.range.mode!==this.sc.mode)){delete this.sc.range;this.sc.auto=true;}
     const { d, i0, i1 } = this.bars();
     this.base = (d[Math.max(0, Math.min(d.length - 1, i0))] || d[0]).c;
     let lo = Infinity,
@@ -1362,20 +1355,23 @@ class Chart {
     this.rt.onclick = (e) => {
       e.stopPropagation();
       this.view.end = 0;
-      this.view.fwd = 0;
+      this.view.fwd = 0;this.sc.auto=true;delete this.sc.range;
       draw();
     };
     el.addEventListener("mousedown", (e) => {
+      if(e.button!==0&&e.button!==1)return;
+      if(e.button===1)e.preventDefault();
+      if(!this.data.length)return;
       select(this.slot);
       const p = this.pt(e);
       /* price axis: drag to rescale, double-click handled below */
       if (p.x > this.plotW) {
-        this.drag = { mode: "axisY", y: e.clientY, f: this.sc.factor };
+        this.drag = { mode: "axisY", y: e.clientY, anchor:p.y, range:this.capturePriceRange() };
         this.sc.auto = false;
         return;
       }
       if (p.y > this.axisY) {
-        this.drag = { mode: "axisX", x: e.clientX, n: this.view.n };
+        this.drag = { mode: "axisX", x: e.clientX, n: this.bars().n, anchor:this.ix(p.x), fraction:p.x/this.plotW };
         return;
       }
       // Drawings store price/bar anchors, not indicator-pane coordinates.
@@ -1390,15 +1386,16 @@ class Chart {
         this.drag = { mode: "new" };
         return;
       }
-      if (state.tool === "cursor") {
-        const position=this.positionHit(p,true);
+      if (state.tool === "cursor" || e.button===1) {
+        const position=e.button===1?null:this.positionHit(p,true);
         if(position){
           state.posSelected=true;state.selObj=null;paintObjects();
+          this.sc.range=this.capturePriceRange();this.sc.auto=false;
           if(!state.pos.locked){this.drag={mode:'position',k:position.k,snapshot:{...JSON.parse(JSON.stringify(state.pos)),startBar:Number.isFinite(state.pos.startBar)?state.pos.startBar:this.ix(this.positionBounds(state.pos).left),endBar:Number.isFinite(state.pos.endBar)?state.pos.endBar:this.ix(this.positionBounds(state.pos).right)},start:{i:this.ix(p.x),price:this.py(p.y),x:p.x,y:p.y},scale:{tLo:this.tLo,tHi:this.tHi,lo:this.lo,hi:this.hi,base:this.base}};}
           draw();return;
         }
         state.posSelected=false;
-        const h = this.grab(p);
+        const h = e.button===1?null:this.grab(p);
         if (h) {
           // Position handles are {pos:true,k}; drawing handles are {o,k}.
           if (!h.pos) {
@@ -1408,7 +1405,7 @@ class Chart {
           this.drag = { mode: "handle", h };
           return;
         }
-        const i = this.nearest(p);
+        const i = e.button===1?-1:this.nearest(p);
         if (i >= 0) {
           state.selObj = this.drw[i].id;
           paintObjects();
@@ -1427,8 +1424,8 @@ class Chart {
           mode: "pan",
           x: e.clientX,
           y: e.clientY,
-          end: this.view.end,
-          off: this.sc.offset || 0,
+          offset:(this.view.fwd||0)-this.view.end,
+          n:this.bars().n,range:this.capturePriceRange(),
         };
         el.style.cursor = "grabbing";
         return;
@@ -1507,27 +1504,17 @@ class Chart {
       const D = this.drag;
       if (D) {
         if (D.mode === "pan") {
-          const { n } = this.bars();
-          const dx = (e.clientX - D.x) / (this.plotW / n);
-          const want = Math.round(D.end - dx);
-          this.view.end = Math.max(-40, Math.min(this.raw.length - 40, want));
-          if (this.view.end < 0) {
-            this.view.fwd = -this.view.end;
-            this.view.end = 0;
-          } else this.view.fwd = 0;
-          if (!this.sc.auto) {
-            const dy = (e.clientY - D.y) / this.panes.price.h;
-            this.sc.offset = D.off + dy;
-          }
+          const dx=e.clientX-D.x,dy=e.clientY-D.y;
+          if(!D.moved&&Math.hypot(dx,dy)<3)return;
+          D.moved=true;
+          this.setTimeOffset(D.offset-dx/(this.plotW/D.n));
+          this.sc.auto=false;this.sc.range=chartPanPrice(D.range,dy,this.panes.price.h,this.sc.invert);
         } else if (D.mode === "axisY") {
-          const f = Math.max(
-            0.15,
-            Math.min(6, D.f * (1 + (e.clientY - D.y) / 240)),
-          );
-          this.sc.factor = f;
+          const factor=Math.exp(Math.max(-4,Math.min(4,(e.clientY-D.y)/240)));
+          const f=Math.max(0,Math.min(1,D.anchor/this.panes.price.h));
+          this.sc.range=chartZoomPrice(D.range,factor,this.sc.invert?f:1-f);this.sc.auto=false;
         } else if (D.mode === "axisX") {
-          const f = 1 - (e.clientX - D.x) / 300;
-          this.view.n = Math.max(20, Math.min(520, Math.round(D.n * f)));
+          this.zoomTime(D.n*Math.exp(Math.max(-3,Math.min(3,(e.clientX-D.x)/250))),D.anchor,D.fraction);
         } else if (D.mode === "free") {
           /* Unsnapped: a freehand stroke that jumped to the nearest OHLC
              would be a staircase, not a stroke. */
@@ -1652,39 +1639,18 @@ class Chart {
       "wheel",
       (e) => {
         e.preventDefault();
+        if(!this.data.length)return;
         const p = this.pt(e);
-        if (p.x > this.plotW) {
-          /* wheel on the axis rescales */
-          this.sc.auto = false;
-          this.sc.factor = Math.max(
-            0.15,
-            Math.min(6, (this.sc.factor || 1) * (e.deltaY > 0 ? 1.1 : 0.91)),
-          );
-          draw();
-          return;
+        const unit=e.deltaMode===1?16:e.deltaMode===2?this.H:1,delta=(e.deltaY||0)*unit;
+        if (p.x > this.plotW) {this.zoomPrice(Math.exp(Math.max(-.5,Math.min(.5,delta*.0015))),p.y);draw();return;}
+        if(e.shiftKey || Math.abs(e.deltaX)>Math.abs(e.deltaY)){
+          const horizontal=e.deltaX||e.deltaY;
+          this.sc.range=this.capturePriceRange();this.sc.auto=false;
+          this.setTimeOffset((this.view.fwd||0)-this.view.end+horizontal*unit/(this.plotW/this.bars().n));draw();return;
         }
-        if (e.shiftKey) {
-          /* shift-wheel pans time */
-          this.view.end = Math.max(
-            0,
-            Math.min(
-              this.raw.length - 40,
-              this.view.end + (e.deltaY > 0 ? 3 : -3),
-            ),
-          );
-          draw();
-          return;
-        }
-        const before = this.ix(p.x);
-        this.view.n = Math.max(
-          20,
-          Math.min(520, Math.round(this.view.n * (e.deltaY > 0 ? 1.12 : 0.89))),
-        );
-        const after = this.ix(p.x);
-        this.view.end = Math.max(
-          0,
-          Math.round(this.view.end + (after - before)),
-        );
+        const before=this.ix(p.x),fraction=p.x/this.plotW;
+        this.sc.range=this.capturePriceRange();this.sc.auto=false;
+        this.zoomTime(this.bars().n*Math.exp(Math.max(-.5,Math.min(.5,delta*.0015))),before,fraction);
         draw();
       },
       { passive: false },
@@ -1713,7 +1679,7 @@ class Chart {
     el.addEventListener("dblclick", (e) => {
       const p = this.pt(e);
       if (p.x > this.plotW) {
-        this.sc.auto = true;
+        this.sc.auto = true;delete this.sc.range;
         this.sc.factor = 1;
         this.sc.offset = 0;
         draw();
@@ -1742,7 +1708,7 @@ class Chart {
     this.view.fwd = 0;
     this.sc.factor = 1;
     this.sc.offset = 0;
-    this.sc.auto = true;
+    this.sc.auto = true;delete this.sc.range;
   }
   newObj(t, p) {
     const q = this.ptSnap(p),
@@ -1786,9 +1752,11 @@ class Chart {
     return best;
   }
   dataT(i) {
-    const { d } = this.bars();
-    const b = d[Math.max(0, Math.min(d.length - 1, Math.round(i)))];
-    return b ? b.t : null;
+    const {d}=this.bars(),index=Math.round(i);
+    if(d[index])return d[index].t;
+    if(!d.length)return null;
+    const edge=index<0?0:d.length-1;
+    return d[edge].t+(index-edge)*(IV_MS[this.cfg.iv]||60000);
   }
   inChartBody(p) {
     return p.x >= 0 && p.x <= this.plotW &&
@@ -1969,7 +1937,7 @@ class Chart {
     c.textAlign = "center";
     for (
       let i = Math.max(0, Math.ceil(i0 / stepI) * stepI);
-      i < Math.min(d.length, i1);
+      i < i1;
       i += stepI
     ) {
       const x = Math.round(this.x(i)) + 0.5;
@@ -1984,7 +1952,7 @@ class Chart {
          the explicit timeZone these fall back to the machine's zone, so the
          clock would say UTC while the axis said something else — and on a
          chart the axis is the one people trust. */
-      const t = new Date(d[i].t),
+      const t = new Date(this.dataT(i)),
         tz = state.look.utc === false ? undefined : "UTC",
         lbl =
           IV_MS[this.cfg.iv] >= 864e5
@@ -3404,6 +3372,7 @@ class Chart {
       this.dw.hidden = true;
       return;
     }
+    if(state.hover?.slot===this.slot&&(state.hover.i<0||state.hover.i>=d.length)){this.dw.hidden=true;return;}
     this.dw.hidden = false;
     const i =
       state.hover && state.hover.slot === this.slot
@@ -3482,7 +3451,7 @@ class Chart {
             this.sc.invert = !this.sc.invert;
             this.axisButtons();
           } else {
-            this.sc.mode = b.dataset.m;
+            this.sc.mode = b.dataset.m;delete this.sc.range;this.sc.auto=true;
             this.sc.factor = 1;
             this.sc.offset = 0;
           }
@@ -3623,3 +3592,9 @@ function barCountdown(iv) {
     ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
     : `${m}:${String(sec).padStart(2, "0")}`;
 }
+
+/* Viewport math */
+function chartPanPrice(range,dy,height,inverted=false){const shift=dy/Math.max(1,height)*(range.tHi-range.tLo)*(inverted?-1:1);return {...range,tLo:range.tLo+shift,tHi:range.tHi+shift};}
+function chartZoomPrice(range,factor,fraction){const f=Math.max(0,Math.min(1,fraction)),anchor=range.tLo+(range.tHi-range.tLo)*f;return {...range,tLo:anchor-(anchor-range.tLo)*factor,tHi:anchor+(range.tHi-anchor)*factor};}
+function chartZoomTime(length,n,anchor,fraction){return anchor+.5+n*(1-fraction)-length;}
+/* End viewport math */
