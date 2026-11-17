@@ -4216,11 +4216,12 @@ addEventListener("storechange", (e) => {
 // Deep links from Academy lessons open the intended instrument and timeframe.
 // Only allow symbols and intervals supported by our own feed.
 const academyParams = new URLSearchParams(location.search);
-if (academyParams.get("source") === "academy") {
+if (["academy", "overview"].includes(academyParams.get("source"))) {
   const requestedSymbol = (academyParams.get("symbol") || "").toUpperCase();
   const requestedInterval = academyParams.get("interval") || "";
   const availableSymbols = new Set(
     state.charts.map((chart) => chart.sym).concat(
+      (typeof Feed !== "undefined" ? Feed.list().map((item) => item.symbol) : []),
       (typeof Instruments !== "undefined" && Instruments.all
         ? Instruments.all().map((item) => item.sym || item.symbol)
         : [])
