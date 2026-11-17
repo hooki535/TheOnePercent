@@ -17,13 +17,13 @@
   border-bottom: 1px solid var(--line);
   background: color-mix(in srgb, var(--surface-2) 82%, var(--brand));
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
   text-align: center;
 }
 
 .demo-market-notice strong {
   color: var(--ink);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.08em;
 }
 
@@ -83,7 +83,7 @@
   height: 38px;
   padding: 0 16px;
   border-right: 1px solid var(--line-soft);
-  font-size: 12.5px;
+  font-size: 14px;
   white-space: nowrap;
 }
 
@@ -99,7 +99,7 @@
 
 .tape-item .t-chg {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 
 .tape-item .t-chg.up {
@@ -143,12 +143,12 @@
 .band-head p {
   margin: 0;
   color: var(--muted);
-  font-size: 14.5px;
+  font-size: 16px;
 }
 
 .band-head .more {
   flex-shrink: 0;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--brand);
   text-decoration: none;
@@ -174,7 +174,7 @@
   border-radius: 999px;
   padding: 6px 13px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
   cursor: pointer;
 }
@@ -281,21 +281,21 @@
 }
 
 .heat-tile b {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .heat-tile small {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
   opacity: 0.82;
   margin-top: 2px;
 }
 
 .heat-tile .h-chg {
   font-family: var(--mono);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -304,7 +304,7 @@
   align-items: center;
   gap: 10px;
   margin-top: 14px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -340,7 +340,7 @@
   margin: 0;
   padding: 14px 16px;
   border-bottom: 1px solid var(--line-soft);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -354,7 +354,7 @@
   gap: 12px;
   padding: 11px 16px;
   border-bottom: 1px solid var(--line-soft);
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .mover-row:last-child {
@@ -368,7 +368,7 @@
 .mover-row small {
   display: block;
   color: var(--faint);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 
 .mover-row .m-last {
@@ -410,7 +410,7 @@
 }
 
 .feature .eyebrow {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -427,7 +427,7 @@
 .feature p {
   margin: 0 0 18px;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.62;
   max-width: 44ch;
 }
@@ -443,7 +443,7 @@
 .feature li {
   display: flex;
   gap: 9px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-700);
 }
 
@@ -471,7 +471,7 @@
   padding: 11px 14px;
   border-bottom: 1px solid var(--line-soft);
   background: var(--paper);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -498,7 +498,7 @@
   gap: 12px;
   padding: 10px 4px;
   border-bottom: 1px solid var(--line-soft);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .jrow:last-child {
@@ -507,7 +507,7 @@
 
 .jrow .j-date {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--faint);
 }
 
@@ -537,7 +537,7 @@
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-s);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -556,7 +556,7 @@
   border-radius: var(--r-s);
   background: var(--brand-soft);
   color: var(--brand);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -578,7 +578,7 @@
   padding: 11px 12px;
   border: 1px solid var(--line-soft);
   border-radius: var(--r-s);
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .lesson i {
@@ -589,7 +589,7 @@
   border-radius: 999px;
   background: var(--paper);
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   font-style: normal;
   color: var(--muted);
 }
@@ -601,7 +601,7 @@
 
 .lesson small {
   color: var(--faint);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 
 /* ============================================================ calendar strip */
@@ -624,18 +624,18 @@
   justify-content: space-between;
   gap: 10px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 
 .cal-item b {
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .cal-item small {
   color: var(--faint);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .impact {
@@ -679,7 +679,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -691,20 +691,20 @@
   border-radius: 999px;
   background: var(--brand-soft);
   color: var(--brand);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .idea h3 {
   margin: 0;
-  font-size: 15.5px;
+  font-size: 16px;
   letter-spacing: -0.01em;
 }
 
 .idea p {
   margin: 0;
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -728,7 +728,7 @@
   gap: 8px;
   flex-wrap: wrap;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--faint);
 }
 
@@ -761,7 +761,7 @@
 .stat span {
   display: block;
   margin-top: 4px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -785,7 +785,7 @@
   margin: 0 auto 24px;
   max-width: 46ch;
   color: rgba(255, 255, 255, 0.68);
-  font-size: 15.5px;
+  font-size: 16px;
   line-height: 1.6;
 }
 
@@ -808,7 +808,7 @@
 
 .close-cta .fine {
   margin: 22px auto 0;
-  font-size: 12.5px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.45);
 }
 

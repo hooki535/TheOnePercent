@@ -50,7 +50,7 @@
 .ac-kicker {
   display: inline-block;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #9fb0ff;
@@ -66,7 +66,7 @@
 }
 
 .ac-hero p {
-  font-size: 15.5px;
+  font-size: 16px;
   line-height: 1.6;
   color: #c9d1e3;
   margin: 0 0 22px;
@@ -91,7 +91,7 @@
 
 .ac-stats small {
   color: #9aa4ba;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ------------------------------------------------------------- sections */
@@ -117,7 +117,7 @@
 
 .ac-sec-head span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .ac-grid {
@@ -226,7 +226,7 @@
 
 .ac-status {
   display: inline-block;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -271,7 +271,7 @@
 }
 
 .ac-school {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -291,7 +291,7 @@
 }
 
 .ac-body p {
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.55;
   color: var(--muted);
   margin: 0 0 12px;
@@ -303,7 +303,7 @@
   flex-wrap: wrap;
   gap: 4px 14px;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   margin-bottom: 12px;
 }
@@ -339,7 +339,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--ink-700);
   height: 38px;
   cursor: pointer;
@@ -357,7 +357,7 @@
   background: var(--surface);
   color: var(--ink-700);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
@@ -399,7 +399,7 @@
 
 .ac-school-head p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -442,7 +442,7 @@
 
 .ac-enroll small {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 14px;
   max-width: 56ch;
 }
 
@@ -492,7 +492,7 @@
 .ac-outcomes li {
   position: relative;
   padding-left: 24px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
 }
 
@@ -537,7 +537,7 @@
 
 .ac-mod-head b {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--brand);
@@ -545,7 +545,7 @@
 
 .ac-mod-head span {
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 16px;
 }
 
 .ac-mod ol {
@@ -579,7 +579,7 @@
   display: grid;
   place-items: center;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   border: 1px solid var(--line);
   color: var(--muted);
 }
@@ -592,14 +592,14 @@
 }
 
 .ac-lt {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
 }
 
 .ac-lt small {
   display: block;
   font-weight: 400;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--muted);
   margin-top: 2px;
   line-height: 1.45;
@@ -607,13 +607,13 @@
 
 .ac-lm {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
 }
 
 .ac-lock {
-  font-size: 11px;
+  font-size: 13px;
   opacity: 0.7;
 }
 
@@ -635,7 +635,7 @@
 .ac-inc li {
   position: relative;
   padding-left: 20px;
-  font-size: 13.5px;
+  font-size: 15px;
   margin-bottom: 8px;
   line-height: 1.45;
 }
@@ -653,13 +653,13 @@
 
 .ac-rel li {
   margin-bottom: 10px;
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .ac-rel small {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ----------------------------------------------------------------- gate */
@@ -690,7 +690,7 @@
 
 .ac-lesson-kicker {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--brand);
@@ -712,7 +712,7 @@
 }
 
 .ac-box h3 {
-  font-size: 13px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0 0 10px;
@@ -732,7 +732,7 @@
 }
 
 .ac-box li {
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.5;
   margin-bottom: 6px;
 }
@@ -765,7 +765,7 @@
 .ac-psych b,
 .ac-practice b {
   display: block;
-  font-size: 12.5px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 4px;
@@ -774,7 +774,7 @@
 .ac-psych p,
 .ac-practice p {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
   color: var(--ink-700);
 }
@@ -792,7 +792,7 @@
   padding: 7px 8px;
   border-radius: var(--r-s);
   color: var(--ink-700);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -803,7 +803,7 @@
 .ac-toc li a span {
   flex: 0 0 20px;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 
@@ -842,12 +842,12 @@
 }
 
 .fig-head b {
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .fig-head span {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
@@ -871,7 +871,7 @@
 
 .fg-t {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fg-b {
@@ -887,7 +887,7 @@
 }
 
 .fig figcaption {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--muted);
   padding: 8px 14px 12px;
@@ -919,7 +919,7 @@
   display: block;
   margin-top: 4px;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--muted);
   opacity: 0.85;
@@ -963,7 +963,7 @@
   display: flex;
   gap: 10px;
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 16px;
   padding: 0;
   margin-bottom: 10px;
   float: left;
@@ -983,7 +983,7 @@
   padding: 8px 10px;
   border-radius: var(--r-s);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .ac-q label:hover {
@@ -1009,7 +1009,7 @@
   padding: 10px 12px;
   border-radius: var(--r-s);
   background: var(--tint);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.5;
 }
 
@@ -1047,7 +1047,7 @@
 
 .ac-result span {
   color: var(--ink-700);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 /* ---------------------------------------------------------- certificate */
@@ -1074,7 +1074,7 @@
   gap: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  font-size: 15px;
+  font-size: 16px;
   margin-bottom: 22px;
 }
 
@@ -1087,13 +1087,13 @@
   background: #3654ff;
   color: #fff;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .ac-cert-in > small {
   display: block;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #68707f;
@@ -1130,12 +1130,12 @@
 .ac-cert-foot b {
   display: block;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .ac-cert-foot small {
   color: #68707f;
-  font-size: 11.5px;
+  font-size: 13px;
 }
 
 @media print {
@@ -1416,54 +1416,54 @@
 .ac-vthumb:hover img{opacity:1}
 .ac-vplay{position:absolute;inset:0;margin:auto;width:58px;height:40px;border-radius:10px;background:#e62117;color:#fff;display:grid;place-items:center;font-size:18px}
 .ac-vcap{padding:10px 12px;display:flex;flex-direction:column;gap:4px}
-.ac-vcap b{font-size:13px;line-height:1.35}
-.ac-vcap a{font-size:12px}
-.ac-vcap small{font-size:11px;color:var(--muted)}
+.ac-vcap b{font-size:14px;line-height:1.35}
+.ac-vcap a{font-size:14px}
+.ac-vcap small{font-size:13px;color:var(--muted)}
 .ac-videos.one .ac-video{max-width:720px}
 
 /* Academy study sequence and annotated chart readability */
 .ac-study-heading { margin: 28px 0 18px; padding: 18px 20px; border-left: 3px solid var(--brand); background: var(--surface-2); border-radius: 0 var(--r-m) var(--r-m) 0; }
-.ac-study-heading span { display: block; font: 600 11px var(--mono); letter-spacing: .09em; color: var(--brand); margin-bottom: 6px; }
+.ac-study-heading span { display: block; font: 600 13px var(--mono); letter-spacing: .09em; color: var(--brand); margin-bottom: 6px; }
 .ac-study-heading h2 { margin: 0 0 5px; font-size: 20px; }
-.ac-study-heading p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.ac-study-heading p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--muted); }
 .ac-video-heading { margin-top: 36px; }
 .lesson-main .fig { margin: 22px 0 26px; border-radius: var(--r-l); background: var(--surface); box-shadow: var(--shadow-card); }
 .lesson-main .fig-head { padding: 14px 18px; align-items: center; }
-.lesson-main .fig-head b { font-size: 14px; line-height: 1.45; }
+.lesson-main .fig-head b { font-size: 15px; line-height: 1.45; }
 .lesson-main .fig-body { padding: 18px 12px 6px; background: var(--surface-2); }
 .lesson-main .fig figcaption { padding: 13px 18px 16px; border-top: 1px solid var(--line-soft); line-height: 1.65; }
-.fig-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 18px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--line-soft); }
+.fig-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 18px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line-soft); }
 .fig-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .fig-key { display: inline-block; width: 9px; height: 12px; border-radius: 2px; }
 .fig-key-up { background: var(--up); }
 .fig-key-down { background: var(--down); }
-.fig-synthetic { margin-left: auto; font-family: var(--mono); font-size: 10px; }
+.fig-synthetic { margin-left: auto; font-family: var(--mono); font-size: 12px; }
 @media (max-width: 620px) { .ac-study-heading { padding: 14px 15px; } .lesson-main .fig-body { padding: 12px 3px 3px; } .fig-synthetic { margin-left: 0; width: 100%; } }
 
 /* Self-check mode: hide chart annotations while keeping candles visible. */
 .fig-hide-annotations .fg-annotations { visibility: hidden; }
 .fig-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line-soft); }
-.fig-controls span { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.fig-controls span { color: var(--muted); font-size: 14px; line-height: 1.5; }
 .fig-controls button { flex-shrink: 0; }
 @media (max-width: 620px) { .fig-controls button { width: 100%; } }
 
 /* Guided candlestick replay */
 .fig-replay { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px 16px; border-top:1px solid var(--line-soft); }
-.fig-replay-status { margin-left:auto; font:500 11px var(--mono); color:var(--muted); }
+.fig-replay-status { margin-left:auto; font:500 13px var(--mono); color:var(--muted); }
 .fig-replay button:disabled { opacity:.45; cursor:not-allowed; }
 .fig-replaying .fg-annotations { visibility:hidden; }
 @media(max-width:620px) { .fig-replay-status { width:100%; margin-left:0; } }
 
 /* Formative chart knowledge check */
 .ac-chart-practice { margin:32px 0; padding:22px; border:1px solid var(--line); border-radius:var(--r-l); background:var(--surface-2); }
-.ac-practice-eyebrow { color:var(--brand); font:600 11px var(--mono); letter-spacing:.09em; }
+.ac-practice-eyebrow { color:var(--brand); font:600 13px var(--mono); letter-spacing:.09em; }
 .ac-chart-practice h2 { font-size:20px; margin:10px 0; }
-.ac-chart-practice p { color:var(--muted); font-size:14px; line-height:1.6; }
+.ac-chart-practice p { color:var(--muted); font-size:15px; line-height:1.6; }
 .ac-chart-practice fieldset { border:0; padding:0; margin:18px 0; display:grid; gap:9px; }
-.ac-chart-practice label { display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--line); border-radius:var(--r-s); background:var(--surface); cursor:pointer; font-size:14px; line-height:1.5; }
+.ac-chart-practice label { display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--line); border-radius:var(--r-s); background:var(--surface); cursor:pointer; font-size:15px; line-height:1.5; }
 .ac-chart-practice input { margin-top:4px; accent-color:var(--brand); }
 .ac-chart-practice label:has(input:checked) { border-color:var(--brand); }
-.ac-answer-feedback { margin:14px 0; padding:12px; border:1px solid var(--line); border-radius:var(--r-s); line-height:1.6; font-size:13px; }
+.ac-answer-feedback { margin:14px 0; padding:12px; border:1px solid var(--line); border-radius:var(--r-s); line-height:1.6; font-size:14px; }
 .ac-answer-feedback.correct { border-color:var(--up); }
 .ac-answer-feedback.incorrect { border-color:var(--down); }
 .ac-chart-practice small { display:block; margin-top:14px; color:var(--muted); line-height:1.5; }
@@ -1471,9 +1471,9 @@
 /* Trading-terminal-inspired educational chart axes */
 .fig-body .fg-axis-bg { fill:var(--surface-2, #f6f8fb); }
 .fig-body .fg-axis-line { stroke:var(--line, #dce3eb); stroke-width:1; }
-.fig-body .fg-axis-text { fill:var(--muted, #7b8798); font:11px ui-monospace, SFMono-Regular, Consolas, monospace; }
-.fig-body .fg-axis-caption { fill:var(--muted, #7b8798); font:9px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing:.04em; }
-.fig-body .fg-last-text { font:600 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.fig-body .fg-axis-text { fill:var(--muted, #7b8798); font:13px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.fig-body .fg-axis-caption { fill:var(--muted, #7b8798); font:12px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing:.04em; }
+.fig-body .fg-last-text { font:600 13px ui-monospace, SFMono-Regular, Consolas, monospace; }
 .fig-body .fg-candle { cursor:crosshair; }
 .fig-body .fg-candle:hover { opacity:.78; }
 
@@ -1482,62 +1482,62 @@
 .shot-viewer { display:flex; flex-direction:column; width:min(1500px,100%); height:min(92vh,960px); min-height:0; overflow:hidden; border:1px solid #38404d; border-radius:12px; background:#10151d; box-shadow:0 28px 90px rgba(0,0,0,.55); }
 .shot-viewer-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid #343c49; color:#f4f6f9; }
 .shot-viewer-heading { display:flex; flex-direction:column; gap:4px; min-width:0; }
-.shot-viewer-heading strong { font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.shot-viewer-heading span { color:#b5becd; font-size:11px; line-height:1.4; }
+.shot-viewer-heading strong { font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.shot-viewer-heading span { color:#b5becd; font-size:13px; line-height:1.4; }
 .shot-viewer-actions { display:flex; gap:6px; flex-shrink:0; }
 .shot-viewer-actions button { min-width:38px; min-height:36px; padding:6px 10px; border:1px solid #465162; border-radius:6px; background:#202938; color:#f4f6f9; cursor:pointer; }
 .shot-viewer-actions button:focus-visible { outline:2px solid #8faeff; outline-offset:2px; }
 .shot-viewer-scroll { flex:1; min-height:0; overflow:auto; display:block; background:#0d111a; }
 .shot-viewer-scroll img { display:block; width:100%; max-width:none; max-height:none; height:auto; border-radius:0; box-shadow:none; }
-@media(max-width:650px) { .shot-viewer-bar { flex-wrap:wrap; } .shot-viewer-actions { width:100%; justify-content:space-between; } .shot-viewer-heading span { font-size:10px; } }
+@media(max-width:650px) { .shot-viewer-bar { flex-wrap:wrap; } .shot-viewer-actions { width:100%; justify-content:space-between; } .shot-viewer-heading span { font-size:12px; } }
 
 /* Real-market embedded charts replace the old synthetic candlestick illustrations. */
 .fig-market-chart { overflow:hidden; }
 .fig-market-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 14px; border-bottom:1px solid var(--line); }
-.fig-market-toolbar strong { font-size:14px; letter-spacing:.025em; }
-.fig-market-toolbar span { color:var(--muted); font:11px var(--mono); }
-.fig-market-toolbar a { margin-left:auto; font-size:12px; font-weight:600; text-decoration:underline; text-underline-offset:3px; }
+.fig-market-toolbar strong { font-size:15px; letter-spacing:.025em; }
+.fig-market-toolbar span { color:var(--muted); font:13px var(--mono); }
+.fig-market-toolbar a { margin-left:auto; font-size:14px; font-weight:600; text-decoration:underline; text-underline-offset:3px; }
 .fig-market-frame { display:block; width:100%; height:clamp(350px,48vw,540px); border:0; background:var(--surface); }
 .fig-market-chart figcaption { padding:12px 14px; color:var(--muted); line-height:1.6; }
 @media(max-width:620px) { .fig-market-toolbar a { margin-left:0; width:100%; } .fig-market-frame { height:390px; } }
 
 /* Market explorer: instrument and timeframe controls for all candlestick lessons. */
-.fig-market-toolbar label { display:inline-flex; align-items:center; gap:7px; color:var(--muted); font-size:12px; }
+.fig-market-toolbar label { display:inline-flex; align-items:center; gap:7px; color:var(--muted); font-size:14px; }
 .fig-market-toolbar select { max-width:185px; padding:7px 26px 7px 9px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:var(--surface); font:inherit; cursor:pointer; }
 .fig-market-toolbar select:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
 @media(max-width:620px) { .fig-market-toolbar label { width:100%; justify-content:space-between; } .fig-market-toolbar select { flex:1; max-width:none; } }
 
 /* Persistent, local-only chart-analysis notebook */
 .fig-market-workspace { border-top:1px solid var(--line); }
-.fig-market-notes summary { padding:13px 15px; cursor:pointer; font-size:13px; font-weight:650; }
-.fig-market-notes summary span { color:var(--muted); font-size:11px; font-weight:400; }
+.fig-market-notes summary { padding:13px 15px; cursor:pointer; font-size:14px; font-weight:650; }
+.fig-market-notes summary span { color:var(--muted); font-size:13px; font-weight:400; }
 .fig-market-notes[open] summary { border-bottom:1px solid var(--line); }
-.fig-market-notes label { display:grid; gap:8px; padding:14px 15px 8px; font-size:12px; font-weight:600; }
-.fig-market-note { width:100%; min-height:96px; padding:12px; resize:vertical; border:1px solid var(--line); border-radius:8px; color:var(--ink); background:var(--surface); font:13px/1.6 inherit; }
+.fig-market-notes label { display:grid; gap:8px; padding:14px 15px 8px; font-size:14px; font-weight:600; }
+.fig-market-note { width:100%; min-height:96px; padding:12px; resize:vertical; border:1px solid var(--line); border-radius:8px; color:var(--ink); background:var(--surface); font:14px/1.6 inherit; }
 .fig-market-note:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
 .fig-market-note-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:0 15px 14px; }
-.fig-market-note-status { color:var(--muted); font-size:11px; }
-.fig-market-note-clear { padding:7px 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); font-size:12px; cursor:pointer; }
+.fig-market-note-status { color:var(--muted); font-size:13px; }
+.fig-market-note-clear { padding:7px 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); font-size:14px; cursor:pointer; }
 
 /* Structured curriculum: objectives and end-of-lesson reflection */
 .ac-learning-objectives { margin:24px 0 28px; padding:20px 22px; border:1px solid var(--line); border-left:3px solid var(--brand); border-radius:10px; background:var(--surface-2); }
-.ac-objectives-kicker { color:var(--brand); font:600 10px var(--mono); letter-spacing:.1em; }
+.ac-objectives-kicker { color:var(--brand); font:600 12px var(--mono); letter-spacing:.1em; }
 .ac-learning-objectives h2 { margin:8px 0 12px; font-size:19px; }
 .ac-learning-objectives ul { margin:0; padding-left:20px; display:grid; gap:9px; }
-.ac-learning-objectives li { font-size:14px; line-height:1.6; }
+.ac-learning-objectives li { font-size:15px; line-height:1.6; }
 .ac-lesson-checklist { margin:24px 0; padding:20px; border:1px solid var(--line); border-radius:10px; }
 .ac-lesson-checklist h3 { margin:0 0 12px; font-size:17px; }
-.ac-lesson-checklist label { display:flex; align-items:flex-start; gap:10px; margin:10px 0; font-size:13px; line-height:1.6; cursor:pointer; }
+.ac-lesson-checklist label { display:flex; align-items:flex-start; gap:10px; margin:10px 0; font-size:14px; line-height:1.6; cursor:pointer; }
 .ac-lesson-checklist input { margin-top:4px; accent-color:var(--brand); }
-.ac-lesson-checklist p { margin:12px 0 0; font-size:11px; color:var(--muted); }
+.ac-lesson-checklist p { margin:12px 0 0; font-size:13px; color:var(--muted); }
 
 /* Native TheOnePercent Charts entry point, replacing third-party embeds. */
 .fig-native-chart-content { padding:clamp(20px,4vw,36px); background:var(--surface-2); }
-.fig-native-chart-kicker { color:var(--brand); font:600 11px var(--mono); letter-spacing:.08em; }
+.fig-native-chart-kicker { color:var(--brand); font:600 13px var(--mono); letter-spacing:.08em; }
 .fig-native-chart-content h3 { margin:10px 0; font-size:clamp(19px,2.5vw,25px); }
-.fig-native-chart-content > p { max-width:680px; font-size:14px; line-height:1.7; }
+.fig-native-chart-content > p { max-width:680px; font-size:15px; line-height:1.7; }
 .fig-native-chart-content .btn { display:inline-flex; margin:12px 0; }
-.fig-native-chart-warning { color:var(--muted); font-size:12px!important; }
+.fig-native-chart-warning { color:var(--muted); font-size:14px!important; }
 
 /* Lazy first-party chart workspace embedded within an Academy lesson. */
 .fig-native-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:12px 0; }

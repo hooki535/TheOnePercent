@@ -44,7 +44,7 @@
 .prog-top small,
 .prog-foot {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 14px;
 }
 
 .bar {
@@ -92,7 +92,7 @@
 
 .subtabs a {
   padding: 10px 14px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--muted);
   text-decoration: none;
@@ -145,7 +145,7 @@
 .block-head p {
   margin: 0;
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 15px;
   max-width: 68ch;
 }
 
@@ -164,12 +164,12 @@
 .block-meta small {
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .level {
   display: inline-block;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -205,7 +205,7 @@
   border-left: 2px solid var(--brand);
   background: var(--tint);
   border-radius: 0 var(--r-s) var(--r-s) 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-700);
 }
 
@@ -252,7 +252,7 @@
   display: grid;
   place-items: center;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   border: 1px solid var(--line);
   color: var(--muted);
   background: var(--surface);
@@ -282,13 +282,13 @@
 .row .t {
   display: block;
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: 16px;
 }
 
 .row .s {
   display: block;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 14px;
   margin-top: 2px;
 }
 
@@ -297,7 +297,7 @@
   align-items: center;
   gap: 10px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -317,12 +317,12 @@
 
 .gate b {
   display: block;
-  font-size: 14.5px;
+  font-size: 16px;
 }
 
 .gate small {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 14px;
 }
 
 .gate.passed {
@@ -349,18 +349,18 @@
 }
 
 #next-body .rec b {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 #next-body .rec p {
   margin: 4px 0 8px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .cost {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--down);
 }
 
@@ -381,7 +381,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--muted);
   margin-bottom: 10px;
 }
@@ -430,13 +430,13 @@
 }
 
 .vid b {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .vid small {
   display: block;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 14px;
   margin-top: 3px;
 }
 
@@ -472,7 +472,7 @@
   background: var(--tint);
   padding: 10px 12px;
   border-radius: 0 var(--r-s) var(--r-s) 0;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--ink-700);
   max-width: 68ch;
 }
@@ -511,7 +511,7 @@
   border: 0;
   background: none;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
   padding: 6px 10px;
   border-radius: var(--r-s);
@@ -530,7 +530,7 @@
 }
 
 .ex-body b {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .ex-body ol {
@@ -540,7 +540,7 @@
 
 .ex-body li {
   margin-bottom: 6px;
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
@@ -559,12 +559,12 @@
 
 .apply b {
   display: block;
-  font-size: 14.5px;
+  font-size: 16px;
 }
 
 .apply small {
   color: var(--ink-700);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .lesson-foot {
@@ -597,7 +597,7 @@
 
 .side-card h3 {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
@@ -608,7 +608,7 @@
   min-height: 92px;
   resize: vertical;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--ink);
   background: var(--surface-2);
   border: 1px solid var(--line);
@@ -620,7 +620,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .side-card li {
@@ -635,7 +635,7 @@
 .side-card li b {
   display: block;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .side-card li span {
@@ -659,7 +659,7 @@
   flex-wrap: wrap;
   gap: 8px 16px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   font-family: var(--mono);
   margin-bottom: 18px;
 }
@@ -674,13 +674,13 @@
 
 .q > b {
   display: block;
-  font-size: 15px;
+  font-size: 16px;
   margin-bottom: 10px;
 }
 
 .q .qn {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   display: block;
   margin-bottom: 4px;
@@ -699,7 +699,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-s);
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -723,7 +723,7 @@
 
 .why {
   margin: 10px 0 0;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--ink-700);
   border-left: 2px solid var(--line-strong);
   padding-left: 10px;
@@ -765,7 +765,7 @@
 
 .score p {
   margin: 6px 0 0;
-  font-size: 13.5px;
+  font-size: 15px;
   max-width: 64ch;
 }
 
@@ -785,7 +785,7 @@
 .lib-intro p {
   margin: 0;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .lib-grid {
@@ -806,20 +806,20 @@
 
 .lib .kind {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
 }
 
 .lib b {
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .lib p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   flex: 1 1 auto;
 }
 
@@ -832,7 +832,7 @@
 
 .lib-row .file {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--faint);
 }
 
@@ -856,13 +856,13 @@
 
 .gloss dt {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .gloss dd {
   margin: 2px 0 0;
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
@@ -874,7 +874,7 @@
   max-width: 280px;
   background: var(--invert-bg);
   color: #fff;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.5;
   padding: 8px 10px;
   border-radius: var(--r-s);
@@ -885,7 +885,7 @@
 .tip b {
   display: block;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
   opacity: 0.8;
 }
 

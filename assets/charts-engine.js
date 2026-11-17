@@ -1897,7 +1897,7 @@ class Chart {
     }
 
     /* grid + price axis */
-    c.font = '10px "IBM Plex Mono",monospace';
+    c.font = '12px "IBM Plex Mono",monospace';
     c.textBaseline = "middle";
     c.lineWidth = 1;
     /* One label every ~44px produced seventeen prices down the axis on a
@@ -2306,7 +2306,7 @@ class Chart {
       /* 70 / 50 / 30 are the whole point of an RSI pane, so they get the
          readable text colour; only the middle guide is deliberately quiet. */
       c.fillStyle = css(L.faint ? "--txt3" : "--txt2");
-      c.font = '9px "IBM Plex Mono",monospace';
+      c.font = '12px "IBM Plex Mono",monospace';
       c.textAlign = "left";
       c.textBaseline = "middle";
       c.fillText(L.label, 2, yy(L.v) - 6);
@@ -2364,7 +2364,7 @@ class Chart {
        An RSI bounded 0–100 was printing its floor as "0.0000", borrowing
        five decimals from a currency pair it has nothing to do with. */
     c.fillStyle = css("--txt2");
-    c.font = '9px "IBM Plex Mono",monospace';
+    c.font = '12px "IBM Plex Mono",monospace';
     c.textAlign = "left";
     c.textBaseline = "middle";
     const pdp = paneDp(hi - lo);
@@ -2390,7 +2390,7 @@ class Chart {
       .filter(Boolean)
       .join("  ");
     c.fillStyle = css("--txt2");
-    c.font = '9.5px "IBM Plex Sans",sans-serif';
+    c.font = '12px "IBM Plex Sans",sans-serif';
     c.textBaseline = "top";
     c.fillText(
       STUDIES[s.id].name + "  " + vals + (r.est ? "  · estimated" : ""),
@@ -2428,14 +2428,14 @@ class Chart {
 
     c.save();
     c.fillStyle = css("--acc2");
-    c.font = '9.5px "IBM Plex Sans",sans-serif';
+    c.font = '12px "IBM Plex Sans",sans-serif';
     c.textAlign = "left";
     c.textBaseline = "top";
 
     if (total < 5) {
       c.fillText("Win rate by hour of entry · " + sym, 5, p.y + 4);
       c.fillStyle = css("--txt3");
-      c.font = '10px "IBM Plex Sans",sans-serif';
+      c.font = '12px "IBM Plex Sans",sans-serif';
       c.textBaseline = "middle";
       const msg = total
         ? `Only ${total} logged trade${total === 1 ? "" : "s"} on ${sym}. This fills in as you journal — five is enough for a first read.`
@@ -2455,7 +2455,7 @@ class Chart {
       state.hover && state.hover.slot === this.slot && state.hover.t
         ? new Date(state.hover.t).getHours()
         : null;
-    c.font = '9px "IBM Plex Mono",monospace';
+    c.font = '12px "IBM Plex Mono",monospace';
     c.textAlign = "center";
     hours.forEach((o, i) => {
       const h = o.wr * (p.h - 30),
@@ -2542,7 +2542,7 @@ class Chart {
       c.fillRect(this.plotW - w, y, w, h);
     });
     c.fillStyle = css("--warn");
-    c.font = '9px "IBM Plex Sans",sans-serif';
+    c.font = '12px "IBM Plex Sans",sans-serif';
     c.textAlign = "right";
     c.textBaseline = "middle";
     c.fillText(
@@ -2583,8 +2583,8 @@ class Chart {
     if(L.lastPriceLine!==false)line(b.c,col,L.lastPriceDash||'dot');
     if(L.lastPriceLabel===false)return;
     const cd=L.countdown&&!(window.THEONEPERCENT_CHART_ARCHIVE&&!Feed.isDemoMode())?barCountdown(this.cfg.iv):null,h=cd?26:16;
-    c.fillStyle=col;c.fillRect(pw+1,y-h/2,AX-2,h);c.fillStyle='#fff';c.font='600 10.5px "IBM Plex Mono",monospace';c.textAlign='left';c.textBaseline='middle';c.fillText(fmt(b.c,this.cfg.sym),pw+6,cd?y-5:y);
-    if(cd){c.font='9px "IBM Plex Mono",monospace';c.globalAlpha=.85;c.fillText(cd,pw+6,y+7);c.globalAlpha=1;}
+    c.fillStyle=col;c.fillRect(pw+1,y-h/2,AX-2,h);c.fillStyle='#fff';c.font='600 12px "IBM Plex Mono",monospace';c.textAlign='left';c.textBaseline='middle';c.fillText(fmt(b.c,this.cfg.sym),pw+6,cd?y-5:y);
+    if(cd){c.font='12px "IBM Plex Mono",monospace';c.globalAlpha=.85;c.fillText(cd,pw+6,y+7);c.globalAlpha=1;}
   }
   drawScopedObj(c, o, ghost, sel) {
     if(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(o,this.cfg.iv))return;
@@ -2611,7 +2611,7 @@ class Chart {
         clip.rect(this.plotW, pr.y, this.W - this.plotW, pr.h);
         c.clip(clip);
         c.globalAlpha = ghost ? 0.65 : 1;
-        c.font = '10px "IBM Plex Sans",sans-serif';
+        c.font = '12px "IBM Plex Sans",sans-serif';
         c.textBaseline = "middle";
         const label = fmt(o.pts[0].p, this.cfg.sym);
         const w = c.measureText(label).width + 10;
@@ -2640,7 +2640,7 @@ class Chart {
       st = o.style || {};
     c.strokeStyle = col;
     c.fillStyle = col;
-    c.font = '10px "IBM Plex Sans",sans-serif';
+    c.font = '12px "IBM Plex Sans",sans-serif';
     c.textBaseline = "middle";
     const tag = (x, y, s, bg, fg) => {
       const w = c.measureText(s).width + 10;
@@ -2736,7 +2736,7 @@ class Chart {
         const mins = (bars * IV_MS[this.cfg.iv]) / 6e4;
         const unitMove = SYMBOLS[S].tick > 0 ? `  ${ticks.toFixed(0)} ${SYMBOLS[S].tickName}` : "";
         const s = `${dp >= 0 ? "+" : "−"}${Math.abs(dp).toFixed(SYMBOLS[S].digits)}${unitMove}  ${pct.toFixed(2)}%  ${bars} bars · ${fmtDur(mins)}`;
-        c.font = '10px "IBM Plex Mono",monospace';
+        c.font = '12px "IBM Plex Mono",monospace';
         const w = c.measureText(s).width + 12,
           mx = (P[0].x + P[1].x) / 2,
           my = (P[0].y + P[1].y) / 2;
@@ -2775,7 +2775,7 @@ class Chart {
       c.globalAlpha = 1;
       c.strokeStyle = col;
       c.strokeRect(P[0].x, P[0].y, P[1].x - P[0].x, P[1].y - P[0].y);
-      c.font = '10px "IBM Plex Mono",monospace';
+      c.font = '12px "IBM Plex Mono",monospace';
       const unitMove = SYMBOLS[S].tick > 0 ? ` · ${ticks.toFixed(0)} ${SYMBOLS[S].tickName}` : "";
       tag(
         Math.min(P[0].x, P[1].x),
@@ -2826,7 +2826,7 @@ class Chart {
         c.globalAlpha = 1;
         c.fillStyle = css("--txt2");
         c.textAlign = "right";
-        c.font = '9.5px "IBM Plex Mono",monospace';
+        c.font = '12px "IBM Plex Mono",monospace';
         c.fillText(
           (st.showLevels!==false?String(l):"")+(st.showPrices!==false?"  "+fmt(p,S):""),
           x2 - 4,
@@ -2920,7 +2920,7 @@ class Chart {
     c.fillRect(xs, Math.min(ye, ys), xe - xs, Math.abs(ys - ye));
     c.globalAlpha=1;
     c.lineWidth = P.style?.width||1.5;
-    c.font = '10px "IBM Plex Sans",sans-serif';
+    c.font = '12px "IBM Plex Sans",sans-serif';
     c.textBaseline = "middle";
     const tight = this.W < 560;
     const rows = tight
@@ -2995,7 +2995,7 @@ class Chart {
   tradeLayer(c, d, i0, i1) {
     const trades = state.journal.filter((j) => j.sym === this.cfg.sym);
     c.save();
-    c.font = '9.5px "IBM Plex Mono",monospace';
+    c.font = '12px "IBM Plex Mono",monospace';
     c.textBaseline = "middle";
     trades.forEach((j) => {
       const iEntry = d.length - 1 + j.bar;
@@ -3064,7 +3064,7 @@ class Chart {
         c.stroke();
         c.setLineDash([]);
         c.fillStyle = a.fired ? css("--txt3") : css("--warn");
-        c.font = '9px "IBM Plex Sans",sans-serif';
+        c.font = '12px "IBM Plex Sans",sans-serif';
         c.textAlign = "left";
         c.textBaseline = "middle";
         c.fillText(
@@ -3129,7 +3129,7 @@ class Chart {
         c.fillStyle = css("--surf2");
         c.fillRect(this.plotW + 1, h.y - 8, AX - 2, 16);
         c.fillStyle = css("--txt");
-        c.font = '10px "IBM Plex Mono",monospace';
+        c.font = '12px "IBM Plex Mono",monospace';
         c.textAlign = "left";
         c.textBaseline = "middle";
         c.fillText(
@@ -3143,7 +3143,7 @@ class Chart {
     }
     if (h.t) {
       c.setLineDash([]);
-      c.font = '9.5px "IBM Plex Mono",monospace';
+      c.font = '12px "IBM Plex Mono",monospace';
       const s = clock(h.t),
         w = c.measureText(s).width + 16;
       c.fillStyle = css("--surf2");
