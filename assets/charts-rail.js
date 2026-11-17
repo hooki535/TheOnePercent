@@ -668,14 +668,15 @@ function wireRail() {
     };
   });
 
+  const objects=c=>c.drw.concat(typeof PositionPlans!=='undefined'?PositionPlans.forChart(c.key):[]);
   const each = (fn) => {
     const c = charts[state.sel];
-    if (!c.drw.length) {
+    if (!objects(c).length) {
       toast("No drawings on this chart");
       return null;
     }
     pushUndo();
-    c.drw.forEach(fn);
+    objects(c).forEach(fn);
     paintObjects();
     draw();
     return c;
@@ -684,8 +685,8 @@ function wireRail() {
   if (lock)
     lock.onclick = () => {
       const c = charts[state.sel];
-      if (!c.drw.length) return toast("No drawings on this chart");
-      const anyOpen = c.drw.some((o) => !o.locked);
+      if (!objects(c).length) return toast("No drawings on this chart");
+      const anyOpen = objects(c).some((o) => !o.locked);
       each((o) => {
         o.locked = anyOpen;
       });
@@ -700,8 +701,8 @@ function wireRail() {
   if (hide)
     hide.onclick = () => {
       const c = charts[state.sel];
-      if (!c.drw.length) return toast("No drawings on this chart");
-      const anyShown = c.drw.some((o) => !o.hidden);
+      if (!objects(c).length) return toast("No drawings on this chart");
+      const anyShown = objects(c).some((o) => !o.hidden);
       each((o) => {
         o.hidden = anyShown;
       });
@@ -714,9 +715,10 @@ function wireRail() {
   if (cl)
     cl.onclick = () => {
       const c = charts[state.sel];
-      if (!c.drw.length) return toast("No drawings on this chart");
+      if (!objects(c).length) return toast("No drawings on this chart");
       pushUndo();
       state.drawings[c.key] = [];
+      if(typeof PositionPlans!=='undefined'){PositionPlans.forChart(c.key).slice().forEach(p=>PositionPlans.remove(p.id));recalc();}
       state.selObj = null;
       paintObjects();
       draw();

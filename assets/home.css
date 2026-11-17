@@ -36,3 +36,5 @@ html[data-theme=dark] .author-mark img{filter:brightness(0) invert(1)}
 @media(prefers-reduced-motion:reduce){.icon-button{transition:none}}
 
 .utility-rail .active[aria-pressed=false]{background:transparent;color:var(--fg)}
+
+.footer-community{border-top:1px solid var(--line);padding:24px 0}.footer-community h4{font-size:13px;margin:0 0 14px}.footer-social{display:flex;flex-wrap:wrap;gap:10px}.footer-social a{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:12px;color:var(--fg)}.footer-social a:hover{color:var(--blue);background:var(--soft)}.footer-social svg{width:18px;height:18px}.footer-social a:focus-visible{outline:2px solid var(--blue);outline-offset:3px}

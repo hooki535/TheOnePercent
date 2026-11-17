@@ -1292,11 +1292,7 @@ class Chart {
           }
         }),
       );
-    if (state.look.showPositions !== false && state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv)))
-      [state.pos.entry, state.pos.stop, state.pos.target].forEach((p) => {
-        lo = Math.min(lo, p);
-        hi = Math.max(hi, p);
-      });
+    if(state.look.showPositions!==false)(typeof PositionPlans!=='undefined'?PositionPlans.forChart(this.key):[state.pos].filter(Boolean)).filter(P=>P.key===this.key&&!P.hidden&&(typeof DrawingProperties==='undefined'||DrawingProperties.visible(P,this.cfg.iv))).forEach(P=>[P.entry,P.stop,P.target].forEach(p=>{lo=Math.min(lo,p);hi=Math.max(hi,p);}));
     let tlo = this.tp(lo),
       thi = this.tp(hi);
     const pad = (thi - tlo) * 0.09 || Math.abs(tlo * 0.01) || 1;
@@ -1391,9 +1387,10 @@ class Chart {
       if (state.tool === "cursor" || e.button===1) {
         const position=e.button===1?null:this.positionHit(p,true);
         if(position){
-          state.posSelected=true;state.selObj=null;paintObjects();
+          if(typeof PositionPlans!=='undefined')PositionPlans.select(position.position.id);
+          state.posSelected=true;state.selObj=null;recalc();syncInputs();paintObjects();
           this.sc.range=this.capturePriceRange();this.sc.auto=false;
-          if(!state.pos.locked){this.drag={mode:'position',k:position.k,snapshot:{...JSON.parse(JSON.stringify(state.pos)),startBar:Number.isFinite(state.pos.startBar)?state.pos.startBar:this.ix(this.positionBounds(state.pos).left),endBar:Number.isFinite(state.pos.endBar)?state.pos.endBar:this.ix(this.positionBounds(state.pos).right)},start:{i:this.ix(p.x),price:this.py(p.y),x:p.x,y:p.y},scale:{tLo:this.tLo,tHi:this.tHi,lo:this.lo,hi:this.hi,base:this.base}};}
+          if(!state.pos.locked){this.drag={mode:'position',positionId:state.pos.id,k:position.k,snapshot:{...JSON.parse(JSON.stringify(state.pos)),startBar:Number.isFinite(state.pos.startBar)?state.pos.startBar:this.ix(this.positionBounds(state.pos).left),endBar:Number.isFinite(state.pos.endBar)?state.pos.endBar:this.ix(this.positionBounds(state.pos).right)},start:{i:this.ix(p.x),price:this.py(p.y),x:p.x,y:p.y},scale:{tLo:this.tLo,tHi:this.tHi,lo:this.lo,hi:this.hi,base:this.base}};}
           draw();return;
         }
         state.posSelected=false;
@@ -1433,6 +1430,8 @@ class Chart {
         return;
       }
       if (state.tool === "eraser") {
+        const position=this.positionHit(p);
+        if(position&&typeof PositionPlans!=='undefined'){pushUndo();PositionPlans.remove(position.position.id);recalc();paintObjects();draw();return;}
         const i = this.nearest(p);
         if (i >= 0) {
           pushUndo();
@@ -1473,7 +1472,7 @@ class Chart {
             setTimeout(() => editDrawing(this, o), 0);
         }
         this.drw.push(o);
-        state.selObj = o.id;
+        state.posSelected=false;state.selObj = o.id;
         if (typeof keepToolAfterPlacement !== "function" || !keepToolAfterPlacement(state.tool)) setTool("cursor");
         paintObjects();
         draw();
@@ -1532,10 +1531,11 @@ class Chart {
           if (this.pending.pts.length > 2)
             this.pending.pts[2] = { i: q.i, p: q.p };
         } else if (D.mode === "position") {
-          if(!state.pos || state.pos.locked)return;
+          const selected=typeof PositionPlans!=='undefined'?PositionPlans.find(D.positionId):state.pos;
+          if(!selected || selected.locked)return;
           if(!D.undoPushed && Math.hypot(p.x-D.start.x,p.y-D.start.y)<3)return;
-          const next=adjustedPosition(D.snapshot,D.k,{deltaPrice:this.py(p.y)-D.start.price,deltaBar:this.ix(p.x)-D.start.i,price:this.py(p.y),bar:this.ix(p.x)},SYMBOLS[state.pos.sym]?.tick);
-          if(next){if(!D.undoPushed){pushUndo();D.undoPushed=true;}Object.assign(state.pos,next);recalc();syncInputs();}
+          const next=adjustedPosition(D.snapshot,D.k,{deltaPrice:this.py(p.y)-D.start.price,deltaBar:this.ix(p.x)-D.start.i,price:this.py(p.y),bar:this.ix(p.x)},SYMBOLS[selected.sym]?.tick);
+          if(next){if(!D.undoPushed){pushUndo();D.undoPushed=true;}Object.assign(selected,next);recalc();syncInputs();}
         } else if (D.mode === "handle") {
           const q = this.ptSnap(p),
             h = D.h;
@@ -1581,7 +1581,7 @@ class Chart {
         if (o.pts.length > 2) {
           pushUndo();
           this.drw.push(o);
-          state.selObj = o.id;
+          state.posSelected=false;state.selObj = o.id;
           paintObjects();
           toast(
             DRAW[o.t].name + " drawn",
@@ -1612,7 +1612,7 @@ class Chart {
             );
           } else {
             this.drw.push(o);
-            state.selObj = o.id;
+            state.posSelected=false;state.selObj = o.id;
             paintObjects();
             toast(
               DRAW[o.t].name + " drawn",
@@ -1626,6 +1626,7 @@ class Chart {
         this.pending = null;
       }
       if (D) {
+        if(D.mode==="position")paintObjects();
         this.drag = null;
         this.el.style.cursor = "crosshair";
         draw();
@@ -1669,6 +1670,8 @@ class Chart {
     el.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       const p = this.pt(e);
+      const position=this.positionHit(p,true);
+      if(position&&typeof PositionPlans!=='undefined'){PositionPlans.select(position.position.id);openPositionCtx(e.clientX,e.clientY,this,position.position);paintObjects();draw();return;}
       const i = this.nearest(p);
       openCtx(
         e.clientX,
@@ -1688,11 +1691,11 @@ class Chart {
         return;
       }
       const positionHit = this.positionHit(p,true);
-      if(positionHit && typeof editPositionSettings === "function"){editPositionSettings(this);return;}
+      if(positionHit && typeof editPositionSettings === "function"){if(typeof PositionPlans!=="undefined")PositionPlans.select(positionHit.position.id);editPositionSettings(this,positionHit.position);draw();return;}
       const i = this.nearest(p);
       if (i >= 0) {
         /* double-click a drawing opens its settings */
-        state.selObj = this.drw[i].id;
+        state.posSelected=false;state.selObj = this.drw[i].id;
         paintObjects();
         if (typeof editDrawing === "function") {
           editDrawing(this, this.drw[i]);
@@ -2036,16 +2039,9 @@ class Chart {
       if (!o.hidden) this.drawScopedObj(c, o, false, o.id === state.selObj);
     });
     if (this.pending) this.drawScopedObj(c, this.pending, true);
-    if (state.look.showPositions !== false && state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv))) {
-      c.save();
-      try {
-        const clip = new Path2D();
-        clip.rect(0, pr.y, pw, pr.h);
-        c.clip(clip);
-        this.posTool(c);
-      } finally {
-        c.restore();
-      }
+    if(state.look.showPositions!==false){
+      const plans=(typeof PositionPlans!=='undefined'?PositionPlans.forChart(this.key):[state.pos].filter(Boolean)).slice().sort((a,b)=>Number(a===state.pos)-Number(b===state.pos));
+      for(const P of plans){if(P.hidden||(typeof DrawingProperties!=='undefined'&&!DrawingProperties.visible(P,this.cfg.iv)))continue;c.save();try{const clip=new Path2D();clip.rect(0,pr.y,pw,pr.h);c.clip(clip);this.posTool(c,P,this.slot===state.sel&&state.posSelected&&P===state.pos);}finally{c.restore();}}
     }
     this.alertLines(c, pw);
 
@@ -2890,23 +2886,25 @@ class Chart {
     c.restore();
   }
   positionHit(p,includeLocked=false){
-    const P=state.pos;
-    if(state.look.showPositions===false||!P||P.key!==this.key||P.hidden||(!includeLocked&&P.locked)||!this.inPricePlot(p)||(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(P,this.cfg.iv)))return null;
-    const {left,right}=this.positionBounds(P),entry=this.y(P.entry),stop=this.y(P.stop),target=this.y(P.target),inside=p.x>=left-7&&p.x<=right+7;
-    if(!inside)return null;
-    if(state.posSelected&&!P.locked&&Math.abs(p.y-entry)<8){if(Math.abs(p.x-right)<8)return {k:'endBar'};if(Math.abs(p.x-left)<8)return {k:'entryPrice'};}
-    if(Math.abs(p.y-stop)<7)return {k:'stop'};
-    if(Math.abs(p.y-target)<7)return {k:'target'};
-    if(p.y>=Math.min(stop,target)&&p.y<=Math.max(stop,target))return {k:'move'};
-    return null;
+    if(state.look.showPositions===false||!this.inPricePlot(p))return null;
+    const plans=(typeof PositionPlans!=='undefined'?PositionPlans.forChart(this.key):[state.pos].filter(Boolean)).slice().sort((a,b)=>Number(b===state.pos)-Number(a===state.pos));
+    // Selected drawing renders above others; otherwise newest wins overlapping hits.
+    const selected=plans.filter(P=>P===state.pos),other=plans.filter(P=>P!==state.pos).reverse();
+    for(const P of [...selected,...other]){
+      if(P.key!==this.key||P.hidden||(!includeLocked&&P.locked)||(typeof DrawingProperties!=='undefined'&&!DrawingProperties.visible(P,this.cfg.iv)))continue;
+      const {left,right}=this.positionBounds(P),entry=this.y(P.entry),stop=this.y(P.stop),target=this.y(P.target);if(p.x<left-7||p.x>right+7)continue;
+      let k=null;
+      if(state.posSelected&&P===state.pos&&!P.locked&&Math.abs(p.y-entry)<8){if(Math.abs(p.x-right)<8)k='endBar';else if(Math.abs(p.x-left)<8)k='entryPrice';}
+      if(!k&&Math.abs(p.y-stop)<7)k='stop';if(!k&&Math.abs(p.y-target)<7)k='target';if(!k&&p.y>=Math.min(stop,target)&&p.y<=Math.max(stop,target))k='move';
+      if(k)return {k,position:P};
+    }return null;
   }
   positionBounds(P){
     if(Number.isFinite(P.startBar)&&Number.isFinite(P.endBar)){const a=this.x(P.startBar),b=this.x(P.endBar);return {left:Math.min(a,b),right:Math.max(a,b)};}
     return {left:Math.max(20,this.plotW*.42),right:this.plotW};
   }
-  posTool(c) {
-    const P = state.pos,
-      S = SYMBOLS[this.cfg.sym],
+  posTool(c,P=state.pos,selected=state.posSelected) {
+    const S = SYMBOLS[this.cfg.sym],
       pw = this.plotW;
     const bounds=this.positionBounds(P),xs=bounds.left,xe=bounds.right,
       ye = this.y(P.entry),
@@ -2969,7 +2967,7 @@ class Chart {
       c.moveTo(xs, y);
       c.lineTo(xe, y);
       c.stroke();
-      if(P.style?.showLabels===false)return;
+      if(P.style?.showLabels===false||selected===false)return;
       const w = c.measureText(label).width + 10;
       c.setLineDash([]);
       c.fillStyle = col;
@@ -2978,7 +2976,7 @@ class Chart {
       c.textAlign = "left";
       c.fillText(label, xe - w + 3, y);
     });
-    if(state.posSelected && !P.locked){
+    if(selected && !P.locked){
       c.setLineDash([]);c.lineWidth=1.5;c.strokeStyle=css('--acc');c.fillStyle=css('--bg');
       [[xe,ye],[xs,ys],[xs,yt]].forEach(([x,y])=>{c.fillRect(x-3.5,y-3.5,7,7);c.strokeRect(x-3.5,y-3.5,7,7);});
       c.beginPath();c.arc(xs,ye,4.5,0,Math.PI*2);c.fill();c.stroke();
