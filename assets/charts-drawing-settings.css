@@ -46,3 +46,16 @@ body[data-page="charts"] #drawModal { backdrop-filter:none;background:rgb(0 0 0 
 @media(max-width:520px){.dp-content{padding:14px;}.dp-levels{gap:10px;}.dp-tabs{gap:17px;padding-inline:14px;}.dp-tabs button{font-size:12px;}#drawModal .dp-level input[type=number]{width:52px;}.dp-row{gap:8px;}#drawModal .sheet-h{padding:18px 14px 8px;}}
 body[data-page="charts"] #drawModal .dp-tabs button { font-size:14px;line-height:20px;font-weight:600; }
 body[data-page="charts"] #drawModal .dp-content { font-size:13px; }
+
+/* Position properties follow the compact, scrollable video reference. */
+body[data-page="charts"] #drawModal.dp-position { background:rgb(0 0 0 / 8%); }
+#drawModal.dp-position .sheet { width:440px; }
+#drawModal.dp-position .dp-content { max-height:58dvh; }
+#drawModal.dp-position .dp-row { min-height:49px; }
+#drawModal.dp-position input[type=number] { width:112px; }
+#drawModal.dp-position .dp-row>div { min-width:165px;justify-content:flex-start; }
+.dp-unit { color:var(--term-muted);font-size:12px;min-width:35px; }
+.dp-position-level { border:0;border-top:1px solid var(--term-line);padding:12px 0 2px;margin:22px 0 12px;min-width:0; }
+.dp-position-level legend { text-transform:uppercase;font-size:10px;letter-spacing:.06em;color:var(--term-muted);padding:0 10px 0 0; }
+#drawModal :is(input,button,select):focus-visible { outline:2px solid var(--term-accent,#2962ff);outline-offset:2px; }
+@media(max-width:480px){#drawModal.dp-position .dp-row>div{min-width:145px;}#drawModal.dp-position input[type=number]{width:95px;}#drawModal.dp-position .sheet-f{padding:12px;gap:6px;}}

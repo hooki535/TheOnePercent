@@ -29,6 +29,37 @@ const DrawingProperties = (() => {
   function template(o) { const x={style:clone(o.style||{})};if(o.levelStyles)x.levelStyles=clone(o.levelStyles);if(o.visibility)x.visibility=clone(o.visibility);return x; }
   return {clone,profile,levels,visible,validate,template};
 })();
+/* Pure helpers keep price/tick fields and the sizing preview in agreement. */
+const PositionProperties = (() => {
+  function tickSize(S) {
+    const exact=Number(S?.catalogRecord?.price_tick);
+    return exact>0?exact:S?.instrument?.market==='Forex'&&Number.isInteger(S.digits)?10**(-S.digits):S?.tick;
+  }
+  function price(o,kind,ticks,tick) {
+    if(!Number.isFinite(ticks)||ticks<=0||!(tick>0))return NaN;
+    const sign=o.t==='shortpos'?-1:1;
+    return o.position.entry+(kind==='stop'?-sign:sign)*ticks*tick;
+  }
+  function validate(o) {
+    const p=o.position,a=o.account;
+    if(![p.entry,p.stop,p.target,p.startBar,p.endBar].every(Number.isFinite)||p.endBar<=p.startBar||
+      (o.t==='shortpos'?!(p.stop>p.entry&&p.target<p.entry):!(p.stop<p.entry&&p.target>p.entry)))return 'Keep stop and target on opposite sides of entry and use a positive chart width.';
+    if(!Number.isFinite(a.balance)||a.balance<=0||!Number.isFinite(a.pct)||a.pct<=0||a.pct>100)return 'Account size must be positive and risk must be greater than 0 and at most 100%.';
+    if(!Number.isFinite(p.leverage)||p.leverage<1||p.leverage>10000)return 'Planning leverage must be between 1 and 10,000.';
+    return '';
+  }
+  function preview(o,S,currency) {
+    const p=o.position,a=o.account;
+    if(!S?.instrument||validate(o))return null;
+    const ideal=Instruments.positionSize({instrument:S.instrument,entry:p.entry,stop:p.stop,riskMoney:a.balance*a.pct/100,accountCurrency:currency});
+    if(!ideal||!(ideal.units>0))return null;
+    const perSize=S.unit==='lots'?S.instrument.contract:1;
+    const size=Math.max(S.step,Math.round(ideal.units/perSize/S.step)*S.step);
+    const units=size*perSize,margin=Math.abs(units*p.entry*S.instrument.unitValue*ideal.fx/p.leverage);
+    return Number.isFinite(size)&&Number.isFinite(margin)?{size,margin}:null;
+  }
+  return {tickSize,price,validate,preview};
+})();
 let drawingSession=null;
 function editDrawing(chart,obj) {
   drawingSession={chart,original:obj,draft:DrawingProperties.clone(obj),tab:'Style',applyAll:false,saveDefault:false};
@@ -39,28 +70,37 @@ function editDrawing(chart,obj) {
 function editPositionSettings(chart) {
   if(!state.pos||state.pos.key!==chart.key)return;
   const p=state.pos;
-  const o={id:'position-planner',t:p.entry>p.stop?'position':'shortpos',pts:[{i:0,p:p.entry}],style:p.style||{},visibility:p.visibility,hidden:p.hidden,locked:p.locked,position:{entry:p.entry,stop:p.stop,target:p.target,startBar:Number.isFinite(p.startBar)?p.startBar:Math.round(chart.ix(chart.plotW*.42)),endBar:Number.isFinite(p.endBar)?p.endBar:Math.round(chart.ix(chart.plotW-12))}};
-  editDrawing(chart,o);drawingSession.position=true;drawingSession.tab='Inputs';paintDrawingProperties();
+  const o={id:'position-planner',t:p.entry>p.stop?'position':'shortpos',pts:[{i:0,p:p.entry}],style:p.style||{},visibility:p.visibility,hidden:p.hidden,locked:p.locked,position:{entry:p.entry,stop:p.stop,target:p.target,leverage:p.leverage||100,startBar:Number.isFinite(p.startBar)?p.startBar:Math.round(chart.ix(chart.plotW*.42)),endBar:Number.isFinite(p.endBar)?p.endBar:Math.round(chart.ix(chart.plotW-12))}};
+  editDrawing(chart,o);drawingSession.position=true;drawingSession.draft.account={balance:state.risk.balance,pct:state.risk.pct};drawingSession.tab='Inputs';paintDrawingProperties();
 }
 function paintDrawingProperties() {
   const session=drawingSession;if(!session)return;
   const o=session.draft,st=o.style,p=DrawingProperties.profile(o.t),modal=document.getElementById('drawModal');
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const check=(key,label,value,scope='style')=>`<label class="dp-check"><input type="checkbox" data-scope="${scope}" data-key="${key}" ${value?'checked':''}>${label}</label>`;
-  const number=(scope,key,v,min,max,step='any')=>`<input type="number" data-scope="${scope}" data-key="${key}" value="${v}" ${min!=null?`min="${min}"`:''} ${max!=null?`max="${max}"`:''} step="${step}" aria-label="${esc(key)}">`;
+  const number=(scope,key,v,min,max,step='any')=>`<input type="number" data-scope="${scope}" data-key="${key}" value="${scope==='position'&&['entry','stop','target'].includes(key)&&Number.isFinite(v)?Number(v.toFixed(SYMBOLS[session.chart.cfg.sym].digits)):v}" ${min!=null?`min="${min}"`:''} ${max!=null?`max="${max}"`:''} step="${step}" aria-label="${esc(key)}">`;
   const select=(key,values,value)=>`<select data-scope="style" data-key="${key}" aria-label="${key}">${values.map(([v,l])=>`<option value="${v}" ${v===value?'selected':''}>${l}</option>`).join('')}</select>`;
   const color=(key,v)=>`<input type="color" data-scope="style" data-key="${key}" value="${/^#[0-9a-f]{6}$/i.test(v)?v:'#787b86'}" aria-label="${key}">`;
   const row=(label,controls)=>`<div class="dp-row"><span>${label}</span><div>${controls}</div></div>`;
+  modal.classList.toggle('dp-position',!!session.position);
   const name=p.position?(o.t==='shortpos'?'Short position':'Long position'):(DRAW[o.t]?.name||o.t);
   modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','drawingTitle');
   modal.querySelector('.sheet-h').innerHTML=`<b id="drawingTitle">${esc(name)}</b><button type="button" class="x" data-dp-cancel aria-label="Close drawing settings">✕</button>`;
   const tabs=[...(p.position?['Inputs']:[]),'Style',...(p.text?['Text']:[]),...(!p.position?['Coordinates']:[]),'Visibility'];
   let body='';
   if(session.tab==='Inputs'&&p.position){
-    body=['entry','stop','target'].map(k=>row(k[0].toUpperCase()+k.slice(1)+' price',number('position',k,o.position[k]))).join('');
-    const risk=Math.abs(o.position.entry-o.position.stop),reward=Math.abs(o.position.target-o.position.entry);
-    body+=row('Start bar',number('position','startBar',o.position.startBar))+row('End bar',number('position','endBar',o.position.endBar));
-    body+=row('Price risk / reward (gross)',`<output>${risk?(reward/risk).toFixed(2)+' R':'Set a valid stop'}</output>`)+`<p class="dp-help">Position size uses your existing balance, instrument specifications and risk rule.</p>`;
+    const P=o.position,S=SYMBOLS[session.chart.cfg.sym],tick=PositionProperties.tickSize(S);
+    const level=(kind,label)=>`<fieldset class="dp-position-level"><legend>${label}</legend>${row('Ticks',`<input type="number" data-position-ticks="${kind}" step="any" min="0" value="${Math.abs(P[kind]-P.entry)/tick}" aria-label="${label} ticks">`)}${row('Price',number('position',kind,P[kind]))}</fieldset>`;
+    body=row('Account size',number('account','balance',o.account.balance,0)+`<span class="dp-unit">${esc(state.risk.currency)}</span>`)+
+      row('Calculated size',`<output data-position-size>—</output><span class="dp-unit">${esc(S.unit)}</span>`)+
+      row('Risk',number('account','pct',o.account.pct,0,100)+`<span class="dp-unit">%</span>`)+
+      row('Entry price',number('position','entry',P.entry))+
+      row('Planning leverage',number('position','leverage',P.leverage,1,10000))+
+      `<p class="dp-help">Account size and risk use the shared account settings. Changes save only with OK. Leverage is for the margin estimate below, not a broker setting.</p>`+
+      level('target','Profit level')+level('stop','Stop level')+
+      row('Risk / reward (gross)',`<output data-position-ratio>—</output>`)+
+      row('Estimated margin',`<output data-position-margin>—</output>`)+
+      `<p class="dp-help">Uses existing instrument specifications and available currency conversions; margin excludes broker-specific rules. Chart width is adjusted on the drawing.</p>`;
   }else if(session.tab==='Style'){
     body+=row(p.position?'Entry line':'Line',color('color',st.color)+select('dash',[['solid','━━━━'],['dash','┄┄┄┄'],['dot','········']],st.dash)+number('style','width',st.width,1,5,.5));
     if(p.fill)body+=row('Background opacity',number('style','fill',st.fill,0,100,1)+'<span>%</span>');
@@ -95,13 +135,32 @@ function paintDrawingProperties() {
   modal.querySelector('.sheet-f').innerHTML=`<details class="dp-template"><summary class="btn sm">Template⌄</summary><div><label>Template name<input id="drawingTemplateName" placeholder="My setup" maxlength="60"></label><button type="button" data-template-save>Save template</button><button type="button" data-default>Set as default</button><button type="button" data-apply-all>Apply style to this type${session.applyAll?' ✓':''}</button>${Object.keys(templates).map((t,i)=>`<button type="button" data-template-load="${i}">${esc(t)}</button>`).join('')}</div></details><span class="dp-foot-status">${session.saveDefault?'Default queued':''}${session.applyAll?' · Apply to this type':''}</span><button type="button" class="btn" data-dp-cancel>Cancel</button><button type="button" class="btn primary" data-dp-ok>OK</button>`;
   const error=message=>document.getElementById('drawingError').textContent=message;
   modal.querySelectorAll('[data-dp-cancel]').forEach(b=>b.onclick=()=>hide(modal));
-  modal.querySelectorAll('[data-dp-tab]').forEach(b=>b.onclick=()=>{session.tab=b.dataset.dpTab;paintDrawingProperties();});
+  modal.querySelectorAll('[data-dp-tab]').forEach(b=>{b.tabIndex=session.tab===b.dataset.dpTab?0:-1;b.onclick=()=>{session.tab=b.dataset.dpTab;paintDrawingProperties();modal.querySelector('[aria-selected="true"]').focus();};b.onkeydown=e=>{const list=[...modal.querySelectorAll('[data-dp-tab]')],i=list.indexOf(b);let n;if(e.key==='ArrowRight')n=(i+1)%list.length;if(e.key==='ArrowLeft')n=(i+list.length-1)%list.length;if(e.key==='Home')n=0;if(e.key==='End')n=list.length-1;if(n!=null){e.preventDefault();list[n].click();}};});
   modal.querySelectorAll('[data-scope]').forEach(el=>el.onchange=()=>{
     const {scope,key}=el.dataset,value=el.type==='checkbox'?el.checked:el.type==='number'?el.valueAsNumber:el.value;
     if(scope==='style'&&key==='extension'){st.extendL=['left','both'].includes(value);st.extendR=['right','both'].includes(value);}
-    else (scope==='style'?st:scope==='position'?o.position:o)[key]=value;
-    if(scope==='position'){const risk=Math.abs(o.position.entry-o.position.stop),reward=Math.abs(o.position.target-o.position.entry);const output=modal.querySelector('output');if(output)output.textContent=risk?(reward/risk).toFixed(2)+' R':'Set a valid stop';}
+    else (scope==='style'?st:scope==='position'?o.position:scope==='account'?o.account:o)[key]=value;
+    if(session.position)refreshPositionPreview();
   });
+  function refreshPositionPreview(sourceKind) {
+    if(!session.position)return;
+    const P=o.position,S=SYMBOLS[session.chart.cfg.sym];
+    ['stop','target'].forEach(kind=>{
+      const ticks=modal.querySelector(`[data-position-ticks="${kind}"]`);
+      const price=modal.querySelector(`[data-scope="position"][data-key="${kind}"]`);
+      if(ticks&&sourceKind!==kind&&document.activeElement!==ticks)ticks.value=Number.isFinite(P[kind])?+(Math.abs(P[kind]-P.entry)/PositionProperties.tickSize(S)).toFixed(6):'';
+      if(price&&document.activeElement!==price)price.value=Number.isFinite(P[kind])?Number(P[kind].toFixed(S.digits)):'';
+    });
+    const size=PositionProperties.preview(o,S,state.risk.currency),risk=Math.abs(P.entry-P.stop),ratio=Math.abs(P.target-P.entry)/risk;
+    const set=(sel,value)=>{const el=modal.querySelector(sel);if(el)el.textContent=value;};
+    set('[data-position-size]',size?Number(size.size.toFixed(6)):'Unavailable');
+    set('[data-position-ratio]',Number.isFinite(ratio)?ratio.toFixed(2)+' R':'—');
+    set('[data-position-margin]',size?size.margin.toFixed(2)+' '+state.risk.currency:'Unavailable');
+  }
+  modal.querySelectorAll('[data-position-ticks]').forEach(el=>el.oninput=()=>{
+    const kind=el.dataset.positionTicks;o.position[kind]=PositionProperties.price(o,kind,el.valueAsNumber,PositionProperties.tickSize(SYMBOLS[session.chart.cfg.sym]));refreshPositionPreview(kind);
+  });
+  refreshPositionPreview();
   modal.querySelectorAll('[data-level]').forEach(el=>el.onchange=()=>{o.levelStyles[+el.dataset.level][el.dataset.field]=el.type==='checkbox'?el.checked:el.type==='number'?el.valueAsNumber:el.value;});
   modal.querySelectorAll('[data-level-remove]').forEach(b=>b.onclick=()=>{o.levelStyles.splice(+b.dataset.levelRemove,1);paintDrawingProperties();});
   modal.querySelector('[data-add-level]')?.addEventListener('click',()=>{if(o.levelStyles.length>=30)return error('Maximum 30 levels.');o.levelStyles.push({value:1,enabled:true,color:st.color});paintDrawingProperties();});
@@ -123,9 +182,16 @@ function paintDrawingProperties() {
     modal.querySelectorAll('[data-scope],[data-level],[data-point],[data-vis]').forEach(el=>{if(el.dataset.field!=='time'&&!el.disabled)el.onchange?.();});
     const invalid=DrawingProperties.validate(o);if(invalid)return error(invalid);
     if(!Number.isFinite(st.width)||st.width<1||st.width>5||!Number.isFinite(st.fill)||st.fill<0||st.fill>100||!Number.isFinite(st.font)||st.font<9||st.font>32)return error('Check line width, opacity and font size ranges.');
-    if(session.position){const {entry,stop,target}=o.position;if(![entry,stop,target,o.position.startBar,o.position.endBar].every(Number.isFinite)||o.position.endBar<=o.position.startBar||entry===stop||(o.t==='position'?!(stop<entry&&target>entry):!(stop>entry&&target<entry)))return error('Stop and target must be on opposite sides of entry for this position direction.');}
+    if(session.position){
+      const invalid=PositionProperties.validate(o);if(invalid)return error(invalid);
+      // Persist shared edits before applying geometry; Cancel never writes.
+      if(o.account.balance!==state.risk.balance||o.account.pct!==state.risk.pct){
+        try{Store.settings.patch({balance:o.account.balance,riskPct:o.account.pct});}
+        catch(e){return error('Could not save account settings. Please retry.');}
+      }
+    }
     pushUndo();
-    if(session.position){state.risk.side=o.t==='shortpos'?'short':'long';Object.assign(state.pos,o.position,{side:o.t==='shortpos'?'short':'long',style:DrawingProperties.clone(st),visibility:DrawingProperties.clone(o.visibility||{}),hidden:o.hidden,locked:o.locked});recalc();syncInputs();}
+    if(session.position){state.risk.balance=o.account.balance;state.risk.pct=o.account.pct;state.risk.side=o.t==='shortpos'?'short':'long';Object.assign(state.pos,o.position,{side:o.t==='shortpos'?'short':'long',style:DrawingProperties.clone(st),visibility:DrawingProperties.clone(o.visibility||{}),hidden:o.hidden,locked:o.locked});recalc();syncInputs();}
     else {Object.assign(session.original,DrawingProperties.clone(o));if(session.applyAll)session.chart.drw.filter(x=>x.t===o.t).forEach(x=>Object.assign(x,DrawingProperties.template(o)));}
     const settings=Store.settings.get(),patch={};
     if(session.savedTemplate){const all=DrawingProperties.clone(settings.chartsDrawingTemplates||{});all[o.t]||={};Object.defineProperty(all[o.t],session.savedTemplate.name,{value:session.savedTemplate.value,enumerable:true,writable:true,configurable:true});patch.chartsDrawingTemplates=all;}

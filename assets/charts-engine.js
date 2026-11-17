@@ -1564,7 +1564,7 @@ class Chart {
             : p.y > this.axisY
               ? "ew-resize"
               : this.positionHit(p)
-                ? (["startBar","endBar"].includes(this.positionHit(p).k)?"ew-resize":["stop","target"].includes(this.positionHit(p).k)?"ns-resize":"move")
+                ? (["startBar","endBar"].includes(this.positionHit(p).k)?"ew-resize":["stop","target","entryPrice"].includes(this.positionHit(p).k)?"ns-resize":"move")
               : this.grab(p)
                 ? "pointer"
                 : this.nearest(p) >= 0
@@ -2917,7 +2917,7 @@ class Chart {
     if(!P||P.key!==this.key||P.hidden||(!includeLocked&&P.locked)||!this.inPricePlot(p)||(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(P,this.cfg.iv)))return null;
     const {left,right}=this.positionBounds(P),entry=this.y(P.entry),stop=this.y(P.stop),target=this.y(P.target),inside=p.x>=left-7&&p.x<=right+7;
     if(!inside)return null;
-    if(state.posSelected&&!P.locked&&Math.abs(p.y-entry)<8){if(Math.abs(p.x-right)<8)return {k:'endBar'};if(Math.abs(p.x-left)<8)return {k:'startBar'};}
+    if(state.posSelected&&!P.locked&&Math.abs(p.y-entry)<8){if(Math.abs(p.x-right)<8)return {k:'endBar'};if(Math.abs(p.x-left)<8)return {k:'entryPrice'};}
     if(Math.abs(p.y-stop)<7)return {k:'stop'};
     if(Math.abs(p.y-target)<7)return {k:'target'};
     if(p.y>=Math.min(stop,target)&&p.y<=Math.max(stop,target))return {k:'move'};
@@ -3003,7 +3003,8 @@ class Chart {
     });
     if(state.posSelected && !P.locked){
       c.setLineDash([]);c.lineWidth=1.5;c.strokeStyle=css('--acc');c.fillStyle=css('--bg');
-      [[xs,ye],[xe,ye],[(xs+xe)/2,ys],[(xs+xe)/2,yt]].forEach(([x,y])=>{c.fillRect(x-3.5,y-3.5,7,7);c.strokeRect(x-3.5,y-3.5,7,7);});
+      [[xe,ye],[xs,ys],[xs,yt]].forEach(([x,y])=>{c.fillRect(x-3.5,y-3.5,7,7);c.strokeRect(x-3.5,y-3.5,7,7);});
+      c.beginPath();c.arc(xs,ye,4.5,0,Math.PI*2);c.fill();c.stroke();
     }
     if (P.calc?.over) {
       const s = "over your " + state.risk.pct.toFixed(1) + "% rule";

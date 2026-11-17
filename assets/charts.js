@@ -448,6 +448,12 @@ function adjustedPosition(P,kind,delta,tick=1e-8){
     if(!Number.isFinite(delta.bar)||!Number.isFinite(P.startBar)||!Number.isFinite(P.endBar))return null;
     return {...P,[kind]:kind==='startBar'?Math.min(delta.bar,P.endBar-2):Math.max(delta.bar,P.startBar+2)};
   }
+  if(kind==='entryPrice'){
+    if(!Number.isFinite(delta.price))return null;
+    const gap=Math.max(tick,1e-10),low=Math.min(P.stop,P.target)+gap,high=Math.max(P.stop,P.target)-gap;
+    if(low>high)return null;
+    return {...P,entry:Math.max(low,Math.min(high,delta.price))};
+  }
   return movedPosition(P,kind,delta.price,tick);
 }
 function movePos(k,price){
