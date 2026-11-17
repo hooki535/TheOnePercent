@@ -1624,7 +1624,7 @@ async function saveTemplate() {
   const list = tplList().filter((t) => t.name !== name);
   list.unshift({
     name,
-    studies: cfg.studies.map((s) => ({ id: s.id, params: { ...s.params } })),
+    studies: cfg.studies.map((s) => IndicatorLibrary.pack(s)),
   });
   tplSave(list);
   paintInd($("#indSearch").value);
@@ -1633,161 +1633,11 @@ async function saveTemplate() {
     `${cfg.studies.length} stud${cfg.studies.length === 1 ? "y" : "ies"}. Apply it to any chart from the indicator list.`,
   );
 }
-function applyTemplate(name, add) {
-  const t = tplList().find((x) => x.name === name);
-  if (!t) return;
-  const cfg = state.charts[state.sel];
-  pushUndo();
-  const made = t.studies.map((s) => makeStudy(s.id, s.params));
-  cfg.studies = add ? cfg.studies.concat(made) : made;
-  paintInd($("#indSearch").value);
-  paintIndCount();
-  draw();
-  toast(
-    `${add ? "Added" : "Applied"} “${t.name}”`,
-    add
-      ? `${made.length} more on ${cfg.sym}.`
-      : `${cfg.sym} now shows only this template's ${made.length} stud${made.length === 1 ? "y" : "ies"}. Ctrl Z puts the old set back.`,
-  );
-}
-
-function paintInd(filter = "") {
-  const cfg = state.charts[state.sel];
-  const tpls = tplList();
-  $("#indFams").innerHTML =
-    FAMS.map(([id, n]) => {
-      const count = Object.values(STUDIES).filter((s) => s.fam === id).length;
-      return `<div class="fam ${famSel === id ? "on" : ""} ${id === "journal" ? "jd" : ""}" data-f="${id}">${n}<b>${count}</b></div>`;
-    }).join("") +
-    `<div class="tpl-g">
-       <div class="mh">Templates</div>
-       ${
-         tpls.length
-           ? tpls
-               .map(
-                 (t) =>
-                   `<div class="tpl" data-t="${t.name.replace(/"/g, "&quot;")}">
-                      <button class="tpl-n" data-apply title="Replace the studies on this chart with this set">${t.name}<span>${t.studies.length}</span></button>
-                      <button class="tpl-b" data-add title="Add this set on top of what is already here">+</button>
-                      <button class="tpl-b" data-del title="Delete this template">✕</button>
-                    </div>`,
-               )
-               .join("")
-           : `<p class="hint">No templates yet. Set a chart up the way you read it, then save it here and drop it onto any symbol.</p>`
-       }
-       <button class="btn sm" id="tplSave">Save this chart's studies</button>
-     </div>` +
-    `<p class="hint" style="margin-top:8px">Every study here computes for real on this chart. Add the same one twice with different lengths — there is no per-chart cap.</p>`;
-  $$("#indFams .fam").forEach(
-    (f) =>
-      (f.onclick = () => {
-        famSel = f.dataset.f;
-        paintInd($("#indSearch").value);
-      }),
-  );
-  $("#tplSave").onclick = saveTemplate;
-  $$("#indFams .tpl").forEach((el) => {
-    const name = el.dataset.t;
-    el.querySelector("[data-apply]").onclick = () => applyTemplate(name, false);
-    el.querySelector("[data-add]").onclick = () => applyTemplate(name, true);
-    el.querySelector("[data-del]").onclick = () => {
-      tplSave(tplList().filter((t) => t.name !== name));
-      paintInd($("#indSearch").value);
-      toast(`Template “${name}” deleted`);
-    };
-  });
-  const q = filter.trim().toLowerCase();
-  const rows = Object.entries(STUDIES).filter(([id, S]) =>
-    q ? (S.name + S.desc).toLowerCase().includes(q) : S.fam === famSel,
-  );
-  $("#indList").innerHTML = rows.length
-    ? rows
-        .map(([id, S]) => {
-          const on = cfg.studies.filter((s) => s.id === id).length;
-          return `<div class="ir ${on ? "added" : ""}" data-i="${id}"><div><div class="ir-n">${S.name}<span class="ir-w">${S.where === "sub" ? "own pane" : "on price"}</span></div>
-      <div class="ir-d">${S.desc}</div></div><span class="ir-a">${on ? on + " on chart · add another" : "Add"}</span></div>`;
-        })
-        .join("")
-    : `<div class="empty">Nothing matches “${filter}”.</div>`;
-  $$("#indList .ir").forEach(
-    (r) =>
-      (r.onclick = () => {
-        pushUndo();
-        cfg.studies.push(makeStudy(r.dataset.i));
-        paintInd($("#indSearch").value);
-        paintIndCount();
-        draw();
-      }),
-  );
-  paintIndSettings();
-}
-function paintIndSettings() {
-  const cfg = state.charts[state.sel];
-  $("#indSettings").innerHTML = cfg.studies.length
-    ? cfg.studies
-        .map((s) => {
-          const S = STUDIES[s.id];
-          const fields = Object.keys(S.params)
-            .map((k) => {
-              const v = s.params[k];
-              if (k === "source")
-                return `<div class="sp-r"><span>Source</span><select data-uid="${s.uid}" data-k="${k}">
-        ${["close", "open", "high", "low", "hl2", "hlc3"].map((o) => `<option ${o === v ? "selected" : ""}>${o}</option>`).join("")}</select></div>`;
-              return `<div class="sp-r"><span>${k}</span><input type="number" step="${k === "mult" ? 0.1 : 1}" value="${v}" data-uid="${s.uid}" data-k="${k}"></div>`;
-            })
-            .join("");
-          return `<div class="sp"><div class="sp-h">${S.name}<label class="study-visibility"><input type="checkbox" data-study-visible="${s.uid}" ${s.visible !== false ? "checked" : ""}> Show</label><button data-rm="${s.uid}">remove</button></div>
-      ${fields || '<div class="sp-r"><span>No parameters</span><span>—</span></div>'}
-      <div class="sp-r"><span>Colour</span><input type="color" value="${hexOf(s.color)}" data-uid="${s.uid}" data-k="__color"></div>
-      <div class="sp-r"><span>Pane</span><span>${S.where === "sub" ? "separate" : "on price"}</span></div>
-      ${S.where === "sub" ? `<div class="sp-r"><span>Pane height</span><input type="range" min="8" max="34" value="${Math.round(s.h * 100)}" data-uid="${s.uid}" data-k="__h"></div>` : ""}
-    </div>`;
-        })
-        .join("")
-    : `<div class="empty">Nothing added yet.</div>`;
-  $$("#indSettings [data-k]").forEach((f) => {
-    const ev = f.type === "range" ? "oninput" : "onchange";
-    f[ev] = () => {
-      const s = cfg.studies.find((x) => x.uid === f.dataset.uid);
-      if (!s) return;
-      const k = f.dataset.k;
-      if (k === "__color") s.color = f.value;
-      else if (k === "__h") s.h = +f.value / 100;
-      else s.params[k] = f.type === "number" ? +f.value : f.value;
-      draw();
-    };
-  });
-  $("#indSettings [data-study-visible]").forEach((input) => {
-    input.onchange = () => {
-      const study = cfg.studies.find((x) => x.uid === input.dataset.studyVisible);
-      if (!study) return;
-      study.visible = input.checked;
-      draw();
-    };
-  });
-  $("#indSettings [data-rm]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        pushUndo();
-        cfg.studies = cfg.studies.filter((x) => x.uid !== b.dataset.rm);
-        paintInd($("#indSearch").value);
-        paintIndCount();
-        draw();
-      }),
-  );
-}
+/* Library, active controls and study properties: charts-indicators.js. */
 function hexOf(c) {
   const v = c && c.startsWith("--") ? css(c) : c;
   return /^#[0-9a-f]{6}$/i.test(v || "") ? v : "#4C6BF5";
 }
-function openStudyCfg(slot, uid) {
-  select(slot);
-  show("#indModal");
-  paintInd(($("#indSearch").value = ""));
-  const el = $(`#indSettings [data-uid="${uid}"]`);
-  if (el) el.closest(".sp").scrollIntoView({ block: "center" });
-}
-
 /* ══════════════════════════════════════════════════════════════
    chart settings
    ══════════════════════════════════════════════════════════════ */
@@ -2334,7 +2184,12 @@ function ask(title, label, value = "", type = "text") {
       inp.focus();
       inp.select();
     }, 30);
+    let settled = false;
+    const dismissed = () => done(null);
     const done = (v) => {
+      if (settled) return;
+      settled = true;
+      m.removeEventListener("pplx-dismiss", dismissed);
       hide(m);
       inp.onkeydown = null;
       res(v);
@@ -2342,7 +2197,7 @@ function ask(title, label, value = "", type = "text") {
     /* Escape reaches this dialog through the global stack too, so a dismissal
        from there has to resolve the promise rather than leave the caller
        waiting on a sheet that is no longer on screen. */
-    m.addEventListener("pplx-dismiss", () => done(null), { once: true });
+    m.addEventListener("pplx-dismiss", dismissed, { once: true });
     $("#askOk").onclick = () => done(inp.value.trim() || null);
     $("#askCancel").onclick = () => done(null);
     inp.onkeydown = (e) => {

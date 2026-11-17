@@ -1272,6 +1272,7 @@ class Chart {
         const r = this.study(s);
         if (!r || !r.lines) return;
         r.lines.forEach((L) => {
+          if(L.visible===false)return;
           for (let i = Math.max(0, i0); i < Math.min(d.length, i1); i++) {
             const v = L.data[i];
             if (v != null) {
@@ -1329,6 +1330,7 @@ class Chart {
   /* per-study cache, invalidated by data length + params */
   study(s) {
     const S = STUDIES[s.id];
+    if(s.id==="jmae")return null;
     if (S.custom || !S.calc) return null;
     if (window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() && (S.fam === "vol" || ["vwap","cvd"].includes(s.id))) return null;
     const d = this.data;
@@ -1346,7 +1348,7 @@ class Chart {
         sig,
         r: S.calc(d, s.params, { iv: this.cfg.iv, sym: this.cfg.sym }),
       };
-    return s._c.r;
+    return typeof IndicatorLibrary!=="undefined"?IndicatorLibrary.decorate(s._c.r,s):s._c.r;
   }
 
   /* ── interaction ── */
@@ -2179,7 +2181,7 @@ class Chart {
     const r = this.study(s);
     if (!r || !r.lines) return;
     const base = css(s.color) || s.color;
-    if (r.fill && r.lines[r.fill[0]] && r.lines[r.fill[1]]) {
+    if (r.fill && r.lines[r.fill[0]] && r.lines[r.fill[1]] && r.lines[r.fill[0]].visible!==false && r.lines[r.fill[1]].visible!==false) {
       const A = r.lines[r.fill[0]].data,
         B = r.lines[r.fill[1]].data;
       c.save();
@@ -2202,6 +2204,7 @@ class Chart {
       c.restore();
     }
     r.lines.forEach((L, k) => {
+      if(L.visible===false)return;
       if (L.dots) {
         /* Parabolic SAR is a sequence of dots, not a line: the whole signal is
            which side of price the dot sits on, and joining them up draws a
@@ -2264,8 +2267,8 @@ class Chart {
         }
       }
     };
-    (r.lines || []).forEach((L) => scan(L.data));
-    if (r.hist) scan(r.hist.data);
+    (r.lines || []).forEach((L) => {if(L.visible!==false)scan(L.data);});
+    if (r.hist && r.hist.visible!==false) scan(r.hist.data);
     if (r.range) {
       lo = r.range[0];
       hi = r.range[1];
@@ -2319,7 +2322,7 @@ class Chart {
       c.lineTo(this.plotW, yy(0));
       c.stroke();
     }
-    if (r.hist) {
+    if (r.hist && r.hist.visible!==false) {
       const w = Math.max(1, Math.min(15, bw * 0.68));
       for (let i = Math.max(0, i0); i < Math.min(r.hist.data.length, i1); i++) {
         const v = r.hist.data[i];
@@ -2331,7 +2334,7 @@ class Chart {
           ? r.hist.colorBy[i] === 1
             ? css("--up")
             : css("--dn")
-          : base;
+          : r.hist.color?css(r.hist.color):base;
         c.fillRect(
           Math.round(this.x(i) - w / 2),
           Math.min(y0, y1),
@@ -2342,6 +2345,7 @@ class Chart {
       }
     }
     (r.lines || []).forEach((L, k) => {
+      if(L.visible===false)return;
       c.save();
       c.beginPath();
       c.strokeStyle = L.color ? css(L.color) : k ? shade(base, k) : base;
