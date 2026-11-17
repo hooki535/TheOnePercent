@@ -1292,7 +1292,7 @@ class Chart {
           }
         }),
       );
-    if (state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv)))
+    if (state.look.showPositions !== false && state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv)))
       [state.pos.entry, state.pos.stop, state.pos.target].forEach((p) => {
         lo = Math.min(lo, p);
         hi = Math.max(hi, p);
@@ -1887,7 +1887,7 @@ class Chart {
        sat under the 4.5:1 the rest of the app holds itself to. */
     const txt3 = css("--txt2"),
       line = css("--line"),
-      grid = css("--grid");
+      grid = state.look.gridColor || css("--grid");
     if (/^#[0-9a-f]{6}$/i.test(state.look.background || "")) {
       c.fillStyle = state.look.background;
       c.fillRect(0, 0, W, H);
@@ -1907,7 +1907,7 @@ class Chart {
     );
     ticks.forEach((v) => {
       const y =
-        Math.round(pr.y + ((this.tHi - v) / (this.tHi - this.tLo)) * pr.h) +
+        Math.round(this.y(this.inv(v))) +
         0.5;
       /* A label centred within 7px of either end of the pane is drawn
          half outside it, so it reads as a cut-off number rather than a
@@ -2030,13 +2030,13 @@ class Chart {
 
     /* price line, trades, drawings, position, alerts */
     this.lastPrice(c, d, pw);
-    if (state.trades) this.tradeLayer(c, d, i0, i1);
+    if (state.trades && state.look.showTrades !== false) this.tradeLayer(c, d, i0, i1);
     // Preserve saved-object order and the pending-preview position.
     this.drw.forEach((o) => {
       if (!o.hidden) this.drawScopedObj(c, o, false, o.id === state.selObj);
     });
     if (this.pending) this.drawScopedObj(c, this.pending, true);
-    if (state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv))) {
+    if (state.look.showPositions !== false && state.pos && state.pos.key === this.key && !state.pos.hidden && (typeof DrawingProperties==="undefined"||DrawingProperties.visible(state.pos,this.cfg.iv))) {
       c.save();
       try {
         const clip = new Path2D();
@@ -2067,7 +2067,7 @@ class Chart {
     this.axisButtons();
     this.rt.classList.toggle("show", this.view.end > 4);
   }
-  drawSeries(c, d, i0, i1, cw, up, dn, pr) {
+  drawSeries(c, d, i0, i1, cw, up, dn, pr, look=state.look) {
     const T = state.type,
       pw = this.plotW;
     if (T === "line" || T === "area" || T === "step" || T === "baseline") {
@@ -2125,7 +2125,7 @@ class Chart {
         x = this.x(i),
         rising = b.c >= b.o,
         col = rising ? up : dn;
-      c.strokeStyle = rising ? (state.look.wickMatch ? col : state.look.wickUp || css("--txt3")) : (state.look.wickMatch ? col : state.look.wickDn || css("--txt3"));
+      c.strokeStyle = rising ? (look.wickMatch ? col : look.wickUp || css("--txt3")) : (look.wickMatch ? col : look.wickDn || css("--txt3"));
       c.fillStyle = col;
       c.lineWidth = 1;
       const yo = this.y(b.o),
@@ -2146,7 +2146,7 @@ class Chart {
         c.beginPath();
         c.moveTo(Math.round(x) + 0.5, yh);
         c.lineTo(Math.round(x) + 0.5, yl);
-        if (state.look.candleWicks !== false) c.stroke();
+        if (look.candleWicks !== false) c.stroke();
         const top = Math.min(yo, yc),
           h = Math.max(1, Math.abs(yc - yo));
         if (T === "hollow" && rising) {
@@ -2158,14 +2158,14 @@ class Chart {
             Math.round(h),
           );
         } else {
-          if (state.look.candleBodies !== false) c.fillRect(
+          if (look.candleBodies !== false) c.fillRect(
             Math.round(x - cw / 2),
             Math.round(top),
             Math.round(cw),
             Math.max(1, Math.round(h)),
           );
-          if (state.look.candleBorders !== false) {
-            c.strokeStyle = rising ? (state.look.borderUp || col) : (state.look.borderDn || col);
+          if (look.candleBorders !== false) {
+            c.strokeStyle = rising ? (look.borderUp || col) : (look.borderDn || col);
             c.strokeRect(
               Math.round(x - cw / 2) + 0.5,
               Math.round(top) + 0.5,
@@ -2580,38 +2580,15 @@ class Chart {
     c.restore();
   }
   lastPrice(c, d, pw) {
-    const b = d[d.length - 1];
-    if (!b) return;
-    const y = this.y(b.c),
-      rising = b.c >= b.o,
-      col = rising
-        ? state.look.up || css("--up")
-        : state.look.dn || css("--dn");
-    c.save();
-    c.setLineDash([3, 3]);
-    c.strokeStyle = col;
-    c.globalAlpha = 0.75;
-    c.lineWidth = 1;
-    c.beginPath();
-    c.moveTo(0, y);
-    c.lineTo(pw, y);
-    c.stroke();
-    c.restore();
-    const cd = state.look.countdown && !(window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode()) ? barCountdown(this.cfg.iv) : null;
-    const h = cd ? 26 : 16;
-    c.fillStyle = col;
-    c.fillRect(pw + 1, y - h / 2, AX - 2, h);
-    c.fillStyle = "#fff";
-    c.font = '600 10.5px "IBM Plex Mono",monospace';
-    c.textAlign = "left";
-    c.textBaseline = "middle";
-    c.fillText(fmt(b.c, this.cfg.sym), pw + 6, cd ? y - 5 : y);
-    if (cd) {
-      c.font = '9px "IBM Plex Mono",monospace';
-      c.globalAlpha = 0.85;
-      c.fillText(cd, pw + 6, y + 7);
-      c.globalAlpha = 1;
-    }
+    const b=d[d.length-1];if(!b)return;
+    const L=state.look,y=this.y(b.c),col=L.lastPriceColor||(b.c>=b.o?L.up||css('--up'):L.dn||css('--dn'));
+    const line=(price,color,dash)=>{if(!Number.isFinite(price))return;c.save();c.strokeStyle=color;c.setLineDash(DASHES[dash]||[]);c.globalAlpha=.75;c.lineWidth=1;c.beginPath();c.moveTo(0,this.y(price));c.lineTo(pw,this.y(price));c.stroke();c.restore();};
+    if(L.previousCloseLine&&typeof ChartSettingsModel!=='undefined')line(ChartSettingsModel.previousClose(d),L.previousCloseColor||css('--txt3'),'dash');
+    if(L.lastPriceLine!==false)line(b.c,col,L.lastPriceDash||'dot');
+    if(L.lastPriceLabel===false)return;
+    const cd=L.countdown&&!(window.THEONEPERCENT_CHART_ARCHIVE&&!Feed.isDemoMode())?barCountdown(this.cfg.iv):null,h=cd?26:16;
+    c.fillStyle=col;c.fillRect(pw+1,y-h/2,AX-2,h);c.fillStyle='#fff';c.font='600 10.5px "IBM Plex Mono",monospace';c.textAlign='left';c.textBaseline='middle';c.fillText(fmt(b.c,this.cfg.sym),pw+6,cd?y-5:y);
+    if(cd){c.font='9px "IBM Plex Mono",monospace';c.globalAlpha=.85;c.fillText(cd,pw+6,y+7);c.globalAlpha=1;}
   }
   drawScopedObj(c, o, ghost, sel) {
     if(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(o,this.cfg.iv))return;
@@ -2914,7 +2891,7 @@ class Chart {
   }
   positionHit(p,includeLocked=false){
     const P=state.pos;
-    if(!P||P.key!==this.key||P.hidden||(!includeLocked&&P.locked)||!this.inPricePlot(p)||(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(P,this.cfg.iv)))return null;
+    if(state.look.showPositions===false||!P||P.key!==this.key||P.hidden||(!includeLocked&&P.locked)||!this.inPricePlot(p)||(typeof DrawingProperties!=="undefined"&&!DrawingProperties.visible(P,this.cfg.iv)))return null;
     const {left,right}=this.positionBounds(P),entry=this.y(P.entry),stop=this.y(P.stop),target=this.y(P.target),inside=p.x>=left-7&&p.x<=right+7;
     if(!inside)return null;
     if(state.posSelected&&!P.locked&&Math.abs(p.y-entry)<8){if(Math.abs(p.x-right)<8)return {k:'endBar'};if(Math.abs(p.x-left)<8)return {k:'entryPrice'};}
@@ -3074,6 +3051,7 @@ class Chart {
     c.restore();
   }
   alertLines(c, pw) {
+    if(state.look.showAlerts===false)return;
     state.alerts
       .filter((a) => Number.isFinite(a.px) && a.sym === this.cfg.sym && (a.iv || this.cfg.iv) === this.cfg.iv && (a.on || a.fired) && (typeof PriceAlertModel === "undefined" || PriceAlertModel.supported(a)))
       .forEach((a) => {
@@ -3124,8 +3102,8 @@ class Chart {
        cursor that tells you nothing is not a cursor mode. */
     const cur = state.look.cursor || "cross";
     c.save();
-    c.strokeStyle = "rgba(159,176,206,.45)";
-    c.setLineDash([3, 3]);
+    c.strokeStyle = state.look.crossColor || "rgba(159,176,206,.45)";
+    c.setLineDash(DASHES[state.look.crossDash||"dash"]||[]);
     c.lineWidth = 1;
     if (cur === "cross") {
       c.beginPath();

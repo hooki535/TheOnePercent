@@ -81,7 +81,7 @@
   const fills=['targetColor','stopColor'].map((key,i)=>{const el=document.createElement('input');el.type='color';el.setAttribute('aria-label',i?'Stop fill colour':'Target fill colour');el.onchange=e=>mutate(o=>{o.style={...DRAW_STYLE_DEFAULTS,...o.style,[key]:e.target.value};});edit.append(el);return el;});
   document.querySelector('.cmid').append(edit);wireDrag(edit);
   function update(){
-    paintFavorites();const {o,position}=selected();edit.hidden=!o||o.hidden;
+    paintFavorites();const {o,position}=selected();edit.hidden=!o||o.hidden||(position&&state.look.showPositions===false);
     edit.querySelector('[aria-label="Duplicate drawing"]').hidden=position;
     edit.classList.toggle('is-position',position);
     labels.hidden=!position;fills.forEach((el,i)=>{el.hidden=!position;if(o&&document.activeElement!==el)el.value=o.style?.[i?'stopColor':'targetColor']||(i?'#f23645':'#089981');});labels.setAttribute('aria-pressed',String(o?.style?.showLabels!==false));
@@ -99,19 +99,6 @@
     }else favorites.hidden=!!state.favoritesHidden || !railFavs.length;
   }
   document.addEventListener('chart-render',update);document.addEventListener('click',()=>requestAnimationFrame(update));
-  // Category navigation operates on the native chart settings and handlers.
-  const setBody=$('setBody');
-  new MutationObserver(()=>{
-    if(setBody.querySelector('.research-settings-nav'))return;
-    const groups=[...setBody.querySelectorAll('[data-settings-section]')];if(!groups.length)return;
-    const nav=document.createElement('nav');nav.className='research-settings-nav';nav.setAttribute('aria-label','Chart settings categories');
-    const symbols=['candle','indicator','chevron','settings','eye'];
-    groups.forEach((g,i)=>{const b=document.createElement('button');b.type='button';b.innerHTML=icon(symbols[i])+'<span></span>';b.querySelector('span').textContent=g.dataset.settingsSection;b.onclick=()=>{groups.forEach((section,n)=>section.hidden=n!==i);nav.querySelectorAll('button').forEach((x,n)=>x.setAttribute('aria-pressed',String(n===i)));};nav.append(b);});
-    setBody.prepend(nav);nav.firstChild.click();
-  }).observe(setBody,{childList:true});
-  const sheet=$('setModal').querySelector('.sheet');
-  const footer=document.createElement('footer');footer.className='research-settings-footer';footer.innerHTML='<span>Changes apply immediately</span><button type="button">Done</button>';footer.querySelector('button').onclick=()=>hide('#setModal');sheet.append(footer);
-  $('setModal').setAttribute('role','dialog');$('setModal').setAttribute('aria-label','Chart settings');$('setModal').setAttribute('aria-modal','true');
   // Use the existing safe post-login return mechanism.
   const empty=document.querySelector('.desk-empty');
   profile.addEventListener('click',()=>window.Cloud?.setReturn('charts',location.hash));

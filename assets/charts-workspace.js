@@ -140,8 +140,7 @@
   function applyLook() {
     if (typeof state === "undefined" || !state.look) return;
     // Known automatic canvas colors follow the theme. Keep any custom color.
-    const storedAppearance = (() => { try { return JSON.parse(localStorage.getItem(LOOK_KEY) || "{}"); } catch (_) { return {}; } })();
-    const automaticBackground = !storedAppearance.background || storedAppearance.background === "#ffffff" || storedAppearance.background === "#0d1727" || storedAppearance.background === "#131722";
+    const automaticBackground = !lookPrefs.background || lookPrefs.background === "#ffffff" || lookPrefs.background === "#0d1727" || lookPrefs.background === "#131722";
     if (automaticBackground) lookPrefs.background = window.Theme?.current() === "dark" ? "#131722" : "#ffffff";
     for (const [key, value] of Object.entries(lookPrefs)) {
       if (["up", "dn", "wickUp", "wickDn", "borderUp", "borderDn", "background"].includes(key)) {
@@ -149,7 +148,7 @@
       } else if (key === "candleWidth") {
         const width = Number(value);
         if (Number.isFinite(width)) state.look[key] = Math.max(0.3, Math.min(1, width));
-      } else state.look[key] = !!value;
+      } else state.look[key] = value;
     }
     lookFields.forEach(el => {
       const value = lookPrefs[el.dataset.chartLook];
@@ -160,6 +159,12 @@
     try { localStorage.setItem(LOOK_KEY, JSON.stringify(lookPrefs)); } catch (_) {}
     if (typeof draw === "function") draw();
   }
+  // Keep the existing appearance panel in step with applied workspace drafts.
+  // This updates the session mirror only; Save workspace retains appearance.
+  window.ChartAppearance = { syncLook(look) {
+    lookPrefs = {...lookPrefs,...JSON.parse(JSON.stringify(look))};
+    lookFields.forEach(el=>{const value=lookPrefs[el.dataset.chartLook];if(el.type==='checkbox')el.checked=!!value;else if(value!==undefined&&value!=='')el.value=String(value);});
+  }};
   lookFields.forEach(el => el.addEventListener(el.type === "color" || el.type === "range" ? "input" : "change", () => {
     lookPrefs[el.dataset.chartLook] = el.type === "checkbox" ? el.checked : el.value;
     applyLook();
