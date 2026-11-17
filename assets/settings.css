@@ -30,7 +30,7 @@
   border-radius: 999px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 14px;
   text-decoration: none;
 }
 
@@ -101,13 +101,13 @@
 
 .toggle-text b {
   display: block;
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .toggle-text small {
   display: block;
   margin-top: 3px;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -136,7 +136,7 @@
 
 .gl span {
   display: block;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -154,7 +154,7 @@
 .gl small {
   display: block;
   margin-top: 3px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 
@@ -167,7 +167,7 @@
   margin: 0;
   padding: 10px 13px;
   background: var(--surface);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -192,7 +192,7 @@
 .chips legend {
   padding: 0;
   margin-bottom: 9px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -212,7 +212,7 @@
   background: var(--surface-2);
   color: var(--muted);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
@@ -258,7 +258,7 @@
   display: block;
   margin-bottom: 10px;
   color: var(--warn-ink);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;

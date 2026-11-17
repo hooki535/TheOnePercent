@@ -72,7 +72,7 @@ body[data-page="charts"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
 }
 body[data-page="charts"] .topnav {
@@ -158,7 +158,7 @@ body[data-page="charts"] .logo {
   height: 20px;
 }
 body[data-page="charts"] .brandname {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.16em;
   font-weight: 600;
   color: var(--muted);
@@ -185,11 +185,11 @@ body[data-page="charts"] .sym:hover {
 }
 body[data-page="charts"] #symName {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.01em;
 }
 body[data-page="charts"] .sym-meta {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
 }
 body[data-page="charts"] .caret {
@@ -214,7 +214,7 @@ body[data-page="charts"] .chips.small {
 body[data-page="charts"] .chip {
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   font-weight: 500;
 }
@@ -239,7 +239,7 @@ body[data-page="charts"] .tb-btn {
   gap: 6px;
   padding: 5px 9px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   border: 1px solid transparent;
   white-space: nowrap;
@@ -263,12 +263,12 @@ body[data-page="charts"] .tb-btn.primary:hover {
 }
 body[data-page="charts"] .tb-btn.ghost {
   border: 1px solid var(--line);
-  font-size: 11px;
+  font-size: 13px;
 }
 body[data-page="charts"] .tb-btn b {
   font-weight: 600;
   color: var(--ink);
-  font-size: 11px;
+  font-size: 13px;
   background: var(--surface-2);
   padding: 0 4px;
   border-radius: 3px;
@@ -280,7 +280,7 @@ body[data-page="charts"] .dotc {
   background: var(--accent-hi);
 }
 body[data-page="charts"] kbd {
-  font-size: 9.5px;
+  font-size: 12px;
   padding: 1px 4px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 3px;
@@ -298,7 +298,7 @@ body[data-page="charts"] .risk-pill {
 }
 body[data-page="charts"] .rp-label {
   white-space: nowrap;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -317,7 +317,7 @@ body[data-page="charts"] .rp-bar i {
   width: 40%;
 }
 body[data-page="charts"] .rp-val {
-  font-size: 11px;
+  font-size: 13px;
   font-family: var(--mono);
   color: var(--muted);
 }
@@ -361,7 +361,7 @@ body[data-page="charts"] .menu button {
   width: 100%;
   padding: 6px 8px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   text-align: left;
 }
@@ -374,11 +374,11 @@ body[data-page="charts"] .menu button.on {
 }
 body[data-page="charts"] .menu button span {
   color: var(--faint);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 body[data-page="charts"] .menu .mh {
   padding: 6px 8px 3px;
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
@@ -432,7 +432,7 @@ body[data-page="charts"] .rtool .tip {
   color: var(--ink);
   padding: 4px 8px;
   border-radius: 5px;
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -503,13 +503,13 @@ body[data-page="charts"] .rfly {
   z-index: 90;
 }
 body[data-page="charts"] .fly-h {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink);
   padding: 4px 8px 6px;
 }
 body[data-page="charts"] .fly-s {
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--faint);
@@ -536,7 +536,7 @@ body[data-page="charts"] .fly-star {
   place-items: center;
   height: 24px;
   border-radius: 5px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
   color: var(--faint);
   cursor: pointer;
@@ -580,7 +580,7 @@ body[data-page="charts"] .fly-r {
   width: 100%;
   padding: 5px 8px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-700);
   text-align: left;
 }
@@ -622,7 +622,7 @@ body[data-page="charts"] .fly-r.on .fly-i {
   color: var(--accent-hi);
 }
 body[data-page="charts"] .fly-f {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.45;
   color: var(--faint);
   padding: 7px 8px 3px;
@@ -678,7 +678,7 @@ body[data-page="charts"] .sym {
 }
 body[data-page="charts"] #symName {
   color: #1b2430;
-  font-size: 15px;
+  font-size: 16px;
 }
 body[data-page="charts"] .sym-meta {
   color: #8c98a8;
@@ -824,7 +824,7 @@ body[data-page="charts"] .leg-1 {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 13px;
 }
 body[data-page="charts"] .leg:not(.expanded) .leg-o,
 body[data-page="charts"] .leg:not(.expanded) .leg-q,
@@ -839,7 +839,7 @@ body[data-page="charts"] .leg-toggle {
   background: var(--surface-2);
   color: var(--muted);
   font: inherit;
-  font-size: 10px;
+  font-size: 12px;
   cursor: pointer;
 }
 body[data-page="charts"] .leg-toggle:hover,
@@ -850,15 +850,15 @@ body[data-page="charts"] .leg-toggle:focus-visible {
 }
 body[data-page="charts"] .leg-sym {
   font-weight: 600;
-  font-size: 12.5px;
+  font-size: 14px;
 }
 body[data-page="charts"] .leg-int {
   color: var(--faint);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 body[data-page="charts"] .leg-o {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   display: flex;
   gap: 7px;
@@ -867,7 +867,7 @@ body[data-page="charts"] .leg-o b {
   font-weight: 500;
 }
 body[data-page="charts"] .leg-i {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   display: flex;
   gap: 9px;
@@ -887,7 +887,7 @@ body[data-page="charts"] .badge {
   z-index: 5;
 }
 body[data-page="charts"] .bdg {
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   padding: 2px 6px;
@@ -921,7 +921,7 @@ body[data-page="charts"] .tabs {
 }
 body[data-page="charts"] .tab {
   flex: 1;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--faint);
   border-bottom: 2px solid transparent;
 }
@@ -972,14 +972,14 @@ body[data-page="charts"] .card-h {
   margin-bottom: 6px;
 }
 body[data-page="charts"] .lbl {
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--faint);
   font-weight: 600;
 }
 body[data-page="charts"] .hint {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--faint);
   margin: 4px 0 9px;
   line-height: 1.4;
@@ -991,7 +991,7 @@ body[data-page="charts"] .side-toggle {
   padding: 2px;
 }
 body[data-page="charts"] .st {
-  font-size: 10.5px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 4px;
   color: var(--faint);
@@ -1014,7 +1014,7 @@ body[data-page="charts"] .frow {
   margin-bottom: 6px;
 }
 body[data-page="charts"] .frow label {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 body[data-page="charts"] .fin {
@@ -1035,7 +1035,7 @@ body[data-page="charts"] .fin input {
   background: none;
   outline: none;
   text-align: right;
-  font-size: 12px;
+  font-size: 14px;
   padding: 4px 0;
 }
 body[data-page="charts"] .fin input::-webkit-outer-spin-button,
@@ -1045,7 +1045,7 @@ body[data-page="charts"] .fin input::-webkit-inner-spin-button {
 }
 body[data-page="charts"] .pre,
 body[data-page="charts"] .post {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--faint);
 }
 
@@ -1064,7 +1064,7 @@ body[data-page="charts"] .ro {
   /* The sub-values ("5.2% of risk") wrap under their row in a narrow panel
      instead of pushing the whole layout sideways. */
   flex-wrap: wrap;
-  font-size: 11.5px;
+  font-size: 13px;
 }
 body[data-page="charts"] .ro > * {
   min-width: 0;
@@ -1077,14 +1077,14 @@ body[data-page="charts"] .ro b {
   font-weight: 500;
 }
 body[data-page="charts"] .ro.big b {
-  font-size: 14px;
+  font-size: 15px;
 }
 body[data-page="charts"] .ro.big span {
   align-self: center;
 }
 body[data-page="charts"] .ro em {
   font-style: normal;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--faint);
   margin-left: 5px;
 }
@@ -1097,13 +1097,13 @@ body[data-page="charts"] .warn {
   padding: 8px;
 }
 body[data-page="charts"] .warn-h {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--warn-ink);
   margin-bottom: 3px;
 }
 body[data-page="charts"] .warn p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -1115,7 +1115,7 @@ body[data-page="charts"] .warn-a {
 }
 body[data-page="charts"] .src-note {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--faint);
   border-top: 1px solid var(--line);
   margin-top: 9px;
@@ -1133,7 +1133,7 @@ body[data-page="charts"]
   border: 1px solid var(--line-strong);
   border-radius: 5px;
   padding: 5px 10px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 body[data-page="charts"]
@@ -1159,7 +1159,7 @@ body[data-page="charts"]
   :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
   .btn.sm {
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: 13px;
 }
 body[data-page="charts"]
   :is(.ctoolbar, .cshell, .notebar, [class*="sheet"], [class*="modal"])
@@ -1170,7 +1170,7 @@ body[data-page="charts"]
 }
 
 body[data-page="charts"] .coach-b {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   display: flex;
   flex-direction: column;
@@ -1208,7 +1208,7 @@ body[data-page="charts"] .wsub-b {
   flex: 1;
   padding: 5px 4px;
   border-radius: 6px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--muted);
@@ -1248,7 +1248,7 @@ body[data-page="charts"] .sc-spec {
   border-top: 1px solid var(--line);
 }
 body[data-page="charts"] .sc-sh {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1261,7 +1261,7 @@ body[data-page="charts"] .sc-sr {
   justify-content: space-between;
   gap: 10px;
   padding: 3.5px 0;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   border-bottom: 1px solid var(--line-soft, var(--line));
 }
@@ -1275,7 +1275,7 @@ body[data-page="charts"] .sc-sr b {
 }
 body[data-page="charts"] .sc-sn {
   margin: 8px 0 0;
-  font-size: 10.5px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--faint);
 }
@@ -1290,7 +1290,7 @@ body[data-page="charts"] .cmp-n b {
 }
 body[data-page="charts"] .wsub-note {
   margin: 0;
-  font-size: 11.5px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--muted);
 }
@@ -1321,22 +1321,22 @@ body[data-page="charts"] .wr.on {
   box-shadow: inset 2px 0 0 var(--brand);
 }
 body[data-page="charts"] .wr-s {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 body[data-page="charts"] .wr-n {
-  font-size: 9.5px;
+  font-size: 12px;
   color: var(--faint);
   display: block;
   font-weight: 400;
 }
 body[data-page="charts"] .wr-p {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 body[data-page="charts"] .wr-c {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   text-align: right;
   min-width: 48px;
 }
@@ -1374,16 +1374,16 @@ body[data-page="charts"] .je-h {
   align-items: baseline;
 }
 body[data-page="charts"] .je-s {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 body[data-page="charts"] .je-r {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 body[data-page="charts"] .je-t {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--faint);
   margin-top: 1px;
 }
@@ -1394,7 +1394,7 @@ body[data-page="charts"] .je-tags {
   flex-wrap: wrap;
 }
 body[data-page="charts"] .tag {
-  font-size: 9.5px;
+  font-size: 12px;
   padding: 1px 6px;
   border-radius: 10px;
   background: var(--surface-2);
@@ -1406,7 +1406,7 @@ body[data-page="charts"] .tag.rule {
   border-color: var(--brand);
 }
 body[data-page="charts"] .je-n {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 6px;
   line-height: 1.4;
@@ -1431,11 +1431,11 @@ body[data-page="charts"] .ai-d {
   flex: 1;
 }
 body[data-page="charts"] .ai-t {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 500;
 }
 body[data-page="charts"] .ai-c {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   font-family: var(--mono);
   margin-top: 2px;
@@ -1483,7 +1483,7 @@ body[data-page="charts"] .rb-btn {
   border-radius: 5px;
   border: 1px solid var(--line-strong);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 body[data-page="charts"] .rb-btn:hover {
   background: var(--surface);
@@ -1492,7 +1492,7 @@ body[data-page="charts"] .rb-btn:hover {
 body[data-page="charts"] .rb-btn.close {
   width: auto;
   padding: 0 9px;
-  font-size: 11px;
+  font-size: 13px;
   margin-left: auto;
 }
 body[data-page="charts"] .rb-speeds {
@@ -1500,7 +1500,7 @@ body[data-page="charts"] .rb-speeds {
   gap: 2px;
 }
 body[data-page="charts"] .rb-speeds .chip {
-  font-size: 10.5px;
+  font-size: 12px;
   padding: 3px 6px;
 }
 body[data-page="charts"] #rbScrub {
@@ -1508,11 +1508,11 @@ body[data-page="charts"] #rbScrub {
   accent-color: var(--brand);
 }
 body[data-page="charts"] .rb-clock {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
 }
 body[data-page="charts"] .rb-check {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   display: flex;
   align-items: center;
@@ -1522,7 +1522,7 @@ body[data-page="charts"] .rb-check input {
   accent-color: var(--brand);
 }
 body[data-page="charts"] .rb-note {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
 }
 
@@ -1582,11 +1582,11 @@ body[data-page="charts"] .sheet-h {
   border-bottom: 1px solid var(--line);
 }
 body[data-page="charts"] .sheet-h b {
-  font-size: 13.5px;
+  font-size: 15px;
 }
 body[data-page="charts"] .sh-sub {
   display: block;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   margin-top: 2px;
 }
@@ -1597,7 +1597,7 @@ body[data-page="charts"] .pal-in {
   border: 1px solid var(--line-strong);
   border-radius: 6px;
   padding: 6px 9px;
-  font-size: 12px;
+  font-size: 14px;
   outline: none;
 }
 body[data-page="charts"] .search:focus,
@@ -1610,10 +1610,10 @@ body[data-page="charts"] .pal-in {
   border-bottom: 1px solid var(--line);
   border-radius: 0;
   padding: 13px 15px;
-  font-size: 14px;
+  font-size: 15px;
 }
 body[data-page="charts"] .x {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--faint);
   border: 1px solid var(--line-strong);
   border-radius: 4px;
@@ -1644,7 +1644,7 @@ body[data-page="charts"] .fam {
   justify-content: space-between;
   padding: 5px 7px;
   border-radius: 5px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   cursor: pointer;
 }
@@ -1657,7 +1657,7 @@ body[data-page="charts"] .fam.on {
 }
 body[data-page="charts"] .fam b {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--faint);
 }
@@ -1691,14 +1691,14 @@ body[data-page="charts"] .tpl-n {
   background: var(--surface-2);
   color: var(--text);
   font: inherit;
-  font-size: 11.5px;
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
 }
 body[data-page="charts"] .tpl-n span {
   flex: none;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--faint);
 }
 body[data-page="charts"] .tpl-n:hover {
@@ -1712,7 +1712,7 @@ body[data-page="charts"] .tpl-b {
   border-radius: 5px;
   background: var(--surface-2);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
   cursor: pointer;
 }
 body[data-page="charts"] .tpl-b:hover {
@@ -1737,16 +1737,16 @@ body[data-page="charts"] .ir:hover {
   background: var(--surface-2);
 }
 body[data-page="charts"] .ir-n {
-  font-size: 12px;
+  font-size: 14px;
 }
 body[data-page="charts"] .ir-d {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   margin-top: 1px;
   line-height: 1.35;
 }
 body[data-page="charts"] .ir-a {
-  font-size: 10.5px;
+  font-size: 12px;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
   padding: 2px 7px;
@@ -1762,21 +1762,21 @@ body[data-page="charts"] .settings .sp {
   margin-bottom: 11px;
 }
 body[data-page="charts"] .sp-h {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   margin-bottom: 5px;
   display: flex;
   justify-content: space-between;
 }
 body[data-page="charts"] .sp-h button {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--faint);
 }
 body[data-page="charts"] .sp-r {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin-bottom: 4px;
 }
@@ -1798,7 +1798,7 @@ body[data-page="charts"] .sp-r input[type="color"] {
   padding: 0;
 }
 body[data-page="charts"] .empty {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--faint);
   text-align: center;
   padding: 26px 10px;
@@ -1822,13 +1822,13 @@ body[data-page="charts"] .cr input {
   border: 1px solid var(--line-strong);
   border-radius: 5px;
   padding: 5px 7px;
-  font-size: 11.5px;
+  font-size: 13px;
   outline: none;
   width: 100%;
 }
 body[data-page="charts"] .cr .rm {
   color: var(--faint);
-  font-size: 12px;
+  font-size: 14px;
   padding: 0 4px;
 }
 body[data-page="charts"] .cond-actions {
@@ -1845,7 +1845,7 @@ body[data-page="charts"] .andor {
   padding: 2px;
 }
 body[data-page="charts"] .ao {
-  font-size: 10.5px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 4px;
   color: var(--faint);
@@ -1885,7 +1885,7 @@ body[data-page="charts"] .pi:hover {
   background: var(--surface-2);
 }
 body[data-page="charts"] .pi-k {
-  font-size: 9.5px;
+  font-size: 12px;
   color: var(--faint);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1893,11 +1893,11 @@ body[data-page="charts"] .pi-k {
   flex: 0 0 auto;
 }
 body[data-page="charts"] .pi-t {
-  font-size: 12px;
+  font-size: 14px;
   flex: 1;
 }
 body[data-page="charts"] .pi-s {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
 }
 body[data-page="charts"] .keys {
@@ -1908,7 +1908,7 @@ body[data-page="charts"] .keys {
 body[data-page="charts"] .kr {
   display: flex;
   justify-content: space-between;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   border-bottom: 1px solid var(--line);
   padding-bottom: 4px;
@@ -1942,11 +1942,11 @@ body[data-page="charts"] .toast.up {
   border-left-color: var(--up);
 }
 body[data-page="charts"] .toast b {
-  font-size: 11.5px;
+  font-size: 13px;
   display: block;
 }
 body[data-page="charts"] .toast p {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
   line-height: 1.4;
@@ -1975,10 +1975,10 @@ body[data-page="charts"] .tourtip {
   z-index: 300;
 }
 body[data-page="charts"] .tourtip b {
-  font-size: 12px;
+  font-size: 14px;
 }
 body[data-page="charts"] .tourtip p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin: 5px 0 9px;
   line-height: 1.45;
@@ -2031,7 +2031,7 @@ body[data-page="charts"] .wv:last-child {
   border-bottom: 0;
 }
 body[data-page="charts"] .wv-t {
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   font-weight: 600;
@@ -2052,7 +2052,7 @@ body[data-page="charts"] .wv-t.w3 {
   color: var(--i4);
 }
 body[data-page="charts"] .wv-b {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -2072,7 +2072,7 @@ body[data-page="charts"] .wv-t.w0 {
    ══════════════════════════════════════════════════════════════════ */
 
 body[data-page="charts"] .mh {
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--faint);
@@ -2080,20 +2080,20 @@ body[data-page="charts"] .mh {
   margin: 2px 0 7px;
 }
 body[data-page="charts"] .warn-b {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   line-height: 1.45;
 }
 body[data-page="charts"] .tb-btn.icon {
   padding: 5px 8px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
 }
 body[data-page="charts"] .lbl.inline {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -2116,7 +2116,7 @@ body[data-page="charts"] .dwin {
   pointer-events: none;
 }
 body[data-page="charts"] .dw-h {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--faint);
@@ -2126,7 +2126,7 @@ body[data-page="charts"] .dw-r {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-family: var(--mono);
   color: var(--muted);
   line-height: 1.6;
@@ -2150,7 +2150,7 @@ body[data-page="charts"] .sbtns button {
   width: 22px;
   height: 19px;
   border-radius: 4px;
-  font-size: 8.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--faint);
@@ -2176,7 +2176,7 @@ body[data-page="charts"] .gort {
   transition: opacity 0.15s;
   padding: 3px 8px;
   border-radius: 12px;
-  font-size: 10px;
+  font-size: 12px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   color: var(--muted);
@@ -2197,7 +2197,7 @@ body[data-page="charts"] .lchip {
   gap: 5px;
   padding: 1px 4px 1px 6px;
   border-radius: 4px;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted);
   background: color-mix(in srgb, var(--surface-2) 70%, transparent);
   /* `.leg` is pointer-events:none so the chart underneath stays draggable
@@ -2237,7 +2237,7 @@ body[data-page="charts"] .lchip.off {
 body[data-page="charts"] .lchip.lmore {
   border: 1px solid var(--line);
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   padding: 1px 7px;
   opacity: 1;
   width: auto;
@@ -2258,7 +2258,7 @@ body[data-page="charts"] .lchip button {
   border: 0;
   background: transparent;
   color: var(--faint);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1;
   padding: 0 2px;
   border-radius: 3px;
@@ -2287,7 +2287,7 @@ body[data-page="charts"] .wl-top {
 body[data-page="charts"] .wl-top .fin {
   flex: 1;
   padding: 4px 6px;
-  font-size: 11px;
+  font-size: 13px;
 }
 body[data-page="charts"] .wr-l {
   display: flex;
@@ -2303,7 +2303,7 @@ body[data-page="charts"] .wr-r {
 }
 body[data-page="charts"] .wr-x {
   color: var(--faint);
-  font-size: 11px;
+  font-size: 13px;
   padding: 0 2px;
   opacity: 0;
   transition: opacity 0.12s;
@@ -2349,7 +2349,7 @@ body[data-page="charts"] .ob.sel {
   border-color: var(--brand);
 }
 body[data-page="charts"] .ob-n {
-  font-size: 11.5px;
+  font-size: 13px;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -2363,7 +2363,7 @@ body[data-page="charts"] .ob-v {
 }
 body[data-page="charts"] .ob-v button {
   color: var(--faint);
-  font-size: 11px;
+  font-size: 13px;
   padding: 0 3px;
   border-radius: 3px;
 }
@@ -2375,7 +2375,7 @@ body[data-page="charts"] .ob-v button:hover {
 /* alerts */
 body[data-page="charts"] .ai-x {
   color: var(--faint);
-  font-size: 11px;
+  font-size: 13px;
   padding: 0 3px;
   margin-left: auto;
 }
@@ -2420,7 +2420,7 @@ body[data-page="charts"] .alog {
 body[data-page="charts"] .lg {
   display: flex;
   gap: 8px;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -2445,7 +2445,7 @@ body[data-page="charts"] .set-r {
   gap: 12px;
   padding: 5px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 body[data-page="charts"] .set-r:last-child {
@@ -2465,7 +2465,7 @@ body[data-page="charts"] .set-r input[type="number"] {
   border: 1px solid var(--line-strong);
   border-radius: 5px;
   padding: 4px 6px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--ink);
 }
 
@@ -2508,7 +2508,7 @@ body[data-page="charts"] #symModal .sheet-b {
 body[data-page="charts"] #symModal .sheet-f {
   margin-top: 0;
   padding: 9px 14px 11px;
-  font-size: 10.5px;
+  font-size: 12px;
 }
 body[data-page="charts"] .stabs {
   display: flex;
@@ -2524,7 +2524,7 @@ body[data-page="charts"] .stab {
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   cursor: pointer;
 }
 body[data-page="charts"] .stab:hover {
@@ -2555,12 +2555,12 @@ body[data-page="charts"] .sr-n {
   display: flex;
   align-items: baseline;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 body[data-page="charts"] .sr-d {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 2px;
   overflow: hidden;
@@ -2569,7 +2569,7 @@ body[data-page="charts"] .sr-d {
 }
 body[data-page="charts"] .sr-cls {
   flex: 0 0 auto;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--faint);
   text-transform: uppercase;
@@ -2584,7 +2584,7 @@ body[data-page="charts"] .sr-r {
   justify-content: flex-end;
   gap: 12px;
   flex: 0 0 auto;
-  font-size: 11.5px;
+  font-size: 13px;
 }
 body[data-page="charts"] .sr-r > span:first-child {
   min-width: 74px;
@@ -2603,7 +2603,7 @@ body[data-page="charts"] .sr-r button {
   border: 0;
   background: transparent;
   color: var(--faint);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
   border-radius: 4px;
   cursor: pointer;
@@ -2620,7 +2620,7 @@ body[data-page="charts"] .ws {
   gap: 10px;
   padding: 7px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 body[data-page="charts"] .ws:last-child {
   border-bottom: 0;
@@ -2630,7 +2630,7 @@ body[data-page="charts"] .ws b {
 }
 body[data-page="charts"] .ws span {
   color: var(--faint);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 body[data-page="charts"] .ws .btn {
   margin-left: auto;
@@ -2638,7 +2638,7 @@ body[data-page="charts"] .ws .btn {
 
 /* indicator row with a warning/info line */
 body[data-page="charts"] .ir-w {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--warn-ink);
   margin-top: 3px;
   line-height: 1.4;
@@ -2663,7 +2663,7 @@ body[data-page="charts"] #ctx button {
   text-align: left;
   padding: 6px 9px;
   border-radius: 5px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 body[data-page="charts"] #ctx button:hover {
@@ -2818,7 +2818,7 @@ body[data-page="charts"] #drawBody .set-r input[type="text"] {
   border: 1px solid var(--line-strong);
   border-radius: 5px;
   padding: 4px 6px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--ink);
 }
 body[data-page="charts"] .sheet-f {
@@ -2879,7 +2879,7 @@ body[data-page="charts"] .menu .mi {
   width: 100%;
   padding: 6px 8px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   text-align: left;
 }
@@ -2889,7 +2889,7 @@ body[data-page="charts"] .menu .mi:hover {
 }
 body[data-page="charts"] .menu .mi span {
   color: var(--faint);
-  font-size: 10.5px;
+  font-size: 12px;
   font-family: var(--mono);
 }
 body[data-page="charts"] .menu-chips {
@@ -2905,7 +2905,7 @@ body[data-page="charts"] .feed-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--warn-ink);
@@ -2960,7 +2960,7 @@ body[data-page="charts"] .nb-l {
   min-width: 0;
 }
 body[data-page="charts"] .nb-l > span {
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--faint);
@@ -2976,7 +2976,7 @@ body[data-page="charts"] #notes {
   border: 1px solid var(--line-strong);
   border-radius: 6px;
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.45;
   color: var(--ink);
   outline: none;
@@ -3132,7 +3132,7 @@ body[data-page="charts"] .leg-i {
     display: none;
   }
   body[data-page="charts"] .leg-o {
-    font-size: 10px;
+    font-size: 12px;
     gap: 5px;
   }
   /* The prompt wraps to two lines at this width, and a box sized for one
@@ -3146,10 +3146,10 @@ body[data-page="charts"] .leg-i {
   }
   body[data-page="charts"] #indBtn::before {
     content: "Studies";
-    font-size: 12px;
+    font-size: 14px;
   }
   body[data-page="charts"] #indBtn b {
-    font-size: 11px;
+    font-size: 13px;
     margin-left: 6px;
   }
   body[data-page="charts"] .sheet-b.threecol {
@@ -3272,7 +3272,7 @@ body[data-page="charts"] .iv-add {
   padding: 6px 8px;
   border: 1px dashed var(--line-strong);
   border-radius: 5px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--ink-700);
   text-align: left;
 }
@@ -3300,7 +3300,7 @@ body[data-page="charts"] .iv-p {
   align-items: baseline;
   gap: 8px;
   padding: 5px 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-family: var(--mono);
   color: var(--ink-700);
   text-align: left;
@@ -3311,7 +3311,7 @@ body[data-page="charts"] .iv-r.on .iv-p {
 }
 body[data-page="charts"] .iv-p span {
   font-family: var(--sans);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--faint);
   white-space: nowrap;
   overflow: hidden;
@@ -3370,7 +3370,7 @@ body[data-page="charts"] .cbot-s {
 body[data-page="charts"] .cb-btn {
   padding: 3px 7px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink-700);
   white-space: nowrap;
@@ -3391,7 +3391,7 @@ body[data-page="charts"] #tzBtn {
 }
 body[data-page="charts"] #tzName {
   color: var(--faint);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.04em;
 }
 
@@ -3405,7 +3405,7 @@ body[data-page="charts"] .leg-q {
   gap: 1px;
   margin: 2px 0;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 body[data-page="charts"] .leg-q > span {
   display: flex;
@@ -3418,7 +3418,7 @@ body[data-page="charts"] .leg-q > span {
 body[data-page="charts"] .leg-q i {
   font-style: normal;
   font-family: var(--sans);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -3438,11 +3438,11 @@ body[data-page="charts"] .qb-b {
 body[data-page="charts"] .qb-m {
   background: var(--surface-2);
   color: var(--faint);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 @media (max-width: 720px) {
   body[data-page="charts"] .leg-q {
-    font-size: 10.5px;
+    font-size: 12px;
   }
 }
 
@@ -3459,7 +3459,7 @@ body[data-page="charts"] .symcard {
   margin-bottom: 10px;
 }
 body[data-page="charts"] .sc-h b {
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.01em;
 }
 body[data-page="charts"] .sc-m {
@@ -3468,7 +3468,7 @@ body[data-page="charts"] .sc-m {
   border-radius: 999px;
   background: var(--surface-3);
   border: 1px solid var(--line);
-  font-size: 9.5px;
+  font-size: 12px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -3476,13 +3476,13 @@ body[data-page="charts"] .sc-m {
 }
 body[data-page="charts"] .sc-n {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--ink-3);
 }
 body[data-page="charts"] .sc-price-note {
   margin-top: 9px;
   color: var(--ink-3);
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.4;
 }
 body[data-page="charts"] .sc-p {
@@ -3507,7 +3507,7 @@ body[data-page="charts"] .sc-p i {
 body[data-page="charts"] .sc-p em {
   font-style: normal;
   margin-left: 6px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink-3);
   letter-spacing: 0.04em;
@@ -3523,7 +3523,7 @@ body[data-page="charts"] .sc-c {
   align-items: center;
   gap: 7px;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 body[data-page="charts"] .sc-c.up {
   color: var(--up);
@@ -3542,7 +3542,7 @@ body[data-page="charts"] .sc-rg {
   gap: 8px;
   margin: 11px 0 9px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ink-3);
 }
 body[data-page="charts"] .sc-rt {
@@ -3576,7 +3576,7 @@ body[data-page="charts"] .sc-f {
   gap: 4px 14px;
   padding-top: 9px;
   border-top: 1px solid var(--line);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--ink-3);
 }
 body[data-page="charts"] .sc-f b {
@@ -3591,7 +3591,7 @@ body[data-page="charts"] .wl-g {
   display: flex;
   justify-content: space-between;
   padding: 9px 2px 5px;
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -3725,7 +3725,7 @@ body[data-page="charts"] .sym {
   background: #171d2a;
 }
 body[data-page="charts"] #symName {
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.03em;
 }
 body[data-page="charts"] .chips {
@@ -3773,7 +3773,7 @@ body[data-page="charts"] .tabs {
   border-bottom-color: #273043;
 }
 body[data-page="charts"] .tab {
-  font-size: 11px;
+  font-size: 13px;
   color: #8190aa;
 }
 body[data-page="charts"] .tab.active {
@@ -3809,7 +3809,7 @@ body[data-page="charts"] .dock-btn {
   border-radius: 5px;
   color: #8190aa;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   border: 1px solid transparent;
 }
@@ -3838,7 +3838,7 @@ body[data-page="charts"] .chart-bottom {
 body[data-page="charts"] .chart-bottom button {
   padding: 5px 10px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 12px;
 }
 body[data-page="charts"] .chart-bottom button:hover {
   color: #fff;
@@ -3848,7 +3848,7 @@ body[data-page="charts"] .bottom-spacer {
   flex: 1;
 }
 body[data-page="charts"] .bottom-status {
-  font-size: 10px;
+  font-size: 12px;
   color: #65728a;
   margin-right: 8px;
 }
@@ -3864,7 +3864,7 @@ body[data-page="charts"] .bottom-status {
 
 /* Stage B: non-destructive workspace readout and legend presentation. */
 body[data-page="charts"] .workspace-data-readout { padding: 12px; overflow-y: auto; }
-body[data-page="charts"] .workspace-data-row { display:flex; justify-content:space-between; gap:12px; padding:9px 2px; border-bottom:1px solid var(--terminal-line); font-size:12px; }
+body[data-page="charts"] .workspace-data-row { display:flex; justify-content:space-between; gap:12px; padding:9px 2px; border-bottom:1px solid var(--terminal-line); font-size:14px; }
 body[data-page="charts"] .workspace-data-row span { color:var(--terminal-muted); }
 body[data-page="charts"] .workspace-data-row strong { font-variant-numeric:tabular-nums; }
 body[data-page="charts"] .dwin { display:none !important; }
@@ -3876,16 +3876,16 @@ body[data-page="charts"] #symModal .sheet { display:flex; flex-direction:column;
 body[data-page="charts"] #symModal .sheet-h { flex:0 0 auto; justify-content:space-between; min-height:52px; padding:0 16px; border-bottom:0; }
 body[data-page="charts"] #symModal .sheet-h b { color:var(--ink); font-size:16px; font-weight:700; letter-spacing:-.015em; }
 body[data-page="charts"] #symModal .sh-sub { display:none; }
-body[data-page="charts"] #symModal .x { display:grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:5px; color:var(--muted); font-size:15px; }
+body[data-page="charts"] #symModal .x { display:grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:5px; color:var(--muted); font-size:16px; }
 body[data-page="charts"] #symModal .x:hover { color:var(--ink); background:var(--surface-2); }
 body[data-page="charts"] #symModal .symbol-search-input { position:relative; display:flex; align-items:center; flex:0 0 auto; min-height:40px; margin:0 16px 12px; padding:0 11px; border:1px solid var(--line-strong); border-radius:7px; background:var(--paper); transition:border-color .14s,box-shadow .14s; }
 body[data-page="charts"] #symModal .symbol-search-input:focus-within { border-color:#2962ff; box-shadow:0 0 0 1px #2962ff; }
 body[data-page="charts"] #symModal .symbol-search-icon { width:16px; height:16px; flex:0 0 auto; color:var(--faint); }
-body[data-page="charts"] #symModal .symbol-search-input input { width:100%; min-width:0; min-height:38px; padding:0 0 0 9px; border:0; outline:0; background:transparent; color:var(--ink); font:inherit; font-size:13px; box-shadow:none; }
+body[data-page="charts"] #symModal .symbol-search-input input { width:100%; min-width:0; min-height:38px; padding:0 0 0 9px; border:0; outline:0; background:transparent; color:var(--ink); font:inherit; font-size:14px; box-shadow:none; }
 body[data-page="charts"] #symModal .symbol-search-input input::placeholder { color:var(--faint); opacity:1; }
 body[data-page="charts"] #symModal .stabs { display:flex; flex:0 0 auto; flex-wrap:nowrap; gap:5px; padding:0 14px 11px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--line); }
 body[data-page="charts"] #symModal .stabs::-webkit-scrollbar { display:none; }
-body[data-page="charts"] #symModal .stab { flex:0 0 auto; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--muted); font-size:10.5px; font-weight:600; line-height:1.35; cursor:pointer; }
+body[data-page="charts"] #symModal .stab { flex:0 0 auto; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--muted); font-size:12px; font-weight:600; line-height:1.35; cursor:pointer; }
 body[data-page="charts"] #symModal .stab:hover:not(.unsupported) { border-color:var(--line-strong); color:var(--ink); }
 body[data-page="charts"] #symModal .stab.on { border-color:#131722; background:#131722; color:#fff; box-shadow:none; }
 body[data-page="charts"] #symModal .stab.unsupported { opacity:.44; cursor:not-allowed; }
@@ -3897,19 +3897,19 @@ body[data-page="charts"] #symList .sr + .sr { border-top:1px solid color-mix(in 
 body[data-page="charts"] #symList .sr:hover { background:var(--surface-2); }
 body[data-page="charts"] #symList .sr.cur { background:color-mix(in srgb,#2962ff 10%,var(--surface)); box-shadow:inset 2px 0 #2962ff; }
 body[data-page="charts"] #symList .sr-main { display:flex; align-items:center; flex:1 1 auto; gap:9px; min-width:0; }
-body[data-page="charts"] #symList .symbol-avatar { display:flex; align-items:center; justify-content:center; position:relative; flex:0 0 22px; width:22px; height:22px; overflow:hidden; border:1px solid var(--line); border-radius:50%; background:var(--surface-2); color:var(--ink); font-size:10px; font-weight:700; line-height:1; }
+body[data-page="charts"] #symList .symbol-avatar { display:flex; align-items:center; justify-content:center; position:relative; flex:0 0 22px; width:22px; height:22px; overflow:hidden; border:1px solid var(--line); border-radius:50%; background:var(--surface-2); color:var(--ink); font-size:12px; font-weight:700; line-height:1; }
 body[data-page="charts"] #symList .symbol-avatar-pair { overflow:visible; border:0; background:transparent; }
-body[data-page="charts"] #symList .symbol-avatar-pair span { display:grid; place-items:center; position:absolute; top:2px; width:16px; height:16px; overflow:hidden; border:1px solid var(--surface); border-radius:50%; background:var(--surface-2); font-size:11px; }
+body[data-page="charts"] #symList .symbol-avatar-pair span { display:grid; place-items:center; position:absolute; top:2px; width:16px; height:16px; overflow:hidden; border:1px solid var(--surface); border-radius:50%; background:var(--surface-2); font-size:13px; }
 body[data-page="charts"] #symList .symbol-avatar-pair span:first-child { left:0; z-index:1; }
 body[data-page="charts"] #symList .symbol-avatar-pair span:last-child { right:0; }
-body[data-page="charts"] #symList .symbol-avatar-crypto { background:#f7931a; color:#fff; border-color:transparent; font-size:14px; }
-body[data-page="charts"] #symList .symbol-avatar-metal { background:#b9892f; color:#fff; border-color:transparent; font-size:9px; }
+body[data-page="charts"] #symList .symbol-avatar-crypto { background:#f7931a; color:#fff; border-color:transparent; font-size:15px; }
+body[data-page="charts"] #symList .symbol-avatar-metal { background:#b9892f; color:#fff; border-color:transparent; font-size:12px; }
 body[data-page="charts"] #symList .sr-copy { display:flex; align-items:baseline; gap:8px; min-width:0; overflow:hidden; }
-body[data-page="charts"] #symList .sr-n { display:inline-flex; flex:0 0 auto; margin:0; font-size:11.5px; letter-spacing:.015em; }
+body[data-page="charts"] #symList .sr-n { display:inline-flex; flex:0 0 auto; margin:0; font-size:13px; letter-spacing:.015em; }
 body[data-page="charts"] #symList .sr-n strong { font-weight:700; font-variant-numeric:tabular-nums; }
-body[data-page="charts"] #symList .sr-d { display:block; min-width:0; margin:0; overflow:hidden; color:var(--muted); font-size:11px; font-weight:400; text-overflow:ellipsis; white-space:nowrap; }
-body[data-page="charts"] #symList .sr-market { flex:0 1 84px; overflow:hidden; color:var(--muted); font-size:10px; text-overflow:ellipsis; text-transform:lowercase; white-space:nowrap; }
-body[data-page="charts"] #symList .sr-source { display:inline-flex; align-items:center; flex:0 0 126px; min-width:0; overflow:hidden; color:var(--muted); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+body[data-page="charts"] #symList .sr-d { display:block; min-width:0; margin:0; overflow:hidden; color:var(--muted); font-size:13px; font-weight:400; text-overflow:ellipsis; white-space:nowrap; }
+body[data-page="charts"] #symList .sr-market { flex:0 1 84px; overflow:hidden; color:var(--muted); font-size:12px; text-overflow:ellipsis; text-transform:lowercase; white-space:nowrap; }
+body[data-page="charts"] #symList .sr-source { display:inline-flex; align-items:center; flex:0 0 126px; min-width:0; overflow:hidden; color:var(--muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
 body[data-page="charts"] #symList .sr-source::before { content:""; flex:0 0 6px; width:6px; height:6px; margin-right:6px; border-radius:50%; background:#89909f; }
 body[data-page="charts"] #symList .sr-source[data-source="binance"]::before { background:#f0b90b; }
 body[data-page="charts"] #symList .sr-source[data-source="exness_mt5"]::before { background:#1a9c75; }
@@ -3923,8 +3923,8 @@ body[data-page="charts"] #symList .sr-r button.is-favorite { color:#d9a514; }
 body[data-page="charts"] #symList .sr-r button:disabled { cursor:not-allowed; opacity:.4; }
 body[data-page="charts"] #symList .source-conflict { cursor:not-allowed; opacity:.62; }
 body[data-page="charts"] #symList .source-conflict:hover { background:transparent; }
-body[data-page="charts"] #symList .empty { padding:18px 10px; color:var(--muted); font-size:11px; }
-body[data-page="charts"] #symModal .sheet-f { display:flex; flex:0 0 auto; align-items:center; justify-content:space-between; gap:12px; min-height:36px; margin:0; padding:7px 15px; border-top:1px solid var(--line); color:var(--faint); font-size:10px; }
+body[data-page="charts"] #symList .empty { padding:18px 10px; color:var(--muted); font-size:13px; }
+body[data-page="charts"] #symModal .sheet-f { display:flex; flex:0 0 auto; align-items:center; justify-content:space-between; gap:12px; min-height:36px; margin:0; padding:7px 15px; border-top:1px solid var(--line); color:var(--faint); font-size:12px; }
 body[data-page="charts"] #symModal .symbol-search-keys { color:var(--muted); white-space:nowrap; }
 @media (max-width:620px) {
   body[data-page="charts"] #symModal .sheet { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); border-radius:8px; }
@@ -3935,12 +3935,12 @@ body[data-page="charts"] #symModal .symbol-search-keys { color:var(--muted); whi
   body[data-page="charts"] #symList .sr-market { display:none; }
   body[data-page="charts"] #symList .sr-source { flex:0 1 106px; }
   body[data-page="charts"] #symList .sr-copy { gap:5px; }
-  body[data-page="charts"] #symList .sr-d { font-size:10px; }
+  body[data-page="charts"] #symList .sr-d { font-size:12px; }
   body[data-page="charts"] #symModal .sheet-f { align-items:flex-start; flex-direction:column; gap:2px; padding:6px 12px; }
 }
 @media (max-width:390px) {
   body[data-page="charts"] #symList .sr { gap:5px; }
   body[data-page="charts"] #symList .symbol-avatar { flex-basis:20px; width:20px; height:20px; }
-  body[data-page="charts"] #symList .sr-source { flex-basis:82px; font-size:9px; }
+  body[data-page="charts"] #symList .sr-source { flex-basis:82px; font-size:12px; }
   body[data-page="charts"] #symList .sr-access { display:none; }
 }

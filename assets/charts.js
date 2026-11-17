@@ -2388,9 +2388,9 @@ function stampSnapshot(src, c) {
   const bg = tok("--bg", "#0e1117");
 
   const MONO =
-    '600 10px ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", monospace';
+    '600 12px ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", monospace';
   const SANS =
-    '600 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    '600 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
   const pad = 10,
     mark = 22,

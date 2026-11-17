@@ -382,7 +382,7 @@
       <div class="dr-sec">
         <h3>Discipline ${d}/100</h3>
         <span class="disc-bar ${d >= 75 ? "" : d >= 50 ? "mid" : "low"}" style="width:100%;display:block"><i style="width:${d}%"></i></span>
-        <p style="margin-top:8px;font-size:13px">${esc(disciplineNote(t, c, d))}</p>
+        <p style="margin-top:8px;font-size:14px">${esc(disciplineNote(t, c, d))}</p>
       </div>
 
       ${

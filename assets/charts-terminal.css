@@ -39,7 +39,7 @@ body[data-page="charts"] {
   background: var(--term-bg) !important;
   color: var(--term-text);
   font-family: "IBM Plex Sans", sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.4;
 }
 html[data-theme="light"] body[data-page="charts"] {
@@ -110,8 +110,8 @@ body[data-page="charts"] .ctoolbar .sym {
   background: var(--term-raised) !important;
   color: var(--term-text) !important;
 }
-body[data-page="charts"] #symName { font-size: 13px; font-weight: 650; letter-spacing: .02em; }
-body[data-page="charts"] .sym-meta { color: var(--term-faint); font-size: 10px; }
+body[data-page="charts"] #symName { font-size: 14px; font-weight: 650; letter-spacing: .02em; }
+body[data-page="charts"] .sym-meta { color: var(--term-faint); font-size: 12px; }
 body[data-page="charts"] .ctoolbar .chips {
   gap: 1px;
   padding: 2px;
@@ -124,7 +124,7 @@ body[data-page="charts"] .ctoolbar .chip {
   border: 0;
   border-radius: 4px;
   color: var(--term-muted) !important;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 550;
 }
 body[data-page="charts"] .ctoolbar .chip:hover,
@@ -149,7 +149,7 @@ body[data-page="charts"] .workspace-toggle {
   border-radius: var(--term-radius);
   color: var(--term-muted) !important;
   background: transparent !important;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 550;
   white-space: nowrap;
   transition: background .12s ease, color .12s ease, border-color .12s ease;
@@ -166,7 +166,7 @@ body[data-page="charts"] .ctoolbar #indCount {
   border-radius: 9px;
   background: var(--term-raised);
   color: var(--term-muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 body[data-page="charts"] .ctoolbar #journalBtn {
   display: inline-flex !important;
@@ -181,10 +181,10 @@ body[data-page="charts"] .ctoolbar #journalBtn {
   box-shadow: none;
 }
 body[data-page="charts"] .ctoolbar #journalBtn:hover { filter: brightness(1.08); }
-body[data-page="charts"] .ctoolbar #feedBadge { display: inline-flex !important; font-size: 9px; }
+body[data-page="charts"] .ctoolbar #feedBadge { display: inline-flex !important; font-size: 12px; }
 body[data-page="charts"] .cw.data-unavailable canvas { pointer-events: none; }
-body[data-page="charts"] #dataModeToggle { min-height: 28px; padding: 4px 7px; font-size: 10px; white-space: nowrap; }
-body[data-page="charts"] .wr-unavailable { color: var(--ink-3); font-size: 9px; white-space: nowrap; }
+body[data-page="charts"] #dataModeToggle { min-height: 28px; padding: 4px 7px; font-size: 12px; white-space: nowrap; }
+body[data-page="charts"] .wr-unavailable { color: var(--ink-3); font-size: 12px; white-space: nowrap; }
 body[data-page="charts"] .ctoolbar .risk-pill { display: none !important; }
 body[data-page="charts"] #moreMenu #themeBtn { display: none !important; }
 
@@ -276,7 +276,7 @@ body[data-page="charts"] .tab {
   border-radius: 0;
   color: var(--term-muted) !important;
   background: transparent !important;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 550;
   white-space: nowrap;
 }
@@ -312,16 +312,16 @@ body[data-page="charts"] .leg {
   box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
   backdrop-filter: blur(8px);
 }
-body[data-page="charts"] .leg-1 { gap: 8px; font-size: 11px; }
-body[data-page="charts"] .leg-sym { font-size: 12px; font-weight: 650; }
+body[data-page="charts"] .leg-1 { gap: 8px; font-size: 13px; }
+body[data-page="charts"] .leg-sym { font-size: 14px; font-weight: 650; }
 body[data-page="charts"] .leg-int,
-body[data-page="charts"] .leg-o { color: var(--term-muted); font-size: 10px; }
+body[data-page="charts"] .leg-o { color: var(--term-muted); font-size: 12px; }
 body[data-page="charts"] .leg-i { gap: 3px; max-width: 100%; }
 body[data-page="charts"] .lchip {
   padding: 2px 4px;
   border-radius: 3px;
   background: color-mix(in srgb, var(--term-surface) 70%, transparent);
-  font-size: 10px;
+  font-size: 12px;
 }
 body[data-page="charts"] .lchip button { border-radius: 3px; color: var(--term-muted); }
 body[data-page="charts"] .lchip button:hover { color: var(--term-text); background: var(--term-hover); }
@@ -379,7 +379,7 @@ body[data-page="charts"] .cbot {
   border: 0 !important;
   border-top: 1px solid var(--term-line) !important;
 }
-body[data-page="charts"] .cb-btn { padding: 4px 7px; border-radius: 3px; color: var(--term-muted); font-size: 10.5px; }
+body[data-page="charts"] .cb-btn { padding: 4px 7px; border-radius: 3px; color: var(--term-muted); font-size: 12px; }
 body[data-page="charts"] .cb-btn:hover,
 body[data-page="charts"] .cb-btn.on { color: var(--term-accent); background: var(--term-accent-soft) !important; }
 body[data-page="charts"] .notebar {
@@ -575,7 +575,7 @@ body[data-page="charts"] #symModal .symbol-search-input input {
   box-shadow: none;
   color: inherit;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
 }
 body[data-page="charts"] #symModal .symbol-source-filter { flex: 0 0 148px; min-width: 0; }
 body[data-page="charts"] #symModal .symbol-source-filter select {
@@ -587,7 +587,7 @@ body[data-page="charts"] #symModal .symbol-source-filter select {
   background: #fff;
   color: #131722;
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   cursor: pointer;
 }
 [data-theme="dark"] body[data-page="charts"] #symModal .symbol-source-filter select {
@@ -631,7 +631,7 @@ body[data-page="charts"] #symModal .stab {
   border-radius: 999px;
   background: #f0f3fa;
   color: #434651;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -653,7 +653,7 @@ body[data-page="charts"] #symModal .broker-directory-trigger {
   border: 1px solid #d1d4dc;
   border-radius: 6px;
   color: inherit;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -685,19 +685,19 @@ body[data-page="charts"] #symList .sr:hover { background: #f0f3fa; }
 body[data-page="charts"] #symList .sr.cur { background: rgba(41,98,255,.08); box-shadow: inset 2px 0 #2962ff; }
 body[data-page="charts"] #symList .sr-main { display: flex; align-items: center; flex: 1 1 auto; gap: 9px; min-width: 0; }
 body[data-page="charts"] #symList .sr-copy { display: flex; align-items: baseline; gap: 8px; min-width: 0; overflow: hidden; }
-body[data-page="charts"] #symList .sr-n { flex: 0 0 auto; margin: 0; font-size: 11.5px; }
-body[data-page="charts"] #symList .sr-d { min-width: 0; margin: 0; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-body[data-page="charts"] #symList .sr-market { flex: 0 1 80px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; text-transform: lowercase; white-space: nowrap; }
-body[data-page="charts"] #symList .sr-source { display: inline-flex; align-items: center; flex: 0 0 122px; min-width: 0; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+body[data-page="charts"] #symList .sr-n { flex: 0 0 auto; margin: 0; font-size: 13px; }
+body[data-page="charts"] #symList .sr-d { min-width: 0; margin: 0; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+body[data-page="charts"] #symList .sr-market { flex: 0 1 80px; overflow: hidden; font-size: 12px; text-overflow: ellipsis; text-transform: lowercase; white-space: nowrap; }
+body[data-page="charts"] #symList .sr-source { display: inline-flex; align-items: center; flex: 0 0 122px; min-width: 0; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 body[data-page="charts"] #symList .sr-source::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: #89909f; }
 body[data-page="charts"] #symList .sr-source[data-source="binance"]::before { background: #f0b90b; }
 body[data-page="charts"] #symList .sr-source[data-source="exness_mt5"]::before { background: #1a9c75; }
-body[data-page="charts"] #symList .sr-access { display: flex; align-items: center; justify-content: flex-start; flex: 0 0 86px; gap: 5px; min-width: 0; overflow: hidden; font-size: 9px; white-space: nowrap; }
+body[data-page="charts"] #symList .sr-access { display: flex; align-items: center; justify-content: flex-start; flex: 0 0 86px; gap: 5px; min-width: 0; overflow: hidden; font-size: 12px; white-space: nowrap; }
 body[data-page="charts"] #symList .sr-access > .sr-status-dot { flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: #89909f; }
 body[data-page="charts"] #symList .sr-access > .sr-access-label { width: auto; height: auto; overflow: hidden; border-radius: 0; background: transparent; color: #737987; text-overflow: ellipsis; }
 [data-theme="dark"] body[data-page="charts"] #symList .sr-access > .sr-access-label { color: #a3a7b0; }
 body[data-page="charts"] #symList .sr-access.available > .sr-status-dot { background: #2eaa72; }
-body[data-page="charts"] #symList .broker-source-note { padding: 8px 8px 5px; border-top: 1px solid #e0e3eb; color: #707583; font-size: 9px; font-weight: 600; letter-spacing: .01em; }
+body[data-page="charts"] #symList .broker-source-note { padding: 8px 8px 5px; border-top: 1px solid #e0e3eb; color: #707583; font-size: 12px; font-weight: 600; letter-spacing: .01em; }
 [data-theme="dark"] body[data-page="charts"] #symList .broker-source-note { border-color: #2a2e39; color: #9ca0aa; }
 body[data-page="charts"] #symList .broker-unavailable-row { cursor: not-allowed; }
 body[data-page="charts"] #symList .sr-source[data-source="oanda"]::before { background: #c73e4d; }
@@ -710,7 +710,7 @@ body[data-page="charts"] #symList .sr-r button { display: grid; width: 24px; hei
 body[data-page="charts"] #symList .sr-r button:hover,
 body[data-page="charts"] #symList .sr-r button.is-favorite { color: #d9a514; }
 body[data-page="charts"] #symList .source-conflict { cursor: not-allowed; opacity: .6; }
-body[data-page="charts"] #symList .empty { padding: 16px 10px; font-size: 11px; }
+body[data-page="charts"] #symList .empty { padding: 16px 10px; font-size: 13px; }
 body[data-page="charts"] #symModal .symbol-broker-directory {
   flex: 1 1 auto;
   min-height: 0;
@@ -718,22 +718,22 @@ body[data-page="charts"] #symModal .symbol-broker-directory {
   overflow: auto;
 }
 body[data-page="charts"] #symModal .broker-directory-heading { display: flex; flex-direction: column; gap: 3px; margin-bottom: 11px; }
-body[data-page="charts"] #symModal .broker-directory-heading b { font-size: 13px; }
+body[data-page="charts"] #symModal .broker-directory-heading b { font-size: 14px; }
 body[data-page="charts"] #symModal .broker-directory-heading span,
-body[data-page="charts"] #symModal .broker-directory-card p { color: #707583; font-size: 10px; line-height: 1.45; }
+body[data-page="charts"] #symModal .broker-directory-card p { color: #707583; font-size: 12px; line-height: 1.45; }
 [data-theme="dark"] body[data-page="charts"] #symModal .broker-directory-heading span,
 [data-theme="dark"] body[data-page="charts"] #symModal .broker-directory-card p { color: #9ca0aa; }
 body[data-page="charts"] #symModal .broker-directory-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
 body[data-page="charts"] #symModal .broker-directory-card { min-width: 0; padding: 10px; border: 1px solid #e0e3eb; border-radius: 6px; background: #fff; }
 [data-theme="dark"] body[data-page="charts"] #symModal .broker-directory-card { border-color: #2a2e39; background: #1e222d; }
-body[data-page="charts"] #symModal .broker-card-title { display: flex; align-items: center; gap: 8px; font-size: 11px; }
-body[data-page="charts"] #symModal .broker-mark { display: grid; width: 22px; height: 22px; flex: 0 0 22px; place-items: center; border: 1px solid #d1d4dc; border-radius: 50%; color: #434651; font-size: 9px; font-weight: 700; }
+body[data-page="charts"] #symModal .broker-card-title { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+body[data-page="charts"] #symModal .broker-mark { display: grid; width: 22px; height: 22px; flex: 0 0 22px; place-items: center; border: 1px solid #d1d4dc; border-radius: 50%; color: #434651; font-size: 12px; font-weight: 700; }
 [data-theme="dark"] body[data-page="charts"] #symModal .broker-mark { border-color: #434651; color: #d1d4dc; }
 body[data-page="charts"] #symModal .broker-directory-card p { min-height: 30px; margin: 8px 0; }
-body[data-page="charts"] #symModal .broker-data-status { display: block; margin-bottom: 7px; color: #707583; font-size: 9px; }
-body[data-page="charts"] #symModal .broker-directory-card a { color: #2962ff; font-size: 10px; font-weight: 600; text-decoration: none; }
+body[data-page="charts"] #symModal .broker-data-status { display: block; margin-bottom: 7px; color: #707583; font-size: 12px; }
+body[data-page="charts"] #symModal .broker-directory-card a { color: #2962ff; font-size: 12px; font-weight: 600; text-decoration: none; }
 body[data-page="charts"] #symModal .broker-directory-card a:hover { text-decoration: underline; }
-body[data-page="charts"] #symModal .sheet-f { display: flex; justify-content: space-between; gap: 10px; min-height: 36px; padding: 7px 14px; border-top: 1px solid #e0e3eb; font-size: 10px; }
+body[data-page="charts"] #symModal .sheet-f { display: flex; justify-content: space-between; gap: 10px; min-height: 36px; padding: 7px 14px; border-top: 1px solid #e0e3eb; font-size: 12px; }
 [data-theme="dark"] body[data-page="charts"] #symModal .sheet-f { border-color: #2a2e39; }
 @media (max-width: 560px) {
   body[data-page="charts"] #symModal .symbol-search-controls { flex-direction: column; margin-inline: 11px; }
@@ -744,7 +744,7 @@ body[data-page="charts"] #symModal .sheet-f { display: flex; justify-content: sp
   body[data-page="charts"] #symModal .broker-directory-grid { grid-template-columns: 1fr; }
   body[data-page="charts"] #symList .sr { gap: 6px; padding-inline: 4px; }
   body[data-page="charts"] #symList .sr-market { display: none; }
-  body[data-page="charts"] #symList .sr-source { flex-basis: 94px; font-size: 9px; }
+  body[data-page="charts"] #symList .sr-source { flex-basis: 94px; font-size: 12px; }
   body[data-page="charts"] #symModal .sheet-f { flex-wrap: wrap; }
 }
 @media (max-width: 390px) {
@@ -818,7 +818,7 @@ body[data-page="charts"] .fly-search input {
   outline: 0;
   color: var(--term-text);
   background: transparent;
-  font: 11px "IBM Plex Sans", sans-serif;
+  font: 13px "IBM Plex Sans", sans-serif;
 }
 body[data-page="charts"] .fly-search input::placeholder { color: var(--term-muted); }
 body[data-page="charts"] .fly-results {
@@ -833,7 +833,7 @@ body[data-page="charts"] .fly-empty {
   padding: 22px 10px;
   color: var(--term-muted);
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
 }
 body[data-page="charts"] .fly-h {
   position: sticky;
@@ -847,7 +847,7 @@ body[data-page="charts"] .fly-h {
   border-bottom: 1px solid var(--term-line);
   background: var(--term-surface);
   color: var(--term-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .09em;
   text-transform: uppercase;
@@ -868,7 +868,7 @@ body[data-page="charts"] .fly-s {
   padding: 9px 7px 4px;
   border-top: 1px solid var(--term-line);
   color: var(--term-muted);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .1em;
 }
@@ -880,7 +880,7 @@ body[data-page="charts"] .fly-r {
   gap: 10px;
   border-radius: 4px;
   color: var(--term-text);
-  font-size: 12px;
+  font-size: 14px;
   transition: background-color .12s ease, color .12s ease;
 }
 body[data-page="charts"] .fly-i {
@@ -908,12 +908,12 @@ body[data-page="charts"] .fly-r kbd {
   border: 1px solid var(--term-line-strong);
   border-radius: 3px;
   color: var(--term-muted);
-  font: 10px/1.2 "IBM Plex Mono", monospace;
+  font: 12px/1.2 "IBM Plex Mono", monospace;
 }
 body[data-page="charts"] .fly-star {
   flex-basis: 25px;
   height: 28px;
-  font-size: 15px;
+  font-size: 16px;
 }
 body[data-page="charts"] .fly-star:hover { background: var(--term-hover); color: #f0b90b; }
 body[data-page="charts"] .fly-star.on { color: #f0b90b; }
@@ -922,7 +922,7 @@ body[data-page="charts"] .fly-f {
   padding: 8px 8px 3px;
   border-top: 1px solid var(--term-line);
   color: var(--term-muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 body[data-page="charts"] .rfav[draggable="true"] { cursor: grab; }
 body[data-page="charts"] .rfav[draggable="true"] { touch-action: none; }
@@ -937,5 +937,5 @@ body[data-page="charts"] .rfav:focus-visible { outline: 2px solid var(--term-acc
 }
 @media (max-width: 420px) {
   body[data-page="charts"] .rfly { padding-inline: 4px; }
-  body[data-page="charts"] .fly-r { min-height: 36px; font-size: 12px; }
+  body[data-page="charts"] .fly-r { min-height: 36px; font-size: 14px; }
 }

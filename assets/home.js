@@ -87,14 +87,14 @@
     const values=data.map(b=>b.c),min=Math.min(...values),max=Math.max(...values),span=max-min||max*.001||1;
     const L=5,R=w<400?61:75,T=12,B=h-30,low=min-span*.08,high=max+span*.08;
     const x=i=>L+i/(data.length-1)*(w-L-R),y=v=>T+(high-v)/(high-low)*(B-T);
-    ctx.font='11px Arial';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.font='12px Arial';ctx.textAlign='left';ctx.textBaseline='middle';
     const digits=instrument(state.hero)?.digits||2;
     for(let i=0;i<4;i++){const value=low+(high-low)*i/3,yy=y(value);ctx.fillStyle=col('--muted');ctx.fillText(format(value,digits),w-R+8,yy);}
     const color=values.at(-1)>=values[0]?col('--up'):col('--down');
     ctx.beginPath();data.forEach((b,i)=>i?ctx.lineTo(x(i),y(b.c)):ctx.moveTo(x(i),y(b.c)));ctx.lineTo(x(data.length-1),B);ctx.lineTo(L,B);ctx.closePath();
     const gradient=ctx.createLinearGradient(0,T,0,B);gradient.addColorStop(0,color+'32');gradient.addColorStop(1,color+'02');ctx.fillStyle=gradient;ctx.fill();
     ctx.beginPath();data.forEach((b,i)=>i?ctx.lineTo(x(i),y(b.c)):ctx.moveTo(x(i),y(b.c)));ctx.strokeStyle=color;ctx.lineWidth=1.7;ctx.lineJoin='round';ctx.stroke();
-    const ticks=w<400?3:5;ctx.fillStyle=col('--muted');ctx.font='10px Arial';
+    const ticks=w<400?3:5;ctx.fillStyle=col('--muted');ctx.font='12px Arial';
     for(let i=0;i<ticks;i++){const index=Math.round(i*(data.length-1)/(ticks-1)),date=new Date(data[index].t);ctx.textAlign=i===ticks-1?'right':'left';const label=state.range==='1D'?date.toLocaleTimeString('en-GB',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'}):date.toLocaleDateString('en-GB',{timeZone:'UTC',day:'numeric',month:'short'});ctx.fillText(label,x(index),h-10)}
     chartState={data,x,y,w,h,L,R,T,B};
     canvas.setAttribute('aria-label',`${instrument(state.hero).name} ${state.range} ${state.mode==='preview'?'illustrative':'provider historical'} line chart, ${format(values.at(-1),digits)} ${instrument(state.hero).currency}. Time in UTC.`);

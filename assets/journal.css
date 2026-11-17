@@ -58,7 +58,7 @@
   background: none;
   color: var(--ink-700);
   font: inherit;
-  font-size: 12.5px;
+  font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -89,7 +89,7 @@
   background: none;
   color: var(--muted);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -141,7 +141,7 @@
 
 .cal .dow {
   padding-bottom: 4px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -165,20 +165,20 @@
 
 .cal .day .d {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--faint);
 }
 
 .cal .day .pl {
   margin-top: 8px;
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .cal .day .ct {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted);
 }
 
@@ -215,7 +215,7 @@
   gap: 6px;
   flex-wrap: wrap;
   margin: 14px 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -252,7 +252,7 @@
 
 .ins h3 {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -273,12 +273,12 @@
 }
 
 .ins-row .lab {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .ins-row .lab small {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--faint);
 }
 
@@ -304,7 +304,7 @@
 
 .ins-row .val {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -452,7 +452,7 @@
 }
 
 .kv dt {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -462,7 +462,7 @@
 .kv dd {
   margin: 3px 0 0;
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -480,7 +480,7 @@
 
 .dr-sec h3 {
   margin: 0 0 6px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -489,7 +489,7 @@
 
 .dr-sec p {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--ink-700);
 }
@@ -505,7 +505,7 @@
   padding: 0;
   list-style: none;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .exit-list li {
@@ -679,7 +679,7 @@
   .side {
     min-width: 0;
     padding: 1px 4px;
-    font-size: 9.5px;
+    font-size: 12px;
   }
 
   .disc-bar {
@@ -697,7 +697,7 @@
 
   .cal .day .pl {
     margin-top: 4px;
-    font-size: 10.5px;
+    font-size: 12px;
   }
 
   .cal .day .ct {
@@ -735,7 +735,7 @@
 
 .pt-col h4 {
   margin: 0 0 10px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -754,7 +754,7 @@
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -770,7 +770,7 @@
 .pt-checks small {
   display: block;
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -783,7 +783,7 @@
   border-radius: 999px;
   border: 1px solid var(--line-strong);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 15px;
   text-align: center;
   color: var(--faint);
@@ -805,7 +805,7 @@
 }
 
 .pt-col .fld.chk span {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -818,13 +818,13 @@
 }
 
 .pt-verdict b {
-  font-size: 13.5px;
+  font-size: 15px;
 }
 
 .pt-verdict span {
   display: block;
   margin-top: 3px;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -856,7 +856,7 @@
 
 /* Stage C: additive Journal filters and readable metrics; shared tokens stay authoritative. */
 body[data-page="journal"] .journal-advanced-filters { display:grid; grid-template-columns:repeat(5,minmax(120px,1fr)); gap:8px; width:100%; }
-body[data-page="journal"] .journal-advanced-filters label { display:flex; flex-direction:column; gap:5px; min-width:0; font-size:11px; color:var(--muted,var(--text-muted,#64748b)); }
+body[data-page="journal"] .journal-advanced-filters label { display:flex; flex-direction:column; gap:5px; min-width:0; font-size:13px; color:var(--muted,var(--text-muted,#64748b)); }
 body[data-page="journal"] .journal-advanced-filters :is(input,select) { width:100%; min-width:0; min-height:36px; border:1px solid var(--border,#cbd5e1); border-radius:6px; padding:6px 8px; background:var(--surface,#fff); color:var(--text,#172238); }
 body[data-page="journal"] .journal-advanced-filters :is(input,select):focus-visible { outline:2px solid var(--accent,#2962ff); outline-offset:2px; }
 body[data-page="journal"] .stat-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
