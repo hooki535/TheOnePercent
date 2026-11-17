@@ -230,6 +230,8 @@ const state = {
     side: "long",
   },
   pos: null,
+  positions: [],
+  activePositionId: null,
   drawings: {},
   alerts: [],
   fired: [],
@@ -304,7 +306,7 @@ function syncSettings() {
   /* Favourite drawing tools live in the same settings blob; the rail owns the
      list and reads it here so one sync covers the whole page. */
   if (typeof loadFavs === "function") loadFavs();
-  if (state.pos) recalc();
+  if (state.pos || state.positions?.length) recalc();
 }
 
 function saveWatch() {
@@ -337,6 +339,9 @@ function snapshotState() {
     drawings: state.drawings,
     layout: state.layout,
     pos: state.pos,
+    positions: state.positions,
+    activePositionId: state.activePositionId,
+    posSelected: state.posSelected,
     type: state.type,
     look: state.look,
     watch: state.watch,
@@ -350,6 +355,7 @@ function pushUndo(snapshot) {
 }
 function applySnap(j) {
   const o = JSON.parse(j);
+  if(typeof PositionPlanModel!=='undefined')Object.assign(o,PositionPlanModel.normalise(o));
   if (o.look && typeof o.look.utc === "boolean" && o.look.utc !== state.look.utc) {
     try { Store.settings.patch({chartsUtc:o.look.utc}); }
     catch(e) { toast("Could not restore timezone settings"); return; }
@@ -357,7 +363,8 @@ function applySnap(j) {
   state.charts = o.charts;
   state.drawings = o.drawings;
   state.layout = o.layout;
-  state.pos = o.pos;
+  if(typeof PositionPlans!=='undefined')PositionPlans.restore(o);else state.pos=o.pos;
+  if(typeof recalc==='function')recalc();
   state.type = o.type;
   if (o.look) { state.look = { ...state.look, ...o.look }; if(typeof window!=="undefined")window.ChartAppearance?.syncLook(state.look); }
   if (Array.isArray(o.watch)) state.watch = o.watch.slice();
@@ -410,9 +417,11 @@ function makePos(key, a, b, opts) {
     state.pos.startBar=Math.min(opts.startBar,opts.endBar);
     state.pos.endBar=Math.max(state.pos.startBar+2,Math.max(opts.startBar,opts.endBar));
   }
+  if(typeof PositionPlans!=='undefined')PositionPlans.add(state.pos);
   state.selObj=null;state.posSelected=true;
   recalc();
   syncInputs();
+  if(typeof paintObjects==='function')paintObjects();
   $$(".st").forEach((x) =>
     x.classList.toggle("on", x.dataset.side === state.risk.side),
   );
@@ -473,14 +482,17 @@ function movePos(k,price){
    could disagree about a yen pair. The only work left here is rounding
    to a tradeable step and translating the result into the readouts. */
 function recalc() {
-  const P = state.pos;
+  const list=typeof PositionPlans!=='undefined'?PositionPlans.all():[state.pos].filter(Boolean);
+  list.forEach(calculatePosition);renderReadouts();
+}
+function calculatePosition(P) {
   if (!P) {
-    renderReadouts();
     return;
   }
   const S = SYMBOLS[P.sym],
     R = state.risk,
-    inst = S.instrument;
+    inst = S?.instrument;
+  if(!inst){P.calc=null;return;}
   const riskCash = (R.balance * R.pct) / 100;
 
   const ideal = Instruments.positionSize({
@@ -492,7 +504,6 @@ function recalc() {
   });
   if (!ideal) {
     P.calc = null;
-    renderReadouts();
     return;
   }
 
@@ -532,7 +543,6 @@ function recalc() {
       S.step < 0.01 ? 3 : 2,
     ),
   };
-  renderReadouts();
 }
 function chartsDayRiskAssessment(dailyLossPct, positionRiskPct, capPct, breaches) {
   const confirmedBreaches = Array.isArray(breaches) ? breaches.slice() : [];
@@ -735,6 +745,8 @@ function draw() {
     raf = null;
     if (typeof Feed.watchSeries === "function")
       Feed.watchSeries(charts.map((chart) => ({ symbol: chart.cfg.sym, interval: chart.cfg.iv })));
+    const focused=charts[state.sel];
+    if(focused&&typeof PositionPlans!=='undefined'&&state.pos?.key!==focused.key){const before=state.pos;PositionPlans.focusChart(focused.key);if(before!==state.pos){recalc();syncInputs();paintObjects();}}
     charts.forEach((c) => c.render());
     if (document.body.dataset.workspaceTab === "data") paintWorkspaceData();
     // Reflect the provenance of the selected chart, not a global quote status.
@@ -755,6 +767,7 @@ function select(slot) {
   paintIntervals();
   paintSymbol();
   paintIndCount();
+  if(typeof PositionPlans!=='undefined')PositionPlans.focusChart(charts[state.sel]?.key);
   paintObjects();
   paintTypeBtn();
   if (document.body.dataset.workspaceTab === "data") paintWorkspaceData();
@@ -784,6 +797,8 @@ function ivFavs() {
 }
 function setInterval_(iv) {
   state.charts[state.sel].iv = iv;
+  if(typeof PositionPlans!=='undefined')PositionPlans.focusChart(charts[state.sel]?.key);
+  paintObjects();renderReadouts();
   closeIvMenu();
   paintIntervals();
   draw();
@@ -1104,8 +1119,8 @@ function setSymbol(sym) {
   pushRecent(sym);
   if (state.look.syncSymbol) state.charts.forEach((c) => (c.sym = sym));
   else state.charts[state.sel].sym = sym;
-  if (state.pos && charts[state.sel] && state.pos.key !== charts[state.sel].key)
-    state.pos = null;
+  if(typeof PositionPlans!=='undefined')PositionPlans.focusChart(charts[state.sel]?.key);
+  else if(state.pos&&charts[state.sel]&&state.pos.key!==charts[state.sel].key)state.pos=null;
   paintSymbol();
   paintSymCard();
   paintWatchlist();
@@ -1300,6 +1315,7 @@ function paintObjects() {
   $$("#objs .ob").forEach((el) => {
     el.onclick = (e) => {
       if (e.target.closest("[data-a]")) return;
+      state.posSelected=false;
       state.selObj = el.dataset.o;
       paintObjects();
       draw();
@@ -1320,7 +1336,7 @@ function paintObjects() {
             state.drawings[c.key] = c.drw.filter((x) => x.id !== o.id);
           }
           if (a === "set") {
-            state.selObj = o.id;
+            state.posSelected=false;state.selObj = o.id;
             editDrawing(c, o);
             return;
           }
@@ -1329,7 +1345,8 @@ function paintObjects() {
         }),
     );
   });
-  $("#objCount").textContent = list.length;
+  if(typeof PositionTree!=='undefined')PositionTree.paint(c);
+  $('#objCount').textContent=list.length+(typeof PositionPlans!=='undefined'?PositionPlans.forChart(c.key).length:0);
 }
 
 /* ── journal ─────────────────────────────────────────────────── */
@@ -2835,7 +2852,7 @@ addEventListener("keydown", (e) => {
       return;
     }
     setTool("cursor");
-    state.selObj = null;
+    state.selObj = null;state.posSelected=false;
     paintObjects();
     draw();
     return;
@@ -2895,6 +2912,9 @@ addEventListener("keydown", (e) => {
     return;
   }
   if (e.key === "Delete" || e.key === "Backspace") {
+    if(state.posSelected&&state.pos?.key===c.key&&typeof PositionPlans!=='undefined'){
+      e.preventDefault();if(state.pos.locked)return;pushUndo();PositionPlans.remove(state.pos.id);recalc();paintObjects();draw();return;
+    }
     if (state.selObj) {
       pushUndo();
       state.drawings[c.key] = c.drw.filter((o) => o.id !== state.selObj);
@@ -3352,6 +3372,7 @@ function pushSettings() {
       if (id === "fTarget") P.target = +$("#fTarget").value || P.target;
     }
     recalc();
+    paintObjects();
     draw();
   };
 });

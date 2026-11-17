@@ -67,11 +67,10 @@ function editDrawing(chart,obj) {
   if(DrawingProperties.profile(obj.t).levels)drawingSession.draft.levelStyles=DrawingProperties.levels(obj);
   paintDrawingProperties();show('#drawModal');
 }
-function editPositionSettings(chart) {
-  if(!state.pos||state.pos.key!==chart.key)return;
-  const p=state.pos;
-  const o={id:'position-planner',t:p.entry>p.stop?'position':'shortpos',pts:[{i:0,p:p.entry}],style:p.style||{},visibility:p.visibility,hidden:p.hidden,locked:p.locked,position:{entry:p.entry,stop:p.stop,target:p.target,leverage:p.leverage||100,startBar:Number.isFinite(p.startBar)?p.startBar:Math.round(chart.ix(chart.plotW*.42)),endBar:Number.isFinite(p.endBar)?p.endBar:Math.round(chart.ix(chart.plotW-12))}};
-  editDrawing(chart,o);drawingSession.position=true;drawingSession.draft.account={balance:state.risk.balance,pct:state.risk.pct};drawingSession.tab='Inputs';paintDrawingProperties();
+function editPositionSettings(chart,p=state.pos) {
+  if(!p||p.key!==chart.key)return;
+  const o={id:'position-planner',t:p.entry>p.stop?'position':'shortpos',pts:[{i:0,p:p.entry}],style:p.style||{},visibility:p.visibility,hidden:p.hidden,locked:p.locked,position:{name:p.name||PositionPlanModel.name(p),entry:p.entry,stop:p.stop,target:p.target,leverage:p.leverage||100,startBar:Number.isFinite(p.startBar)?p.startBar:Math.round(chart.ix(chart.plotW*.42)),endBar:Number.isFinite(p.endBar)?p.endBar:Math.round(chart.ix(chart.plotW-12))}};
+  editDrawing(chart,o);drawingSession.position=true;drawingSession.positionId=p.id;drawingSession.positionOriginal=p;drawingSession.draft.account={balance:state.risk.balance,pct:state.risk.pct};drawingSession.tab='Inputs';paintDrawingProperties();
 }
 function paintDrawingProperties() {
   const session=drawingSession;if(!session)return;
@@ -91,7 +90,7 @@ function paintDrawingProperties() {
   if(session.tab==='Inputs'&&p.position){
     const P=o.position,S=SYMBOLS[session.chart.cfg.sym],tick=PositionProperties.tickSize(S);
     const level=(kind,label)=>`<fieldset class="dp-position-level"><legend>${label}</legend>${row('Ticks',`<input type="number" data-position-ticks="${kind}" step="any" min="0" value="${Math.abs(P[kind]-P.entry)/tick}" aria-label="${label} ticks">`)}${row('Price',number('position',kind,P[kind]))}</fieldset>`;
-    body=row('Account size',number('account','balance',o.account.balance,0)+`<span class="dp-unit">${esc(state.risk.currency)}</span>`)+
+    body=row('Name',`<input type="text" maxlength="80" data-scope="position" data-key="name" aria-label="Position name" value="${esc(P.name)}">`)+row('Account size',number('account','balance',o.account.balance,0)+`<span class="dp-unit">${esc(state.risk.currency)}</span>`)+
       row('Calculated size',`<output data-position-size>—</output><span class="dp-unit">${esc(S.unit)}</span>`)+
       row('Risk',number('account','pct',o.account.pct,0,100)+`<span class="dp-unit">%</span>`)+
       row('Entry price',number('position','entry',P.entry))+
@@ -183,6 +182,9 @@ function paintDrawingProperties() {
     const invalid=DrawingProperties.validate(o);if(invalid)return error(invalid);
     if(!Number.isFinite(st.width)||st.width<1||st.width>5||!Number.isFinite(st.fill)||st.fill<0||st.fill>100||!Number.isFinite(st.font)||st.font<9||st.font>32)return error('Check line width, opacity and font size ranges.');
     if(session.position){
+      if(PositionPlans.find(session.positionId)!==session.positionOriginal)return error('This position changed. Close and reopen its settings.');
+      if(!o.position.name?.trim()||o.position.name.trim().length>80)return error('Use a position name between 1 and 80 characters.');
+      o.position.name=o.position.name.trim();
       const invalid=PositionProperties.validate(o);if(invalid)return error(invalid);
       // Persist shared edits before applying geometry; Cancel never writes.
       if(o.account.balance!==state.risk.balance||o.account.pct!==state.risk.pct){
@@ -191,7 +193,7 @@ function paintDrawingProperties() {
       }
     }
     pushUndo();
-    if(session.position){state.risk.balance=o.account.balance;state.risk.pct=o.account.pct;state.risk.side=o.t==='shortpos'?'short':'long';Object.assign(state.pos,o.position,{side:o.t==='shortpos'?'short':'long',style:DrawingProperties.clone(st),visibility:DrawingProperties.clone(o.visibility||{}),hidden:o.hidden,locked:o.locked});recalc();syncInputs();}
+    if(session.position){state.risk.balance=o.account.balance;state.risk.pct=o.account.pct;state.risk.side=o.t==='shortpos'?'short':'long';Object.assign(session.positionOriginal,o.position,{side:o.t==='shortpos'?'short':'long',style:DrawingProperties.clone(st),visibility:DrawingProperties.clone(o.visibility||{}),hidden:o.hidden,locked:o.locked});PositionPlans.select(session.positionId);if(session.applyAll)PositionPlans.all().filter(p=>p.side===session.positionOriginal.side).forEach(p=>Object.assign(p,DrawingProperties.template(o)));recalc();syncInputs();}
     else {Object.assign(session.original,DrawingProperties.clone(o));if(session.applyAll)session.chart.drw.filter(x=>x.t===o.t).forEach(x=>Object.assign(x,DrawingProperties.template(o)));}
     const settings=Store.settings.get(),patch={};
     if(session.savedTemplate){const all=DrawingProperties.clone(settings.chartsDrawingTemplates||{});all[o.t]||={};Object.defineProperty(all[o.t],session.savedTemplate.name,{value:session.savedTemplate.value,enumerable:true,writable:true,configurable:true});patch.chartsDrawingTemplates=all;}
