@@ -1113,53 +1113,7 @@ function setSymbol(sym) {
    the one question a number alone cannot answer — 2341.75 is meaningless
    until you know the day ran 2320 to 2345. */
 function paintSymCard() {
-  const el = $("#symCard");
-  if (!el) return;
-  const sym = state.charts[state.sel].sym,
-    S = Feed.symbol(sym),
-    q = Feed.quote(sym);
-  if (!S || !q) {
-    el.innerHTML = S ? `<div class="sc-h"><div><b>${sym}</b><span class="sc-m">${S.market}</span></div><div class="sc-n">${S.name} · ${S.venue}</div></div><div class="sc-p">Unavailable</div><div class="sc-sn">No provider candles are available for this symbol. No market price, daily change, or spread is inferred. Enable Demo mode only to view synthetic candles.</div><div class="sc-f"><span>Quote currency <b>${S.quote || "Unavailable"}</b></span><span>Spread <b>Unavailable</b></span><span>Interval <b>${state.charts[state.sel].iv}</b></span></div>` : "";
-    return;
-  }
-  const d = Feed.history(sym, "15m"),
-    day = new Date(d[d.length - 1].t).getUTCDate();
-  const lastBar = d[d.length - 1];
-  const source = Feed.historicalSource(sym, "15m") || (Feed.isDemoMode() ? "Synthetic Demo mode" : "Provider history");
-  const closeTime = new Date(lastBar.t).toISOString().replace("T", " ").slice(0, 16) + " UTC";
-  let lo = Infinity,
-    hi = -Infinity;
-  for (let i = d.length - 1; i >= 0; i--) {
-    if (new Date(d[i].t).getUTCDate() !== day) break;
-    lo = Math.min(lo, d[i].l);
-    hi = Math.max(hi, d[i].h);
-  }
-  const at = hi > lo ? ((q.price - lo) / (hi - lo)) * 100 : 50;
-  const up = q.chgPct >= 0,
-    dg = S.digits;
-  /* The last digit is set apart the way a broker terminal does it: the pip
-     you are actually paid in should not look like the digits you are not. */
-  const px = q.price.toFixed(dg),
-    head = px.slice(0, -1),
-    tail = px.slice(-1);
-  el.innerHTML =
-    `<div class="sc-h"><div><b>${sym}</b><span class="sc-m">${S.market}</span></div>
-       <div class="sc-n">${S.name} · ${S.venue}</div></div>
-     <div class="sc-price-note">Last candle close · ${source} · ${closeTime}</div>
-     <div class="sc-p ${up ? "up" : "dn"}"><span>${head}</span><i>${tail}</i>
-       <em>${S.quote || ""}</em></div>
-     <div class="sc-c ${up ? "up" : "dn"}" title="Change from the first available 15-minute candle on the archive’s last UTC date">${up ? "+" : "−"}${Math.abs(q.chg).toFixed(dg)}
-       <span>${up ? "+" : "−"}${Math.abs(q.chgPct).toFixed(2)}%</span>
-       <b>Last stored UTC day</b></div>
-     <div class="sc-rg" title="Where the last price sits between the session low and the session high">
-       <span class="sc-rl">${lo.toFixed(dg)}</span>
-       <span class="sc-rt"><i style="left:${at.toFixed(1)}%"></i></span>
-       <span class="sc-rl">${hi.toFixed(dg)}</span></div>
-     <div class="sc-f">
-       <span title="The spread charged on this symbol">Spread <b>${Number.isFinite(S.spread) ? S.spread.toFixed(1) + " " + S.tickName : "Unavailable"}</b></span>
-       <span title="The session this symbol is most liquid in">Session <b>${S.session}</b></span>
-       <span title="The interval the chart is drawn at">Interval <b>${state.charts[state.sel].iv}</b></span>
-     </div>` + specHTML(sym, S);
+  if (window.ChartWatchlist) ChartWatchlist.paintCard();
 }
 
 /* ── contract specification ────────────────────────────────────
@@ -1250,96 +1204,14 @@ function specHTML(sym, S) {
           `<div class="sc-sr"${t ? ` title="${t}"` : ""}><span>${k}</span><b class="mono">${v}</b></div>`,
       )
       .join("")}
-    <p class="sc-sn">Instrument specifications come from the local instrument table. Real chart history is shown only when the selected provider returns candles. Unsupported markets stay unavailable unless Demo mode is explicitly enabled.</p>
+    <p class="sc-sn">Contract specifications are reference values from the local instrument table. Confirm your broker’s contract before sizing a trade.</p>
   </div>`;
 }
 
 /* ── watchlist with sparklines ───────────────────────────────── */
 let wlSort = "none";
 function paintWatchlist() {
-  /* Quote, change and sparkline all come from Feed, so a row and the main
-     chart can never show two different prices for the same symbol. */
-  const rows = state.watch
-    .map((s) => {
-      const S = SYMBOLS[s],
-        q = Feed.quote(s);
-      if (!S) return null;
-      return { s, S, quote: q, last: q ? q.price : null, ch: q ? q.chgPct : null, d: q ? Feed.spark(s, 40) : [] };
-    })
-    .filter(Boolean);
-  if (wlSort === "gain") rows.sort((a, b) => b.ch - a.ch);
-  if (wlSort === "loss") rows.sort((a, b) => a.ch - b.ch);
-  if (wlSort === "name") rows.sort((a, b) => a.s.localeCompare(b.s));
-  /* Grouped by asset class, because a list that runs EURUSD, XAUUSD, BTCUSD,
-     US500 in one column asks the reader to classify every row themselves.
-     Order is fixed rather than alphabetical so the groups do not reshuffle
-     when a symbol is added. Suppressed while a sort is active: a heading
-     that says FOREX above rows ordered by percentage gain would be lying
-     about what governs the order. */
-  const GRP = ["Forex", "Commodities", "Indices", "Futures", "Crypto"];
-  const row = (r) => `
-    <div class="wr ${state.charts[state.sel].sym === r.s ? "on" : ""}" data-sym="${r.s}">
-      <div class="wr-l"><span class="wr-s">${r.s}</span><span class="wr-n">${r.S.name}</span></div>
-      ${r.quote ? `<canvas class="spark" width="72" height="26" data-spark="${r.s}"></canvas>` : '<span class="wr-unavailable">Unavailable</span>'}
-      <div class="wr-r"><span class="wr-p">${r.quote ? r.last.toFixed(r.S.digits) : "—"}</span>
-        <span class="wr-c ${r.quote ? r.ch >= 0 ? "up" : "dn" : "hint"}">${r.quote ? (r.ch >= 0 ? "+" : "−") + Math.abs(r.ch).toFixed(2) + "%" : "No real feed"}</span></div>
-      <button class="wr-x" data-rm="${r.s}" title="Remove from watchlist">✕</button></div>`;
-  if (wlSort === "none") {
-    $("#wl").innerHTML = GRP.map((g) => {
-      const inG = rows.filter((r) => r.S.market === g);
-      if (!inG.length) return "";
-      return (
-        `<div class="wl-g">${g}<span>${inG.length}</span></div>` +
-        inG.map(row).join("")
-      );
-    }).join("");
-  } else {
-    $("#wl").innerHTML = rows.map(row).join("");
-  }
-  rows.forEach((r) => {
-    if (!r.d.length) return;
-    const cv = $(`#wl [data-spark="${r.s}"]`);
-    if (!cv) return;
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    cv.width = 72 * dpr;
-    cv.height = 26 * dpr;
-    const c = cv.getContext("2d");
-    c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const lo = Math.min(...r.d),
-      hi = Math.max(...r.d),
-      y = (v) => 24 - ((v - lo) / (hi - lo || 1)) * 22;
-    c.beginPath();
-    r.d.forEach((v, i) => {
-      const x = (i / (r.d.length - 1)) * 70 + 1;
-      i ? c.lineTo(x, y(v)) : c.moveTo(x, y(v));
-    });
-    c.strokeStyle = r.ch >= 0 ? css("--up") : css("--dn");
-    c.lineWidth = 1.2;
-    c.stroke();
-    c.lineTo(71, 26);
-    c.lineTo(1, 26);
-    c.closePath();
-    c.globalAlpha = 0.12;
-    c.fillStyle = r.ch >= 0 ? css("--up") : css("--dn");
-    c.fill();
-  });
-  $$("#wl .wr").forEach(
-    (r) =>
-      (r.onclick = (e) => {
-        if (e.target.dataset.rm !== undefined) return;
-        setSymbol(r.dataset.sym);
-      }),
-  );
-  $$("#wl [data-rm]").forEach(
-    (b) =>
-      (b.onclick = (e) => {
-        e.stopPropagation();
-        state.watch = state.watch.filter((x) => x !== b.dataset.rm);
-        saveWatch();
-        paintWatchlist();
-      }),
-  );
-  paintCompare();
+  if (window.ChartWatchlist) ChartWatchlist.paint();
 }
 
 /* The compare chips are their own view now, so they paint on their own. They
