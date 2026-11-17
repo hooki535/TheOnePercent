@@ -343,19 +343,23 @@ function snapshotState() {
     sel: state.sel,
   });
 }
-function pushUndo() {
-  undoStack.push(snapshotState());
+function pushUndo(snapshot) {
+  undoStack.push(typeof snapshot === "string" ? snapshot : snapshotState());
   if (undoStack.length > 60) undoStack.shift();
   redoStack.length = 0;
 }
 function applySnap(j) {
   const o = JSON.parse(j);
+  if (o.look && typeof o.look.utc === "boolean" && o.look.utc !== state.look.utc) {
+    try { Store.settings.patch({chartsUtc:o.look.utc}); }
+    catch(e) { toast("Could not restore timezone settings"); return; }
+  }
   state.charts = o.charts;
   state.drawings = o.drawings;
   state.layout = o.layout;
   state.pos = o.pos;
   state.type = o.type;
-  if (o.look) state.look = { ...state.look, ...o.look };
+  if (o.look) { state.look = { ...state.look, ...o.look }; if(typeof window!=="undefined")window.ChartAppearance?.syncLook(state.look); }
   if (Array.isArray(o.watch)) state.watch = o.watch.slice();
   if (Number.isInteger(o.sel)) state.sel = Math.max(0, Math.min(o.layout - 1, o.sel));
   buildGrid();
@@ -1483,84 +1487,7 @@ function hexOf(c) {
 /* ══════════════════════════════════════════════════════════════
    chart settings
    ══════════════════════════════════════════════════════════════ */
-function paintSettings() {
-  const L = state.look,
-    cfg = state.charts[state.sel];
-  const row = (label, ctrl, note) =>
-    `<div class="set-r"><div><b>${label}</b>${note ? `<span>${note}</span>` : ""}</div>${ctrl}</div>`;
-  const chk = (k, on) =>
-    `<label class="sw2"><input type="checkbox" aria-label="${k.replace(/([A-Z])/g, " $1")}" data-look="${k}" ${on ? "checked" : ""}><i></i></label>`;
-  const colour = (key, label, fallback) => `<input type="color" data-look="${key}" aria-label="${label}" title="${label}" value="${L[key] || fallback}">`;
-  const pair = (key, label) => `<span class="settings-colours">${colour(key+"Up", "Rising "+label,L.up||hexOf("--up"))}${colour(key+"Dn","Falling "+label,L.dn||hexOf("--dn"))}</span>`;
-  $("#setBody").innerHTML = `
-    <section class="set-g" data-settings-section="Symbol"><h3 class="settings-section-title">Candles</h3>
-      ${row("Body", `<span class="settings-colours">${chk("candleBodies", L.candleBodies !== false)}${colour("up","Rising candle body",hexOf("--up"))}${colour("dn","Falling candle body",hexOf("--dn"))}</span>`)}
-      ${row("Borders", `<span class="settings-colours">${chk("candleBorders",L.candleBorders !== false)}${pair("border","border")}</span>`)}
-      ${row("Wicks", `<span class="settings-colours">${chk("candleWicks",L.candleWicks !== false)}${pair("wick","wick")}</span>`)}
-      ${row("Wicks match body",chk("wickMatch",L.wickMatch))}
-      ${row("Candle width", `<input aria-label="Candle width" type="range" min="0.2" max="0.95" step="0.05" data-look="candleWidth" value="${L.candleWidth||0.68}">`)}
-      <p class="settings-help">Colours apply to this workspace. Save the workspace to keep your appearance.</p>
-    </section>
-    <section class="set-g" data-settings-section="Status line"><h3 class="settings-section-title">Chart information</h3>
-      ${row("OHLC values",chk("showOhlc",L.showOhlc!==false),"Shown when the chart’s Details row is expanded")}
-      ${row("Indicator legend",chk("showStudyLegend",L.showStudyLegend!==false))}
-      ${row("Data window",chk("dataWin",L.dataWin),"OHLC and study values under the crosshair")}
-      ${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "" : row("Countdown to bar close",chk("countdown",L.countdown))}
-    </section>
-    <section class="set-g" data-settings-section="Scales and lines"><h3 class="settings-section-title">Price and time scales</h3>
-      ${row("Price scale",`<select aria-label="Price scale" data-scale="mode">${[["normal","Regular"],["log","Logarithmic"],["pct","Percent"]].map(([v,n])=>`<option value="${v}" ${cfg.scale.mode===v?"selected":""}>${n}</option>`).join("")}</select>`)}
-      ${row("Invert price scale",`<label class="sw2"><input type="checkbox" data-invert ${cfg.scale.invert?"checked":""} aria-label="Invert price scale"><i></i></label>`)}
-      ${row("Use UTC time",chk("utc",L.utc!==false),"Switch off to use your browser’s local timezone")}
-      ${row("Sync crosshair",chk("syncCross",L.syncCross))}
-      ${row("Sync symbol",chk("syncSymbol",L.syncSymbol))}
-    </section>
-    <section class="set-g" data-settings-section="Canvas"><h3 class="settings-section-title">Background and grid</h3>
-      ${row("Background",colour("background","Chart background",hexOf("--bg")))}
-      ${row("Horizontal grid",chk("gridH",L.gridH))}
-      ${row("Vertical grid",chk("gridV",L.gridV))}
-      ${row("Session breaks",chk("sessions",L.sessions),"A divider at the start of each UTC day")}
-      ${row("Crosshair",`<select data-look="cross" aria-label="Crosshair mode">${[["free","Free"],["bar","Snap to candle"]].map(([v,n])=>`<option value="${v}" ${L.cross===v?"selected":""}>${n}</option>`).join("")}</select>`)}
-    </section>
-    <section class="set-g" data-settings-section="Studies"><h3 class="settings-section-title">Studies and source</h3>
-      ${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode()?'<p class="settings-help">Your database stores bid OHLC candles without volume. Volume-based studies and profiles are unavailable for these archives.</p>':row("Visible-range volume profile",`<label class="sw2"><input type="checkbox" data-vp ${cfg.vp?"checked":""} aria-label="Visible-range volume profile"><i></i></label>`)}
-      <p class="settings-help">Add or configure indicators from the Indicators button. Alerts are managed in the right-side panel.</p>
-    </section>`;
-  $$("#setBody [data-look]").forEach((f) => {
-    f.onchange = () => {
-      const k = f.dataset.look;
-      state.look[k] = f.type === "checkbox" ? f.checked : f.type === "range" ? Number(f.value) : f.value;
-      if (k === "wickUp" || k === "wickDn") {state.look.wickMatch=false;$('#setBody [data-look="wickMatch"]').checked=false;}
-      if (k === "utc") { Store.settings.patch({chartsUtc:state.look.utc}); paintClock(); }
-      draw();
-    };
-  });
-  const sm = $("#setBody [data-scale]");
-  if (sm)
-    sm.onchange = () => {
-      cfg.scale.mode = sm.value;
-      cfg.scale.factor = 1;
-      cfg.scale.offset = 0;
-      draw();
-    };
-  const iv2 = $("#setBody [data-invert]");
-  if (iv2)
-    iv2.onchange = () => {
-      cfg.scale.invert = iv2.checked;
-      draw();
-    };
-  const vp = $("#setBody [data-vp]");
-  if (vp)
-    vp.onchange = () => {
-      cfg.vp = vp.checked;
-      draw();
-    };
-  const lv = $("#setBody [data-live]");
-  if (lv)
-    lv.onchange = () => {
-      state.live = lv.checked;
-      toast(state.live ? "Live ticks on" : "Live ticks paused");
-    };
-}
+function paintSettings() { ChartSettings.open(); }
 
 /* ══════════════════════════════════════════════════════════════
    symbol search

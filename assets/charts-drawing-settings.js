@@ -205,5 +205,5 @@ document.getElementById('drawModal').addEventListener('pplx-dismiss',()=>{drawin
 (function(){
   const button=document.createElement('button');button.type='button';button.className='btn sm';button.textContent='Position drawing settings';button.hidden=true;button.onclick=()=>editPositionSettings(charts[state.sel]);
   const host=document.querySelector('.desk-bottom-actions')||document.querySelector('#panel');host?.append(button);
-  document.addEventListener('chart-render',()=>{button.hidden=!state.pos||state.pos.key!==charts[state.sel]?.key;});
+  document.addEventListener('chart-render',()=>{button.hidden=state.look.showPositions===false||!state.pos||state.pos.key!==charts[state.sel]?.key;});
 })();
