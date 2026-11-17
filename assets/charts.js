@@ -338,6 +338,9 @@ function snapshotState() {
     layout: state.layout,
     pos: state.pos,
     type: state.type,
+    look: state.look,
+    watch: state.watch,
+    sel: state.sel,
   });
 }
 function pushUndo() {
@@ -352,6 +355,9 @@ function applySnap(j) {
   state.layout = o.layout;
   state.pos = o.pos;
   state.type = o.type;
+  if (o.look) state.look = { ...state.look, ...o.look };
+  if (Array.isArray(o.watch)) state.watch = o.watch.slice();
+  if (Number.isInteger(o.sel)) state.sel = Math.max(0, Math.min(o.layout - 1, o.sel));
   buildGrid();
   paintAll();
 }
@@ -2395,71 +2401,8 @@ const writeWS = (w) => {
     Store.settings.patch({ chartsWorkspaces: w });
   } catch (e) {}
 };
-async function saveWorkspace() {
-  if (window.THEONEPERCENT_CHART_ARCHIVE && (!window.Cloud || !await Cloud.ready)) {
-    document.dispatchEvent(new Event("chart-save-signin"));
-    return;
-  }
-  const name = await ask(
-    "Save workspace",
-    "Name this workspace",
-    "Session · " + new Date().toLocaleDateString("en-GB"),
-  );
-  if (!name) return;
-  const w = readWS();
-  w.unshift({
-    name,
-    at: new Date().toISOString(),
-    data: JSON.parse(snapshotState()),
-    look: state.look,
-    watch: state.watch,
-    type: state.type,
-  });
-  writeWS(w.slice(0, 20));
-  document.dispatchEvent(new CustomEvent("chart-workspace-saved",{detail:{name}}));
-  toast(
-    "Workspace saved",
-    "Symbols, intervals, studies with their parameters, drawings and the layout. Stored on this device only.",
-    "up",
-  );
-}
-function paintWorkspaces() {
-  const w = readWS();
-  $("#wsList").innerHTML = w.length
-    ? w
-        .map(
-          (
-            x,
-            i,
-          ) => `<div class="ws"><div><b>${x.name}</b><span>${new Date(x.at).toLocaleString("en-GB")} · ${x.data.charts.length} charts</span></div>
-    <div><button class="btn sm" data-load="${i}">Load</button><button class="btn sm" data-del="${i}">Delete</button></div></div>`,
-        )
-        .join("")
-    : `<div class="empty">No saved workspaces yet. Save one from the toolbar, or with Ctrl+S.</div>`;
-  $$("#wsList [data-load]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        const x = readWS()[+b.dataset.load];
-        pushUndo();
-        state.look = x.look || state.look;
-        state.watch = x.watch || state.watch;
-        state.type = x.type || state.type;
-        applySnap(JSON.stringify(x.data));
-        hide("#wsModal");
-        toast("Workspace loaded", x.name);
-        document.dispatchEvent(new CustomEvent("chart-workspace-saved",{detail:{name:x.name}}));
-      }),
-  );
-  $$("#wsList [data-del]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        const w2 = readWS();
-        w2.splice(+b.dataset.del, 1);
-        writeWS(w2);
-        paintWorkspaces();
-      }),
-  );
-}
+function saveWorkspace() { if (window.ChartWorkspaces) return ChartWorkspaces.save(); }
+function paintWorkspaces() { if (window.ChartWorkspaces) ChartWorkspaces.paint(); }
 /* ── snapshot ──────────────────────────────────────────────────
    A chart image leaves this app and gets posted in a group chat, so it has to
    carry two things the live screen does not need: where it came from, and that
