@@ -3074,7 +3074,7 @@ class Chart {
   }
   alertLines(c, pw) {
     state.alerts
-      .filter((a) => a.on && a.px && a.sym === this.cfg.sym)
+      .filter((a) => Number.isFinite(a.px) && a.sym === this.cfg.sym && (a.iv || this.cfg.iv) === this.cfg.iv && (a.on || a.fired) && (typeof PriceAlertModel === "undefined" || PriceAlertModel.supported(a)))
       .forEach((a) => {
         const y = this.y(a.px);
         c.save();
@@ -3091,7 +3091,7 @@ class Chart {
         c.textAlign = "left";
         c.textBaseline = "middle";
         c.fillText(
-          (a.fired ? "⏰ fired · " : "⏰ ") + fmt(a.px, this.cfg.sym),
+          (a.fired ? "Triggered · " : "Alert · ") + fmt(a.px, this.cfg.sym),
           4,
           y - 8,
         );

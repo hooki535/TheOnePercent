@@ -1,0 +1,48 @@
+body[data-page=charts] #alertModal .sheet{width:480px;max-width:calc(100vw - 28px);border-radius:12px;background:var(--term-bg);color:var(--term-text);border:1px solid var(--term-line);max-height:calc(100dvh - 36px);overflow:hidden;}
+body[data-page=charts] #alertModal{backdrop-filter:none;background:rgb(0 0 0 / 25%);}
+#alertModal .sheet-h{padding:22px;justify-content:space-between;border-bottom:0;}
+#alertModal .sheet-h b{font-size:19px;}
+#alertModal .sh-sub{font-size:11px;margin-top:7px;}
+.pa-editor{overflow:auto;padding:0 22px 8px;}
+.pa-field{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;font-size:12px;}
+.pa-field>span{min-width:90px;}
+body[data-page=charts] #alertModal :is(input,select,textarea){border:1px solid var(--term-line);border-radius:5px;padding:9px 10px;background:var(--term-bg);color:var(--term-text);font:inherit;min-width:0;width:230px;}
+body[data-page=charts] #alertModal input:read-only{color:var(--term-muted);background:var(--term-surface);}
+.pa-field.message{align-items:flex-start;padding-top:8px;}
+#alertModal textarea{resize:vertical;min-height:75px;max-height:140px;}
+.pa-method{font-size:11px;line-height:1.6;color:var(--term-muted);padding:12px 0 4px;}
+.pa-method strong{display:block;color:var(--term-text);font-size:11px;margin-bottom:4px;font-weight:500;}
+#paError{color:var(--dn);font-size:12px;min-height:18px;line-height:1.5;}
+#alertModal .sheet-f{display:flex;justify-content:flex-end;gap:9px;padding:16px 22px;border-top:1px solid var(--term-line);}
+#alertModal .sheet-f button{font-size:12px;border-radius:6px;}
+#alertModal #alCreate{background:var(--term-accent);color:white;border-color:var(--term-accent);}
+.pa-controls{display:flex;gap:8px;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--term-line);flex-shrink:0;}
+.pa-tabs{display:flex;gap:14px;}
+.pa-tabs button{border:0;background:transparent;color:var(--term-muted);font:inherit;font-size:12px;padding:8px 0;position:relative;cursor:pointer;}
+.pa-tabs [aria-selected=true]{color:var(--term-text);font-weight:600;}
+.pa-tabs [aria-selected=true]:after{content:'';position:absolute;bottom:-9px;height:2px;background:var(--term-accent);left:0;right:0;}
+.pa-controls select{font-size:10px;border:1px solid var(--term-line);background:var(--term-bg);color:var(--term-text);border-radius:4px;padding:5px;max-width:130px;}
+.pa-notice{font-size:10px;line-height:1.6;margin:2px 0 9px;color:var(--term-muted);}
+body[data-page=charts] #al{display:block;overflow:auto;min-height:0;}
+.pa-item,.pa-log{padding:13px 1px;border-bottom:1px solid var(--term-line);}
+.pa-item-heading{display:flex;justify-content:space-between;align-items:center;font-size:9px;color:var(--term-muted);gap:7px;}
+.pa-state{border-radius:4px;padding:3px 5px;background:var(--term-surface);}
+.pa-state.active{background:var(--term-accent-soft);color:var(--term-accent);}
+.pa-state.triggered{color:var(--up);}
+.pa-state.review{color:var(--warn);}
+body[data-page=charts] .pa-open{border:0;background:transparent;display:block;text-align:left;color:var(--term-text);font-size:13px;font-weight:600;padding:10px 0 0;cursor:pointer;}
+.pa-condition,.pa-message{font-size:11px;line-height:1.5;margin:7px 0;color:var(--term-muted);overflow-wrap:anywhere;}
+.pa-item-actions{display:flex;align-items:center;gap:8px;margin-top:12px;}
+.pa-item-actions button{display:flex;align-items:center;gap:4px;border:0;background:transparent;color:var(--term-muted);cursor:pointer;font-size:10px;padding:4px;}
+.pa-item-actions button:last-child{margin-left:auto;}
+.pa-item-actions button:disabled{opacity:.4;cursor:not-allowed;}
+.pa-item-actions button:hover{color:var(--term-accent);}
+.pa-item-actions svg,#newAlert svg{width:16px;height:16px;}
+body[data-page=charts] #newAlert{padding:5px;border:0;background:transparent;color:var(--term-text);}
+.pa-empty{padding:36px 12px;text-align:center;color:var(--term-muted);font-size:12px;line-height:1.6;}
+.pa-empty>svg{display:block;width:28px;height:28px;margin:0 auto 16px;color:var(--term-muted);}
+.pa-empty b{display:block;color:var(--term-text);font-weight:500;}
+.pa-log b{font-size:12px;}
+.pa-log p{font-size:11px;margin:8px 0;line-height:1.5;}
+.pa-log small{font-size:10px;color:var(--term-muted);line-height:1.6;}
+@media(max-width:500px){#alertModal .pa-field{gap:10px;}#alertModal .pa-field>span{min-width:70px;}#alertModal .pa-editor{padding:0 16px 8px;}}

@@ -1419,49 +1419,7 @@ function paintJournal() {
 }
 
 /* ── alerts ──────────────────────────────────────────────────── */
-function paintAlerts() {
-  $("#al").innerHTML =
-    state.alerts
-      .map(
-        (a, i) => `
-    <div class="ai" data-a="${i}"><div class="ai-d"><div class="ai-t">${a.title}</div><div class="ai-c">${a.cond}</div></div>
-      <div class="sw ${a.on ? "on" : ""}" data-sw="${i}"><i></i></div>
-      <button class="ai-x" data-rm="${i}" title="Delete alert">✕</button></div>`,
-      )
-      .join("") +
-    `<div class="alog"><span class="lbl">Triggered</span>${
-      state.fired.length
-        ? state.fired
-            .slice(0, 12)
-            .map(
-              (f) =>
-                `<div class="lg"><b>${f.title}</b><span>${f.when} · ${f.px}</span></div>`,
-            )
-            .join("")
-        : `<div class="empty">Nothing has fired yet. Alerts also fire inside replay, so you can test one on history before you trust it.</div>`
-    }</div>` +
-    `<p class="hint">Checked on this device while the page is open, and saved with your settings so they survive a reload. Server-side evaluation, which would let you close the tab, arrives with the backend.</p>`;
-  $$("#al [data-sw]").forEach(
-    (el) =>
-      (el.onclick = () => {
-        const a = state.alerts[+el.dataset.sw];
-        a.on = !a.on;
-        a.fired = false;
-        saveAlerts();
-        paintAlerts();
-        draw();
-      }),
-  );
-  $$("#al [data-rm]").forEach(
-    (el) =>
-      (el.onclick = () => {
-        state.alerts.splice(+el.dataset.rm, 1);
-        saveAlerts();
-        paintAlerts();
-        draw();
-      }),
-  );
-}
+function paintAlerts() { if (window.ChartAlerts) ChartAlerts.paint(); }
 
 /* ══════════════════════════════════════════════════════════════
    indicator browser — per chart, with real parameters
@@ -2227,96 +2185,9 @@ document.addEventListener(
 /* ══════════════════════════════════════════════════════════════
    alert builder
    ══════════════════════════════════════════════════════════════ */
-let condRows = [{ l: "Price", op: "crosses up", r: "" }];
-function openAlert(px, sym, sub) {
-  const S = SYMBOLS[sym];
-  condRows = [{ l: "Price", op: "crosses up", r: px.toFixed(S.digits) }];
-  $("#alSub").textContent = sub || `on ${sym} · ${state.charts[state.sel].iv}`;
-  paintCond();
-  show("#alertModal");
-}
-function paintCond() {
-  const L = [
-    "Price",
-    "RSI 14",
-    "EMA 21",
-    "Day risk used",
-    "My drawn level",
-    "Volume",
-    "Position P&L in R",
-  ];
-  const OP = [
-    "crosses up",
-    "crosses down",
-    "is above",
-    "is below",
-    "enters",
-    "leaves",
-  ];
-  $("#condRows").innerHTML = condRows
-    .map(
-      (c, i) => `
-    <div class="cr" data-c="${i}">
-      <select data-k="l">${L.map((x) => `<option ${x === c.l ? "selected" : ""}>${x}</option>`).join("")}</select>
-      <select data-k="op">${OP.map((x) => `<option ${x === c.op ? "selected" : ""}>${x}</option>`).join("")}</select>
-      <input data-k="r" value="${c.r}" placeholder="value">
-      ${i ? '<button class="rm">✕</button>' : "<span></span>"}
-    </div>`,
-    )
-    .join("");
-  $$("#condRows .cr").forEach((row) => {
-    const i = +row.dataset.c;
-    row
-      .querySelectorAll("[data-k]")
-      .forEach(
-        (f) => (f.onchange = () => (condRows[i][f.dataset.k] = f.value)),
-      );
-    const rm = row.querySelector(".rm");
-    if (rm)
-      rm.onclick = () => {
-        condRows.splice(i, 1);
-        paintCond();
-      };
-  });
-}
-const DELIV = ["Push", "Email", "In-app", "Webhook", "SMS"];
-function paintDeliv() {
-  $("#alDeliv").innerHTML = DELIV.map(
-    (d, i) =>
-      `<button class="chip ${i < 2 ? "on" : ""}" data-d="${d}">${d}</button>`,
-  ).join("");
-  $$("#alDeliv .chip").forEach(
-    (b) => (b.onclick = () => b.classList.toggle("on")),
-  );
-}
-function checkAlerts() {
-  state.alerts.forEach((a) => {
-    if (!a.on || !a.px || a.fired) return;
-    const d = getSeries(a.sym, state.charts[state.sel].iv),
-      b = d[d.length - 1];
-    if (!b) return;
-    const hit = a.dir === "down" ? b.c <= a.px : b.c >= a.px;
-    if (hit) {
-      a.fired = true;
-      state.fired.unshift({
-        title: a.title,
-        when: new Date().toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-        px: fmt(b.c, a.sym),
-      });
-      paintAlerts();
-      draw();
-      toast(
-        "Alert fired · " + a.title,
-        "Fired inside replay too, so the alert is tested before it is trusted.",
-        "warn",
-      );
-    }
-  });
-}
+function openAlert(px, sym, sub) { if (window.ChartAlerts) ChartAlerts.open(px, sym, sub); }
+function paintDeliv() {} // Channels are owned by the in-app price alert editor.
+function checkAlerts() { if (window.ChartAlerts) ChartAlerts.evaluate(); }
 
 /* ══════════════════════════════════════════════════════════════
    command palette
@@ -2748,9 +2619,8 @@ function annotatedShot(chart) {
   }
 }
 function lastPx() {
-  const c = charts[state.sel];
-  const d = c.data;
-  return d[d.length - 1].c;
+  const d = charts[state.sel]?.data || [];
+  return d.length ? d[d.length - 1].c : null;
 }
 
 /* Chart state worth restoring later: enough to put the screen back the
@@ -3466,41 +3336,6 @@ $("#undoBtn").onclick = undo;
 $("#redoBtn").onclick = redo;
 $("#alertBtn").onclick = () => openAlert(lastPx(), state.charts[state.sel].sym);
 $("#newAlert").onclick = () => openAlert(lastPx(), state.charts[state.sel].sym);
-$("#addCond").onclick = () => {
-  condRows.push({ l: "RSI 14", op: "is above", r: "70" });
-  paintCond();
-};
-$$(".ao").forEach(
-  (b) =>
-    (b.onclick = () => {
-      $$(".ao").forEach((x) => x.classList.remove("on"));
-      b.classList.add("on");
-    }),
-);
-$("#alCreate").onclick = () => {
-  const c = condRows[0],
-    sym = state.charts[state.sel].sym,
-    px = parseFloat(c.r);
-  state.alerts.unshift({
-    id: Date.now(),
-    on: true,
-    title: `${sym} ${c.op} ${c.r}`,
-    cond: `${c.l.toLowerCase()} ${c.op} ${c.r} · ${condRows.length > 1 ? condRows.length + " conditions · " : ""}${[...$$("#alDeliv .chip.on")].map((x) => x.textContent.toLowerCase()).join(" + ") || "in-app"}`,
-    px: isNaN(px) ? null : px,
-    dir: c.op.includes("down") || c.op.includes("below") ? "down" : "up",
-    sym,
-  });
-  saveAlerts();
-  paintAlerts();
-  switchTab("alerts");
-  hide("#alertModal");
-  draw();
-  toast(
-    "Alert created",
-    "It will fire in replay as well, so you can test it on history before you trust it.",
-    "up",
-  );
-};
 $$(".wsub-b").forEach((b) => {
   b.onclick = () => switchWatchView(b.dataset.wsub);
   /* Left and right arrows across a tablist, which is what a tablist promises. */
