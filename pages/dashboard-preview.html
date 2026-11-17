@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard design preview — TheOnePercent</title>
+    <meta
+      name="description"
+      content="Review your journal performance, open positions and trading risk in one workspace."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="../assets/home/logo.svg" type="image/svg+xml" />
+    <script src="../assets/theme.js"></script>
+    <script>if (!Theme.isExplicit()) document.documentElement.dataset.theme = "light";</script>
+
+
+    <link rel="stylesheet" href="../assets/shell.css" />
+    <link rel="stylesheet" href="../assets/components.css" />
+    <link rel="stylesheet" href="../assets/dashboard.css" />
+  </head>
+  <body data-page="dashboard" data-depth="1" data-shell="nav" data-auth="out" data-preview="empty">
+    <aside class="workspace-nav" aria-label="Dashboard workspace">
+      <div class="workspace-caption">WORKSPACE</div>
+      <nav>
+        <a href="#main" aria-current="page"><span data-dash-icon="grid"></span>Overview</a>
+        <a href="journal.html"><span data-dash-icon="book"></span>Trading Journal</a>
+        <a href="#performance"><span data-dash-icon="chart"></span>Analytics</a>
+        <a href="calculators.html"><span data-dash-icon="bank"></span>Risk tools</a>
+        <a href="charts.html"><span data-dash-icon="layers"></span>Chart workspace</a>
+        <a href="settings.html"><span data-dash-icon="settings"></span>Settings</a>
+      </nav>
+      <div class="workspace-note"><span data-dash-icon="bookmark"></span><strong>Discipline compounds.</strong><p>Plan the risk.<br>Journal the decision.<br>Review the process.</p><a href="learn.html">Explore the Academy →</a></div>
+      <button class="workspace-theme" id="dashboard-theme"><span data-dash-icon="moon"></span>Switch colour theme</button>
+    </aside>
+    <main id="main"><div class="preview-label">Design preview · Empty journal · No account data loaded <a href="dashboard.html">Open your dashboard →</a></div>
+      <header class="dashboard-heading"><div><div class="workspace-caption">PERSONAL WORKSPACE</div><h1>Your trading overview</h1><p id="greeting">Welcome back</p><p id="sub">Plan clearly. Review consistently.</p><div id="chips" class="chip-row"></div></div>
+        <div class="heading-actions"><label class="sel"><span>Account</span><select id="f-account"><option value="all">All accounts</option></select></label><label class="sel"><span>Period</span><select id="f-range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></label><a class="btn btn-primary" href="journal.html"><span data-dash-icon="plus"></span>Add journal trade</a></div>
+      </header>
+      <section aria-label="Account summary"><div class="stat-grid account-grid" id="account-summary" aria-live="polite"></div>
+        <details class="calculation-note"><summary>About these figures</summary><p>The shared balance is a sizing setting, not account equity. Current exposure includes all open positions in the selected account, regardless of opening date. Performance uses journal dates because close timestamps are not stored. The selected period applies to performance; compatible trade currency units are not recorded. Unavailable totals are never estimated.</p></details>
+      </section>
+      <div class="dashboard-layout" id="live-grid">
+        <section class="panel performance-panel" id="performance" aria-labelledby="performance-title"><div class="panel-head"><h2 id="performance-title">Trading performance</h2><span>Selected period</span></div>
+          <div class="performance-tabs" role="tablist" aria-label="Performance view"><button id="tab-overview" role="tab" aria-selected="true" aria-controls="view-overview" tabindex="0" data-performance="overview">Overview</button><button id="tab-r" role="tab" aria-selected="false" aria-controls="view-r" tabindex="-1" data-performance="r">R multiples</button><button id="tab-drawdown" role="tab" aria-selected="false" aria-controls="view-drawdown" tabindex="-1" data-performance="drawdown">Drawdown</button></div>
+          <div id="view-overview" role="tabpanel" aria-labelledby="tab-overview"><div class="performance-empty" id="performance-empty"><span data-dash-icon="chart"></span><h3>Your performance starts with a closed trade</h3><p id="performance-empty-note">Close and review a journal trade to populate this view.</p><a class="btn btn-primary" href="journal.html">Open journal</a></div><div class="panel-body" id="equity-wrap"><div class="eq-wrap"><canvas id="equity" height="180" aria-label="Cumulative realised journal P/L"></canvas><div class="eq-tip" id="eq-tip" hidden></div></div><div class="eq-legend"><span id="eq-note"></span><span id="eq-dd"></span></div></div></div>
+          <div id="view-r" role="tabpanel" aria-labelledby="tab-r" class="panel-body" hidden><h3>Average R by setup</h3><p class="muted-note">Eligible closed trades · based on the recorded stop</p><div id="by-setup"></div></div>
+          <div id="view-drawdown" role="tabpanel" aria-labelledby="tab-drawdown" class="performance-empty" hidden><span data-dash-icon="chart"></span><h3>Drawdown unavailable</h3><p>Compatible P/L units are not recorded, so a money-based drawdown cannot be calculated.</p><a class="panel-link" href="journal.html">Review journal records →</a></div>
+          <div class="stat-grid performance-metrics" id="stats"></div>
+        </section>
+        <section class="panel risk-panel" aria-labelledby="risk-title"><div class="panel-head"><h2 id="risk-title"><span data-dash-icon="shield"></span>Risk discipline</h2></div><div class="panel-body"><dl class="risk-facts" id="risk-facts"></dl><div id="guard-warn" hidden></div><a class="panel-link" href="settings.html#guardrails">Review risk settings →</a></div></section>
+        <section class="panel recent-panel" aria-labelledby="recent-title"><div class="panel-head"><h2 id="recent-title">Recent journal entries</h2><a class="panel-link" href="journal.html">View all →</a></div><div class="rt-scroll"><table id="recent"><thead><tr><th>Date</th><th>Symbol / Direction</th><th>Status</th><th class="num">Entry</th><th class="num">Result (R)</th><th class="num">Net P/L (calculation units)</th></tr></thead><tbody id="recent-body"></tbody></table></div></section>
+        <section class="panel checklist-panel"><div class="panel-head"><h2><span data-dash-icon="watchlist"></span>Session checklist</h2><span id="checklist-count" aria-live="polite">0 / 3</span></div><div class="panel-body"><label><input type="checkbox" data-session-check>Review higher-timeframe bias</label><label><input type="checkbox" data-session-check>Mark key levels</label><label><input type="checkbox" data-session-check>Define risk before entry</label><div class="checklist-footer"><small>For this visit</small><button id="reset-checklist" type="button">Reset</button></div></div></section>
+        <details class="panel exposure-panel" id="panel-open" hidden><summary class="panel-head"><h2>Open position details</h2><span id="or-note"></span></summary><div class="panel-body" id="open-risk"></div></details>
+        <details class="panel insights-panel" id="panel-leaks"><summary class="panel-head"><h2>Review insights</h2><span id="lk-note">Calculation notes</span></summary><div class="panel-body" id="leaks"></div></details>
+      </div>
+      <section class="panel market-shortcuts" id="empty-grid"><div class="panel-head"><h2>Your markets</h2><span id="wl-source">Market shortcuts</span></div><div id="watchlist"></div><div class="panel-foot" id="wl-foot"></div></section>
+      <div id="notice" hidden><a class="panel-link" href="onboarding.html">Personalise your market preferences →</a></div>
+      <footer class="dashboard-footer"><span>TheOnePercent · Discipline compounds.</span><a href="charts.html">Open charts ↗</a><span>Journal analytics · No broker execution</span></footer>
+    </main>
+    <script src="../assets/store.js"></script>
+    <script src="../assets/dashboard-preview.js"></script>
+    <script src="../assets/instruments.js"></script>
+    <script src="../assets/lessons.js"></script>
+    <script src="../assets/shell.js"></script>
+    <script src="../assets/home-icons.js"></script>
+    <script src="../assets/dashboard.js"></script>
+  </body>
+</html>
