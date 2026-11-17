@@ -24,6 +24,7 @@ window.Feed = (() => {
   "use strict";
 
   const I = window.Instruments;
+  const ARCHIVE = window.THEONEPERCENT_CHART_ARCHIVE === true ? window.ChartHistory : null;
 
   /* Synthetic candles require an explicit user choice. A provider failure
      leaves the chart unavailable instead of substituting generated prices. */
@@ -36,7 +37,7 @@ window.Feed = (() => {
     (typeof location !== "undefined" && location.protocol === "http:" && /^http:\/\/localhost(?::\d+)?$/i.test(LIVE_API));
   const failedKeys = new Map();
   const LIVE_MAX_AGE_MS = 30000;
-  let demoMode = !!(window.Store && Store.settings && Store.settings.get().chartsDataMode === "demo");
+  let demoMode = !ARCHIVE && !!(window.Store && Store.settings && Store.settings.get().chartsDataMode === "demo");
   const liveQuotes = {};
   const realKeys = new Set();
   const historicalSources = Object.create(null);
@@ -403,6 +404,7 @@ window.Feed = (() => {
     (Store.settings.get().chartsCatalogSymbols || []).forEach((record) => registerCatalogInstrument(record));
 
   async function searchCatalog(query = "", limit = 50, offset = 0, market = "") {
+    if (ARCHIVE) return {data:[],total:0,has_more:false,catalog_status:"stored"};
     if (!API_ENABLED || !window.fetch) return { data: [], total: 0, has_more: false };
     const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset), market });
     try {
@@ -436,6 +438,10 @@ window.Feed = (() => {
 
   function symbol(sym) {
     const inst = I.find(sym);
+    if (!inst && ARCHIVE && archiveSymbols.has(String(sym).toUpperCase())) {
+      const code=String(sym).toUpperCase(), market=code.startsWith('XA')?'Commodities':code==='US30'?'Indices':'Forex';
+      return {symbol:code,name:code,market,cls:market,base:code.slice(0,3),quote:code.slice(3),digits:code.includes('JPY')?3:5,tick:code.includes('JPY')?0.001:0.00001,px:null,spread:null,contract:null,unitValue:null,session:'Stored historical candles',venue:'Database archive',instrument:null};
+    }
     const listed = catalogInstruments[String(sym || "").toUpperCase()];
     /* MT5 chart symbols retain exact broker identity. Static instrument sizing
        defaults are intentionally not borrowed for broker CFDs. */
@@ -485,8 +491,10 @@ window.Feed = (() => {
     }) : local;
   }
 
+  const archiveSymbols = new Set();
+  if (ARCHIVE) ARCHIVE.catalog().then(rows=>{rows.forEach(row=>archiveSymbols.add(row.symbol));notify();}).catch(()=>{});
   function list() {
-    return I.INSTRUMENTS.map((i) => symbol(i.symbol)).filter(Boolean).concat(Object.values(catalogInstruments));
+    return I.INSTRUMENTS.map((i) => symbol(i.symbol)).filter(Boolean).concat(Object.values(catalogInstruments), [...archiveSymbols].filter(code=>!I.find(code)).map(symbol));
   }
 
   /* ---------------------------------------------------------- generator */
@@ -604,6 +612,17 @@ window.Feed = (() => {
   }
 
   function loadHistory(sym, iv) {
+    if (ARCHIVE) {
+      const key = String(sym).toUpperCase() + "|" + iv;
+      if (demoMode || realKeys.has(key) || loading.has(key) || (failedKeys.get(key)?.until > Date.now())) return;
+      loading.add(key);
+      ARCHIVE.load(String(sym).toUpperCase(), iv, BARS).then(({bars,info}) => {
+        cache[key]=bars; realKeys.add(key); historicalSources[key]="Database · "+info.source+" · last candle "+info.lastLabel;
+        delete failureReasons[key]; failedKeys.delete(key);
+      }).catch(error => { failureReasons[key]=error.message; failedKeys.set(key,{until:Date.now()+60000}); })
+        .finally(() => { loading.delete(key); notify(); });
+      return;
+    }
     const key = String(sym).toUpperCase() + "|" + iv;
     const failed = failedKeys.get(key);
     if (failed && failed.until > Date.now()) return;
@@ -773,7 +792,7 @@ window.Feed = (() => {
 
   function watchSeries(series) {
     const Socket = window.WebSocket;
-    if (!API_ENABLED || LOCAL_MT5_MODE || typeof Socket !== "function") return;
+    if (ARCHIVE || !API_ENABLED || LOCAL_MT5_MODE || typeof Socket !== "function") return;
     const desired = new Map();
     (Array.isArray(series) ? series : []).forEach((item) => {
       const symbol = String(item && (item.symbol || item.sym) || "").toUpperCase();
@@ -948,7 +967,9 @@ window.Feed = (() => {
       open,
       chg,
       chgPct: open ? (chg / open) * 100 : 0,
-      spread: S.spread,
+      spread: ARCHIVE ? null : S.spread,
+      time: d[d.length - 1].t,
+      historical: !!ARCHIVE,
       session: S.session,
     };
   }
@@ -1023,9 +1044,9 @@ window.Feed = (() => {
     const localHistorical = historical && source.startsWith("Exness MT5");
     const streamLabel = stream ? stream.state === "stale" ? " · stream stale · Binance spot" : stream.state === "connected" ? " · stream connected · Binance spot" : stream.state === "reconnecting" || stream.state === "connecting" ? " · stream " + stream.state : stream.state === "error" ? " · stream error · Binance spot" : "" : "";
     const label = historical
-      ? historicalStale[key] ? "Stale historical · " + source : (localHistorical ? "Broker historical · " : "Spot historical · ") + source + streamLabel
-      : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : failed ? "Unavailable · " + (LOCAL_MT5_MODE ? "Exness MT5 request failed" : "Binance request failed") : exactSuggestion ? "Unavailable · try " + exactSuggestion : unavailable ? "Unavailable · no real feed" : "No chart data";
-    const title = historical
+      ? ARCHIVE ? source : historicalStale[key] ? "Stale historical · " + source : (localHistorical ? "Broker historical · " : "Spot historical · ") + source + streamLabel
+      : live ? "Quote connected · chart may be unavailable" : demoMode ? "Demo candles · synthetic" : ARCHIVE ? (loading.has(key) ? "Loading database history…" : ARCHIVE.status(sym,interval).message) : failed ? "Unavailable · " + (LOCAL_MT5_MODE ? "Exness MT5 request failed" : "Binance request failed") : exactSuggestion ? "Unavailable · try " + exactSuggestion : unavailable ? "Unavailable · no real feed" : "No chart data";
+    const title = ARCHIVE && !demoMode ? (historical ? source + ". Stored historical candles, not a live quote. Volume is not included in this archive." : ARCHIVE.status(sym,interval).message) : historical
       ? (historicalStale[key] ? "Stale historical OHLC: " : "Historical OHLC: ") + source + (localHistorical ? ". Broker CFD candles from your local MT5 terminal; tick volume is not exchange volume." : ". Not an executable quote or futures feed.") +
         (stream ? ". Binance stream status: " + stream.state + (stream.gapBackfillFailed ? "; reconnect backfill failed, a candle gap may remain" : "") : ". No stream is connected.")
       : live ? "Recent quote received; historical chart candles may still be unavailable." : demoMode ? "Synthetic demonstration data; not actual market prices. Demo mode is explicitly enabled." : failed ? (LOCAL_MT5_MODE ? "Local Exness MT5 history unavailable. " : "Market-data request failed. ") + (failureReasons[key] || "") : exactSuggestion ? "No exact Binance spot mapping for " + sym + ". The supported spot symbol is " + exactSuggestion + " and its quote currency is USDT." : "No real historical feed is available for this instrument. Select Demo mode only to use synthetic candles.";
@@ -1035,6 +1056,7 @@ window.Feed = (() => {
   }
 
   function isLive(sym) {
+    if (ARCHIVE) return false;
     const q = liveQuotes[String(sym || "").toUpperCase()];
     return !!(q && !q.error && Number.isFinite(q.price) &&
       Date.now() - Date.parse(q.time) < LIVE_MAX_AGE_MS);
@@ -1050,7 +1072,7 @@ window.Feed = (() => {
       })
       .catch(() => {});
   }
-  if (API_ENABLED && !LOCAL_MT5_MODE) {
+  if (API_ENABLED && !LOCAL_MT5_MODE && !ARCHIVE) {
     pollLive();
     setInterval(pollLive, 5000);
   }
@@ -1059,6 +1081,7 @@ window.Feed = (() => {
     get DEMO() { return demoMode; },
     LIVE_API,
     API_ENABLED,
+    hasStoredHistory: sym => archiveSymbols.has(String(sym).toUpperCase()),
     isHistorical: (sym, iv) => realKeys.has(String(sym).toUpperCase() + "|" + iv),
     historicalSource: (sym, iv) => historicalSources[String(sym).toUpperCase() + "|" + iv] || null,
     streamState,
@@ -1076,6 +1099,7 @@ window.Feed = (() => {
     list,
     history,
     loadHistory,
+    retryHistory(sym, iv) { failedKeys.delete(String(sym).toUpperCase()+"|"+iv); loadHistory(sym,iv); notify(); },
     setDemoMode,
     isDemoMode: () => demoMode,
     last,

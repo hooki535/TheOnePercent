@@ -16,40 +16,40 @@
    One path each, on an 18×18 grid, stroked not filled unless noted. Kept
    deliberately plain: at 17px a detailed glyph is a smudge. */
 const ICON = {
-  cursor: "M4 2l11 8.4-4.7.6L13 16.6l-1.9.9-2.6-5.3L4 15.6z",
+  cursor: "M9 1v5M9 12v5M1 9h5M12 9h5",
   cursordot: "M9 9h.01M9 2v3M9 13v3M2 9h3M13 9h3",
   cursorarrow: "M4 2l9 7-3.6.4 2 4.4-1.6.8-2-4.4L4 13z",
   eraser: "M3 13l7-7 5 5-4 4H5zM2 16h14",
 
-  trend: "M2 15L15 3",
-  ray: "M2 15L15 3M15 3h.01",
-  infoline: "M2 15L15 3M4 6h6M4 9h4",
-  xline: "M1 16L17 2",
+  trend: "M3.8 14.2 14.2 3.8M3.8 13a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4M14.2 2.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4",
+  ray: "M4 14 16 2M4 12.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4",
+  infoline: "M3 15 15 3M2 3h5M2 6h3M11 12h5M13 15h3",
+  xline: "M1 17 17 1M5 11.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4M13 3.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4",
   trendangle: "M2 15L15 4M2 15h9M6 15a7 7 0 002.4-4",
-  hline: "M1 9h16",
-  hray: "M6 9h11M6 9h.01",
-  vline: "M9 1v16",
+  hline: "M1 9h16M9 7.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4",
+  hray: "M4.2 9H17M3 7.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4",
+  vline: "M9 1v16M9 7.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4",
   crossline: "M1 9h16M9 1v16",
 
-  channel: "M2 14L15 5M2 17L15 8",
-  regression: "M2 13L15 5M2 16L15 8M2 10L15 2",
+  channel: "M2 12 14 3M4 16 16 7M2 10.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4M14 1.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4",
+  regression: "M2 11 15 2M2 15 15 6M4 17 17 8M7 10l2-1.4m2-1.4 2-1.4",
   flatchannel: "M2 5h13M2 13h13M2 5v8M15 5v8",
-  pitchfork: "M3 15L15 3M8 10l4 4M6 8l4 4M10 12l4 4",
+  pitchfork: "M3 16 13 6M5 3l10 10M5 3 1 7M10 8 4 14M15 13l-4 4",
 
-  fib: "M2 4h14M2 8h14M2 12h14M2 16h9",
+  fib: "M2 3h14M2 7h14M2 11h14M2 15h14M4 15 14 3M3 14h2v2H3zM13 2h2v2h-2z",
   fibext: "M2 3h14M2 7h9M2 11h14M2 15h6",
   fibchannel: "M2 12L14 4M3 15L15 7M1 9L13 1",
   fibtime: "M3 2v14M6 2v14M11 2v14M16 2v14",
   fibfan: "M2 16L16 2M2 16L16 8M2 16L16 13M2 16h14",
-  fibcircle: "M9 9a7 7 0 100 .01M9 9a4 4 0 100 .01M9 9h.01",
+  fibcircle: "M16 9a7 7 0 1 0-14 0 7 7 0 1 0 14 0M13 9a4 4 0 1 0-8 0 4 4 0 1 0 8 0M9 8v2M8 9h2",
   gannbox: "M2.5 2.5h13v13h-13zM2.5 7h13M2.5 11h13M7 2.5v13M11 2.5v13",
   gannfan: "M2 16L16 2M2 16L16 9M2 16L9 2M2 16h14M2 16V2",
 
-  rect: "M2.5 4.5h13v9h-13z",
-  ellipse: "M9 9a6.5 4.5 0 100 .01",
+  rect: "M3 4h12v10H3zM2 3h2v2H2zM14 3h2v2h-2zM2 13h2v2H2zM14 13h2v2h-2z",
+  ellipse: "M15.5 9a6.5 4.5 0 1 0-13 0 6.5 4.5 0 1 0 13 0",
   triangle: "M9 3l6.5 12h-13z",
   arrow: "M2 15L15 3M15 3h-5M15 3v5",
-  brush: "M3 15c3 0 2-4 5-6s5-4 7-6M3 15l-1 2 2-1",
+  brush: "M2 15c5 2 1-8 5-8 3 0 0 6 3 5 2-1 2-7 6-9",
   highlighter: "M4 14l8-9 3 3-8 9H4zM3 17h12",
 
   text: "M3 4h12M9 4v11",
@@ -57,29 +57,30 @@ const ICON = {
   pricelabel: "M2 9h8l3-3h4v6h-4l-3-3",
   flag: "M5 16V3l9 3-9 3",
 
-  measure: "M2 12l6-6 3 3 5-5M2 12v3h3",
+  measure: "M2 12 12 2l4 4L6 16zM5 9l2 2M8 6l2 2M11 3l2 2",
   prange: "M4 4h10M4 14h10M9 4v10",
   drange: "M4 4v10M14 4v10M4 9h10",
   dprange: "M3 3h12v12H3zM3 9h12M9 3v12",
 
   abcd: "M2 15l4-8 4 6 6-10",
-  xabcd: "M2 4l3 9 3-5 3 6 4-9",
+  xabcd: "M2 4l3 9 4-8 3 9 4-10M1 3h2v2H1zM4 12h2v2H4zM8 4h2v2H8zM11 13h2v2h-2zM15 3h2v2h-2z",
   elliott: "M2 16l2-4 2 2 3-7 2 3 4-8",
   headshoulders: "M2 14l3-3 2 2 2-8 2 8 2-2 3 3",
 
-  position: "M2.5 5.5h13v3h-13zM2.5 10.5h13v3h-13z",
-  shortpos: "M2.5 10.5h13v3h-13zM2.5 5.5h13v3h-13z",
+  position: "M4 2v14M2 4l2-2 2 2M7 3h9v5H7zM7 10h9v5H7zM10 5.5h3M11.5 4v3",
+  shortpos: "M4 2v14M2 14l2 2 2-2M7 3h9v5H7zM7 10h9v5H7zM10 12.5h3",
   alertline:
     "M9 2a5 5 0 00-5 5c0 4-2 5-2 5h14s-2-1-2-5a5 5 0 00-5-5zM7 15a2 2 0 004 0",
   replayhere: "M4 3v12l10-6z",
 
-  magnet: "M4 3v6a5 5 0 0010 0V3h-3v6a2 2 0 01-4 0V3z",
-  keep: "M3 9a6 6 0 0110.5-4L16 7M16 3v4h-4M15 9a6 6 0 01-10.5 4L2 11m0 4v-4h4",
+  magnet: "M3 3v6a6 6 0 0 0 12 0V3h-3v6a3 3 0 0 1-6 0V3zM3 6h3M12 6h3",
+  keep: "M3 12 11 4l3 3-8 8H3zM10 5l3 3M11 12h5v5h-5zM12 12v-1a1.5 1.5 0 0 1 3 0v1",
   trades: "M2 14l4-5 3 2 4-6 3 3",
-  lock: "M4 8h10v7H4zM6 8V5.5a3 3 0 016 0V8",
+  lock: "M4 8h10v8H4zM6 8V5a3 3 0 0 1 6 0v3M9 11v2",
   hide: "M1 9s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5zM9 7a2 2 0 100 4 2 2 0 000-4",
-  trash: "M4 5h10l-1 10H5zM7 5V3h4v2",
-  zoomrect: "M2.5 4.5h9v7h-9zM11 11l5 5M6 8h3M7.5 6.5v3",
+  trash: "M3 5h12M5 5l1 11h6l1-11M7 5V2h4v3M8 8v5M10 8v5",
+  zoomrect: "M13 7.5a5.5 5.5 0 1 0-11 0 5.5 5.5 0 1 0 11 0M11.5 11.5 16 16M5 7.5h5M7.5 5v5",
+  star: "m9 1.8 2.2 4.5 5 .7-3.6 3.5.8 5L9 13.2 4.6 15.5l.8-5L1.8 7l5-.7Z",
   close: "M4 4l10 10M14 4L4 14",
 };
 
@@ -234,6 +235,7 @@ let railFavs = [];
 
 function loadFavs() {
   const settings = Store.settings.get() || {};
+  state.favoritesHidden = settings.chartsFavoritesHidden === true;
   const s = settings.chartsFavTools;
   /* Filter against the rail itself: a tool renamed or dropped between
      releases should vanish from the favourites rather than render a button
@@ -278,13 +280,14 @@ function toggleFav(id) {
   /* Deliberately does not close the flyout: starring four tools in one visit
      should be four clicks, not four open-star-reopen rounds. */
   renderRail();
+  draw();
   toast(
     i >= 0
       ? `${toolName(id)} removed from favourites`
       : `${toolName(id)} added to favourites`,
     i >= 0
       ? "The rail keeps it in its group."
-      : "It now has its own button at the top of the rail.",
+      : "It is now available in your favourites toolbar.",
   );
 }
 
@@ -305,7 +308,11 @@ function groupOf(tool) {
 /* ── markup ────────────────────────────────────────────────────── */
 
 function svgIcon(id) {
-  return `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON[id] || ICON.cursor}"/></svg>`;
+  if(id==='position'||id==='shortpos'){
+    const long=id==='position',top=long?'#089981':'#f23645',bottom=long?'#f23645':'#089981';
+    return `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h10v12H2z"/><path d="M2 3h10v6H2z" fill="${top}" fill-opacity=".2" stroke="${top}"/><path d="M2 9h10v6H2z" fill="${bottom}" fill-opacity=".2" stroke="${bottom}"/><path d="M1 9h12M16 ${long?'14V3m-2 2 2-2 2 2':'3v11m-2-2 2 2 2-2'}"/></svg>`;
+  }
+  return `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON[id] || ICON.cursor}"/></svg>`;
 }
 
 function railHTML() {
@@ -328,7 +335,7 @@ function railHTML() {
         <span class="tip">${toolName(pick)}${toolKey(pick) ? `<kbd>${toolKey(pick)}</kbd>` : ""}</span>
       </button>
       <button class="rcaret" data-grp-open="${g.id}" aria-label="More ${g.name.toLowerCase()}"
-        aria-haspopup="menu" aria-expanded="${railOpen === g.id}"><svg viewBox="0 0 6 6" aria-hidden="true"><path d="M6 0v6H0z" fill="currentColor"/></svg></button>
+        aria-haspopup="dialog" aria-expanded="${railOpen === g.id}"><svg viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m2 3 3 3-3 3"/></svg></button>
     </div>`;
   };
 
@@ -353,7 +360,7 @@ function railHTML() {
   };
 
   return (
-    (railFavs.length
+    (!window.THEONEPERCENT_CHART_ARCHIVE && railFavs.length
       ? railFavs.map(favBtn).join("") + `<div class="rdiv"></div>`
       : "") +
     RAIL.map(groupBtn).join("") +
@@ -369,6 +376,7 @@ function railHTML() {
     `<button class="rtool" data-lockall aria-label="Lock every drawing">${svgIcon("lock")}<span class="tip">Lock every drawing on this chart</span></button>` +
     `<button class="rtool" data-hideall aria-label="Hide every drawing">${svgIcon("hide")}<span class="tip">Hide every drawing — they stay saved</span></button>` +
     `<button class="rtool" data-clear aria-label="Remove all drawings">${svgIcon("trash")}<span class="tip">Remove every drawing on this chart</span></button>` +
+    `<div class="rdiv"></div><button class="rtool" data-favorites-toggle aria-label="Show or hide favourite drawing tools" aria-pressed="${!state.favoritesHidden}">${svgIcon("star")}<span class="tip">Favourite drawing tools</span></button>` +
     flyoutHTML()
   );
 }
@@ -400,12 +408,12 @@ function flyoutHTML() {
       <span class="fly-star ${fav ? "on" : ""}" role="button" tabindex="0" data-fav="${id}"
         aria-pressed="${fav}"
         aria-label="${fav ? "Remove" : "Add"} ${toolName(id)} ${fav ? "from" : "to"} favourites"
-        title="${fav ? "Remove from favourites" : "Add to favourites — gives it its own rail button"}">${fav ? "★" : "☆"}</span>
+        title="${fav ? "Remove from favourites" : "Add to favourites"}"><svg viewBox="0 0 18 18" fill="${fav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="m9 1.5 2.2 4.7 5.2.6-3.8 3.6 1 5.1L9 13l-4.6 2.5 1-5.1L1.6 6.8l5.2-.6Z"/></svg></span>
     </div>`;
   };
-  return `<div class="rfly" id="rfly" role="menu" aria-label="${g.name}" data-tool-group="${g.id}">
+  return `<div class="rfly" id="rfly" role="dialog" aria-label="${g.name}" data-tool-group="${g.id}">
     <div class="fly-h"><span>${g.name}</span><button class="fly-close" type="button" data-fly-close aria-label="Close ${g.name.toLowerCase()} tools" title="Close tools (Esc)">${svgIcon("close")}</button></div>
-    <label class="fly-search"><span aria-hidden="true">⌕</span><input type="search" data-tool-search placeholder="Search ${g.name.toLowerCase()}" autocomplete="off" aria-label="Search ${g.name.toLowerCase()}" /></label>
+    <label class="fly-search"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="7.5" cy="7.5" r="4.5"/><path d="m11 11 5 5"/></svg><input type="search" data-tool-search placeholder="Search drawing tools" autocomplete="off" aria-label="Search ${g.name.toLowerCase()}" /></label>
     <div class="fly-results">
     ${g.sections
       .map(
@@ -448,6 +456,10 @@ function renderRail() {
   const el = document.querySelector("#crail");
   if (!el) return;
   const oldFlyout = document.getElementById("rfly");
+  const oldSearch = oldFlyout?.querySelector("[data-tool-search]");
+  const searchValue = oldSearch?.value || "";
+  const searchFocused = document.activeElement === oldSearch;
+  const scrollTop = oldFlyout?.querySelector(".fly-results")?.scrollTop || 0;
   if (oldFlyout && oldFlyout.parentNode) oldFlyout.parentNode.removeChild(oldFlyout);
   el.innerHTML = railHTML();
   const flyout = el.querySelector("#rfly");
@@ -456,6 +468,13 @@ function renderRail() {
     positionRailFlyout(flyout);
   }
   wireRail();
+  if (flyout) {
+    const search = flyout.querySelector("[data-tool-search]");
+    if (search && searchValue) { search.value = searchValue; search.oninput(); }
+    const results = flyout.querySelector(".fly-results");
+    if (results) results.scrollTop = scrollTop;
+    if (searchFocused) search?.focus();
+  }
 }
 
 /* Flyouts live on body so the scrollable rail cannot clip them. The selected
@@ -471,7 +490,7 @@ function positionRailFlyout(flyout) {
   flyout.style.position = "fixed";
   flyout.style.left = compact ? "8px" : `${Math.round(railRect.right)}px`;
   flyout.style.right = compact ? "8px" : "auto";
-  flyout.style.width = compact ? "auto" : "294px";
+  flyout.style.width = compact ? "auto" : "310px";
   flyout.style.bottom = compact ? `${Math.max(8, window.innerHeight - railRect.top + 8)}px` : "auto";
   const maxTop = Math.max(8, window.innerHeight - flyout.offsetHeight - 8);
   flyout.style.top = compact ? "auto" : `${Math.max(8, Math.min(groupRect.top, maxTop))}px`;
@@ -491,6 +510,13 @@ function wireRail() {
       Array.from(document.querySelectorAll("#rfly " + s)),
     );
 
+  $$r("[data-favorites-toggle]").forEach(b => {
+    b.onclick = () => {
+      state.favoritesHidden = !state.favoritesHidden;
+      Store.settings.patch({ chartsFavoritesHidden: state.favoritesHidden });
+      renderRail(); draw();
+    };
+  });
   $$r("[data-grp-main]").forEach((b) => {
     b.onclick = () => pickTool(b.dataset.pick);
   });

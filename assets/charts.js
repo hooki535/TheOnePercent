@@ -172,12 +172,7 @@ const state = {
   layout: 1,
   sel: 0,
   charts: [
-    newChart("EURUSD", "15m", [
-      makeStudy("ema", { length: 21 }),
-      makeStudy("ema", { length: 55 }),
-      makeStudy("vol"),
-      makeStudy("rsi"),
-    ]),
+    newChart("AUDNZD", "5m", []),
     newChart("GBPJPY", "15m"),
     newChart("XAUUSD", "1H"),
     newChart("NAS100", "15m"),
@@ -210,7 +205,7 @@ const state = {
     gridV: true,
     sessions: true,
     countdown: true,
-    dataWin: true,
+    dataWin: false,
     cross: "free",
     cursor: "cross",
     /* UTC by default: a chart of a global market read by someone in Kampala
@@ -343,6 +338,9 @@ function snapshotState() {
     layout: state.layout,
     pos: state.pos,
     type: state.type,
+    look: state.look,
+    watch: state.watch,
+    sel: state.sel,
   });
 }
 function pushUndo() {
@@ -357,6 +355,9 @@ function applySnap(j) {
   state.layout = o.layout;
   state.pos = o.pos;
   state.type = o.type;
+  if (o.look) state.look = { ...state.look, ...o.look };
+  if (Array.isArray(o.watch)) state.watch = o.watch.slice();
+  if (Number.isInteger(o.sel)) state.sel = Math.max(0, Math.min(o.layout - 1, o.sel));
   buildGrid();
   paintAll();
 }
@@ -394,23 +395,18 @@ function makePos(key, a, b, opts) {
     toast("Position sizing unavailable", "Verified instrument specifications are not available for this provider listing.");
     return;
   }
-  let entry = a,
-    stop = b;
-  /* The short-position tool forces the direction instead of reading it off
-     the drag, so dragging upward from entry still gives you a short. */
-  const want = opts && opts.side;
-  if (want === "short" && entry > stop) {
-    entry = b;
-    stop = a;
+  const want=opts?.side || (a>b?'long':'short');
+  const geometry=positionPrices(a,b,want,SYMBOLS[sym].tick);
+  if(!geometry){toast("Choose distinct entry and stop prices");return false;}
+  const {entry,stop,target}=geometry;
+  state.risk.side=want;
+  const drawingDefaults=Store.settings.get().chartsDrawingDefaults?.[want==='long'?'position':'shortpos']||{};
+  state.pos={...JSON.parse(JSON.stringify(drawingDefaults)),key,sym,side:want,entry,stop,target};
+  if(Number.isFinite(opts?.startBar)&&Number.isFinite(opts?.endBar)){
+    state.pos.startBar=Math.min(opts.startBar,opts.endBar);
+    state.pos.endBar=Math.max(state.pos.startBar+2,Math.max(opts.startBar,opts.endBar));
   }
-  if (want === "long" && entry < stop) {
-    entry = b;
-    stop = a;
-  }
-  const dist = Math.abs(entry - stop);
-  state.risk.side = entry > stop ? "long" : "short";
-  const target = entry > stop ? entry + dist * 2 : entry - dist * 2;
-  state.pos = { key, sym, entry, stop, target };
+  state.selObj=null;state.posSelected=true;
   recalc();
   syncInputs();
   $$(".st").forEach((x) =>
@@ -422,15 +418,50 @@ function makePos(key, a, b, opts) {
       "Size, risk and R come from your balance and your rule — drag any line to resize.",
     );
 }
-function movePos(k, price) {
-  const P = state.pos;
-  P[k] = price;
-  state.risk.side = P.entry > P.stop ? "long" : "short";
-  recalc();
-  syncInputs();
-  $$(".st").forEach((x) =>
-    x.classList.toggle("on", x.dataset.side === state.risk.side),
-  );
+/* Direction remains fixed during editing. Moving entry translates the whole box. */
+function positionPrices(entry,second,side,tick=1e-8){
+  if(!Number.isFinite(entry)||!Number.isFinite(second))return null;
+  const distance=Math.abs(second-entry);
+  if(distance<Math.max(tick,1e-10))return null;
+  const sign=side==='short'?-1:1;
+  return {entry,stop:entry-sign*distance,target:entry+sign*distance*2};
+}
+function movedPosition(P,k,price,tick=1e-8){
+  if(!P||!Number.isFinite(price)||!['entry','stop','target'].includes(k))return null;
+  const next={...P},sign=(P.side|| (P.entry>P.stop?'long':'short'))==='short'?-1:1;
+  const gap=Math.max(tick,1e-10);
+  if(k==='entry'){const delta=price-P.entry;next.entry=price;next.stop+=delta;next.target+=delta;}
+  else if(k==='stop')next.stop=sign===1?Math.min(price,P.entry-gap):Math.max(price,P.entry+gap);
+  else next.target=sign===1?Math.max(price,P.entry+gap):Math.min(price,P.entry-gap);
+  return next;
+}
+/* All drag updates are derived from the original pointer-down snapshot. */
+function adjustedPosition(P,kind,delta,tick=1e-8){
+  if(!P)return null;
+  if(kind==='move'){
+    if(!Number.isFinite(delta.deltaPrice)||!Number.isFinite(delta.deltaBar))return null;
+    const next=movedPosition(P,'entry',P.entry+delta.deltaPrice,tick);
+    if(Number.isFinite(P.startBar)&&Number.isFinite(P.endBar)){next.startBar=P.startBar+delta.deltaBar;next.endBar=P.endBar+delta.deltaBar;}
+    return next;
+  }
+  if(kind==='startBar'||kind==='endBar'){
+    if(!Number.isFinite(delta.bar)||!Number.isFinite(P.startBar)||!Number.isFinite(P.endBar))return null;
+    return {...P,[kind]:kind==='startBar'?Math.min(delta.bar,P.endBar-2):Math.max(delta.bar,P.startBar+2)};
+  }
+  if(kind==='entryPrice'){
+    if(!Number.isFinite(delta.price))return null;
+    const gap=Math.max(tick,1e-10),low=Math.min(P.stop,P.target)+gap,high=Math.max(P.stop,P.target)-gap;
+    if(low>high)return null;
+    return {...P,entry:Math.max(low,Math.min(high,delta.price))};
+  }
+  return movedPosition(P,kind,delta.price,tick);
+}
+function movePos(k,price){
+  const P=state.pos,next=movedPosition(P,k,price,SYMBOLS[P?.sym]?.tick);
+  if(!next)return;
+  Object.assign(P,next);state.risk.side=P.side||(P.entry>P.stop?'long':'short');
+  recalc();syncInputs();
+  $$(".st").forEach(x=>x.classList.toggle("on",x.dataset.side===state.risk.side));
 }
 /* The sizing answer comes from Instruments.positionSize — the same
    function behind the calculators screen. This used to be its own
@@ -709,6 +740,7 @@ function draw() {
       const next = Feed.badge({ compact: true, symbol: active.sym, interval: active.iv });
       if (badge.innerHTML !== next) badge.innerHTML = next;
     }
+    document.dispatchEvent(new Event("chart-render"));
   });
 }
 addEventListener("resize", draw);
@@ -743,7 +775,7 @@ function select(slot) {
    Favourites live in state and travel with a saved workspace. */
 function ivFavs() {
   if (!state.ivFavs)
-    state.ivFavs = (Feed.IV_DEFAULT_FAVS || INTERVALS.slice(0, 7)).slice();
+    state.ivFavs = (window.THEONEPERCENT_CHART_ARCHIVE ? ["5m","15m","30m","1H","4H","1D"] : Feed.IV_DEFAULT_FAVS || INTERVALS.slice(0, 7)).slice();
   return state.ivFavs;
 }
 function setInterval_(iv) {
@@ -762,7 +794,7 @@ function paintIntervals() {
     .map(
       (i) =>
         `<button class="chip ${cur === i ? "on" : ""} ${favs.includes(i) ? "" : "ghost"}" data-iv="${i}"
-      title="${favs.includes(i) ? i : i + " — not a favourite, showing because it is selected"}">${i}</button>`,
+      title="${favs.includes(i) ? i : i + " — not a favourite, showing because it is selected"}">${window.THEONEPERCENT_CHART_ARCHIVE ? i.replace("H","h").replace("1D","D") : i}</button>`,
     )
     .join("");
   $$("#intervals .chip").forEach(
@@ -1046,7 +1078,9 @@ function paintDataModeToggle() {
 }
 function paintTypeBtn() {
   const t = TYPES.find((x) => x[0] === state.type);
-  $("#typeBtn").firstChild.textContent = (t ? t[1] : "Candles") + " ";
+  const typeButton=$("#typeBtn");
+  if (typeButton.querySelector("svg")) typeButton.setAttribute("aria-label", "Chart type: " + (t ? t[1] : "Candles"));
+  else typeButton.firstChild.textContent = (t ? t[1] : "Candles") + " ";
   $$("#typeMenu button").forEach((b) =>
     b.classList.toggle("on", b.dataset.t === state.type),
   );
@@ -1057,7 +1091,7 @@ function paintLayoutBtn() {
   );
 }
 function paintIndCount() {
-  $("#indCount").textContent = state.charts[state.sel].studies.length;
+  const count=$("#indCount");if(count)count.textContent = state.charts[state.sel].studies.length;
 }
 function setSymbol(sym) {
   /* Every route to a symbol — search, watchlist, compare chip, a journal row,
@@ -1091,53 +1125,7 @@ function setSymbol(sym) {
    the one question a number alone cannot answer — 2341.75 is meaningless
    until you know the day ran 2320 to 2345. */
 function paintSymCard() {
-  const el = $("#symCard");
-  if (!el) return;
-  const sym = state.charts[state.sel].sym,
-    S = Feed.symbol(sym),
-    q = Feed.quote(sym);
-  if (!S || !q) {
-    el.innerHTML = S ? `<div class="sc-h"><div><b>${sym}</b><span class="sc-m">${S.market}</span></div><div class="sc-n">${S.name} · ${S.venue}</div></div><div class="sc-p">Unavailable</div><div class="sc-sn">No provider candles are available for this symbol. No market price, daily change, or spread is inferred. Enable Demo mode only to view synthetic candles.</div><div class="sc-f"><span>Quote currency <b>${S.quote || "Unavailable"}</b></span><span>Spread <b>Unavailable</b></span><span>Interval <b>${state.charts[state.sel].iv}</b></span></div>` : "";
-    return;
-  }
-  const d = Feed.history(sym, "15m"),
-    day = new Date(d[d.length - 1].t).getUTCDate();
-  const lastBar = d[d.length - 1];
-  const source = Feed.historicalSource(sym, "15m") || (Feed.isDemoMode() ? "Synthetic Demo mode" : "Provider history");
-  const closeTime = new Date(lastBar.t * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC";
-  let lo = Infinity,
-    hi = -Infinity;
-  for (let i = d.length - 1; i >= 0; i--) {
-    if (new Date(d[i].t).getUTCDate() !== day) break;
-    lo = Math.min(lo, d[i].l);
-    hi = Math.max(hi, d[i].h);
-  }
-  const at = hi > lo ? ((q.price - lo) / (hi - lo)) * 100 : 50;
-  const up = q.chgPct >= 0,
-    dg = S.digits;
-  /* The last digit is set apart the way a broker terminal does it: the pip
-     you are actually paid in should not look like the digits you are not. */
-  const px = q.price.toFixed(dg),
-    head = px.slice(0, -1),
-    tail = px.slice(-1);
-  el.innerHTML =
-    `<div class="sc-h"><div><b>${sym}</b><span class="sc-m">${S.market}</span></div>
-       <div class="sc-n">${S.name} · ${S.venue}</div></div>
-     <div class="sc-price-note">Last candle close · ${source} · ${closeTime}</div>
-     <div class="sc-p ${up ? "up" : "dn"}"><span>${head}</span><i>${tail}</i>
-       <em>${S.quote || ""}</em></div>
-     <div class="sc-c ${up ? "up" : "dn"}" title="Change from the first available 15-minute candle for the current UTC date">${up ? "+" : "−"}${Math.abs(q.chg).toFixed(dg)}
-       <span>${up ? "+" : "−"}${Math.abs(q.chgPct).toFixed(2)}%</span>
-       <b>UTC day</b></div>
-     <div class="sc-rg" title="Where the last price sits between the session low and the session high">
-       <span class="sc-rl">${lo.toFixed(dg)}</span>
-       <span class="sc-rt"><i style="left:${at.toFixed(1)}%"></i></span>
-       <span class="sc-rl">${hi.toFixed(dg)}</span></div>
-     <div class="sc-f">
-       <span title="The spread charged on this symbol">Spread <b>${Number.isFinite(S.spread) ? S.spread.toFixed(1) + " " + S.tickName : "Unavailable"}</b></span>
-       <span title="The session this symbol is most liquid in">Session <b>${S.session}</b></span>
-       <span title="The interval the chart is drawn at">Interval <b>${state.charts[state.sel].iv}</b></span>
-     </div>` + specHTML(sym, S);
+  if (window.ChartWatchlist) ChartWatchlist.paintCard();
 }
 
 /* ── contract specification ────────────────────────────────────
@@ -1228,96 +1216,14 @@ function specHTML(sym, S) {
           `<div class="sc-sr"${t ? ` title="${t}"` : ""}><span>${k}</span><b class="mono">${v}</b></div>`,
       )
       .join("")}
-    <p class="sc-sn">Instrument specifications come from the local instrument table. Real chart history is shown only when the selected provider returns candles. Unsupported markets stay unavailable unless Demo mode is explicitly enabled.</p>
+    <p class="sc-sn">Contract specifications are reference values from the local instrument table. Confirm your broker’s contract before sizing a trade.</p>
   </div>`;
 }
 
 /* ── watchlist with sparklines ───────────────────────────────── */
 let wlSort = "none";
 function paintWatchlist() {
-  /* Quote, change and sparkline all come from Feed, so a row and the main
-     chart can never show two different prices for the same symbol. */
-  const rows = state.watch
-    .map((s) => {
-      const S = SYMBOLS[s],
-        q = Feed.quote(s);
-      if (!S) return null;
-      return { s, S, quote: q, last: q ? q.price : null, ch: q ? q.chgPct : null, d: q ? Feed.spark(s, 40) : [] };
-    })
-    .filter(Boolean);
-  if (wlSort === "gain") rows.sort((a, b) => b.ch - a.ch);
-  if (wlSort === "loss") rows.sort((a, b) => a.ch - b.ch);
-  if (wlSort === "name") rows.sort((a, b) => a.s.localeCompare(b.s));
-  /* Grouped by asset class, because a list that runs EURUSD, XAUUSD, BTCUSD,
-     US500 in one column asks the reader to classify every row themselves.
-     Order is fixed rather than alphabetical so the groups do not reshuffle
-     when a symbol is added. Suppressed while a sort is active: a heading
-     that says FOREX above rows ordered by percentage gain would be lying
-     about what governs the order. */
-  const GRP = ["Forex", "Commodities", "Indices", "Futures", "Crypto"];
-  const row = (r) => `
-    <div class="wr ${state.charts[state.sel].sym === r.s ? "on" : ""}" data-sym="${r.s}">
-      <div class="wr-l"><span class="wr-s">${r.s}</span><span class="wr-n">${r.S.name}</span></div>
-      ${r.quote ? `<canvas class="spark" width="72" height="26" data-spark="${r.s}"></canvas>` : '<span class="wr-unavailable">Unavailable</span>'}
-      <div class="wr-r"><span class="wr-p">${r.quote ? r.last.toFixed(r.S.digits) : "—"}</span>
-        <span class="wr-c ${r.quote ? r.ch >= 0 ? "up" : "dn" : "hint"}">${r.quote ? (r.ch >= 0 ? "+" : "−") + Math.abs(r.ch).toFixed(2) + "%" : "No real feed"}</span></div>
-      <button class="wr-x" data-rm="${r.s}" title="Remove from watchlist">✕</button></div>`;
-  if (wlSort === "none") {
-    $("#wl").innerHTML = GRP.map((g) => {
-      const inG = rows.filter((r) => r.S.market === g);
-      if (!inG.length) return "";
-      return (
-        `<div class="wl-g">${g}<span>${inG.length}</span></div>` +
-        inG.map(row).join("")
-      );
-    }).join("");
-  } else {
-    $("#wl").innerHTML = rows.map(row).join("");
-  }
-  rows.forEach((r) => {
-    if (!r.d.length) return;
-    const cv = $(`#wl [data-spark="${r.s}"]`);
-    if (!cv) return;
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    cv.width = 72 * dpr;
-    cv.height = 26 * dpr;
-    const c = cv.getContext("2d");
-    c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const lo = Math.min(...r.d),
-      hi = Math.max(...r.d),
-      y = (v) => 24 - ((v - lo) / (hi - lo || 1)) * 22;
-    c.beginPath();
-    r.d.forEach((v, i) => {
-      const x = (i / (r.d.length - 1)) * 70 + 1;
-      i ? c.lineTo(x, y(v)) : c.moveTo(x, y(v));
-    });
-    c.strokeStyle = r.ch >= 0 ? css("--up") : css("--dn");
-    c.lineWidth = 1.2;
-    c.stroke();
-    c.lineTo(71, 26);
-    c.lineTo(1, 26);
-    c.closePath();
-    c.globalAlpha = 0.12;
-    c.fillStyle = r.ch >= 0 ? css("--up") : css("--dn");
-    c.fill();
-  });
-  $$("#wl .wr").forEach(
-    (r) =>
-      (r.onclick = (e) => {
-        if (e.target.dataset.rm !== undefined) return;
-        setSymbol(r.dataset.sym);
-      }),
-  );
-  $$("#wl [data-rm]").forEach(
-    (b) =>
-      (b.onclick = (e) => {
-        e.stopPropagation();
-        state.watch = state.watch.filter((x) => x !== b.dataset.rm);
-        saveWatch();
-        paintWatchlist();
-      }),
-  );
-  paintCompare();
+  if (window.ChartWatchlist) ChartWatchlist.paint();
 }
 
 /* The compare chips are their own view now, so they paint on their own. They
@@ -1362,6 +1268,10 @@ function paintCompare() {
 }
 
 /* ── objects tree ────────────────────────────────────────────── */
+function objectIcon(name) {
+  const paths = {eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',hidden:'<path d="m3 3 18 18M9 5a12 12 0 0 1 13 7s-4 7-10 7a10 10 0 0 1-5-1M5 6a18 18 0 0 0-3 6l3 4"/>',lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/>',unlock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0"/>',set:'<path d="M3 7h18M3 17h18"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>',del:'<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>'};
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[name]+'</svg>';
+}
 function paintObjects() {
   const c = charts[state.sel];
   if (!c || !$("#objs")) return;
@@ -1371,24 +1281,26 @@ function paintObjects() {
     ? list
         .map(
           (o, i) => `
-    <div class="ob ${o.id === state.selObj ? "sel" : ""}" data-o="${o.id}">
+    <div class="ob ${o.id === state.selObj ? "sel" : ""}" data-o="${o.id}" tabindex="0" aria-label="${DRAW[o.t] ? DRAW[o.t].name : o.t}">
+      <span class="ob-icon" aria-hidden="true">${typeof svgIcon === "function" ? svgIcon(o.t) : ""}</span>
       <span class="ob-n">${DRAW[o.t] ? DRAW[o.t].name : o.t}</span>
       <span class="ob-v mono">${o.pts[0].p != null ? fmt(o.pts[0].p, c.cfg.sym) : "—"}</span>
-      <button data-a="eye" title="${o.hidden ? "Show" : "Hide"}">${o.hidden ? "◎" : "◉"}</button>
-      <button data-a="lock" title="${o.locked ? "Unlock" : "Lock"}">${o.locked ? "🔒" : "🔓"}</button>
-      <button data-a="set" title="Settings">⚙</button>
-      <button data-a="del" title="Remove">✕</button>
+      <button data-a="eye" title="${o.hidden ? "Show" : "Hide"}" aria-label="${o.hidden ? "Show" : "Hide"} drawing" aria-pressed="${!!o.hidden}">${objectIcon(o.hidden ? "hidden" : "eye")}</button>
+      <button data-a="lock" title="${o.locked ? "Unlock" : "Lock"}" aria-label="${o.locked ? "Unlock" : "Lock"} drawing" aria-pressed="${!!o.locked}">${objectIcon(o.locked ? "lock" : "unlock")}</button>
+      <button data-a="set" title="Drawing settings" aria-label="Drawing settings">${objectIcon("set")}</button>
+      <button data-a="del" title="Remove drawing" aria-label="Remove drawing">${objectIcon("del")}</button>
     </div>`,
         )
         .join("")
     : `<div class="empty">No drawings on this chart yet. Pick a tool on the left rail.</div>`;
   $$("#objs .ob").forEach((el) => {
     el.onclick = (e) => {
-      if (e.target.dataset.a) return;
+      if (e.target.closest("[data-a]")) return;
       state.selObj = el.dataset.o;
       paintObjects();
       draw();
     };
+    el.onkeydown = e => { if (e.target === el && (e.key === "Enter" || e.key === " ")) {e.preventDefault();el.click();} };
     el.querySelectorAll("[data-a]").forEach(
       (b) =>
         (b.onclick = (e) => {
@@ -1519,49 +1431,7 @@ function paintJournal() {
 }
 
 /* ── alerts ──────────────────────────────────────────────────── */
-function paintAlerts() {
-  $("#al").innerHTML =
-    state.alerts
-      .map(
-        (a, i) => `
-    <div class="ai" data-a="${i}"><div class="ai-d"><div class="ai-t">${a.title}</div><div class="ai-c">${a.cond}</div></div>
-      <div class="sw ${a.on ? "on" : ""}" data-sw="${i}"><i></i></div>
-      <button class="ai-x" data-rm="${i}" title="Delete alert">✕</button></div>`,
-      )
-      .join("") +
-    `<div class="alog"><span class="lbl">Triggered</span>${
-      state.fired.length
-        ? state.fired
-            .slice(0, 12)
-            .map(
-              (f) =>
-                `<div class="lg"><b>${f.title}</b><span>${f.when} · ${f.px}</span></div>`,
-            )
-            .join("")
-        : `<div class="empty">Nothing has fired yet. Alerts also fire inside replay, so you can test one on history before you trust it.</div>`
-    }</div>` +
-    `<p class="hint">Checked on this device while the page is open, and saved with your settings so they survive a reload. Server-side evaluation, which would let you close the tab, arrives with the backend.</p>`;
-  $$("#al [data-sw]").forEach(
-    (el) =>
-      (el.onclick = () => {
-        const a = state.alerts[+el.dataset.sw];
-        a.on = !a.on;
-        a.fired = false;
-        saveAlerts();
-        paintAlerts();
-        draw();
-      }),
-  );
-  $$("#al [data-rm]").forEach(
-    (el) =>
-      (el.onclick = () => {
-        state.alerts.splice(+el.dataset.rm, 1);
-        saveAlerts();
-        paintAlerts();
-        draw();
-      }),
-  );
-}
+function paintAlerts() { if (window.ChartAlerts) ChartAlerts.paint(); }
 
 /* ══════════════════════════════════════════════════════════════
    indicator browser — per chart, with real parameters
@@ -1596,7 +1466,7 @@ async function saveTemplate() {
   const list = tplList().filter((t) => t.name !== name);
   list.unshift({
     name,
-    studies: cfg.studies.map((s) => ({ id: s.id, params: { ...s.params } })),
+    studies: cfg.studies.map((s) => IndicatorLibrary.pack(s)),
   });
   tplSave(list);
   paintInd($("#indSearch").value);
@@ -1605,161 +1475,11 @@ async function saveTemplate() {
     `${cfg.studies.length} stud${cfg.studies.length === 1 ? "y" : "ies"}. Apply it to any chart from the indicator list.`,
   );
 }
-function applyTemplate(name, add) {
-  const t = tplList().find((x) => x.name === name);
-  if (!t) return;
-  const cfg = state.charts[state.sel];
-  pushUndo();
-  const made = t.studies.map((s) => makeStudy(s.id, s.params));
-  cfg.studies = add ? cfg.studies.concat(made) : made;
-  paintInd($("#indSearch").value);
-  paintIndCount();
-  draw();
-  toast(
-    `${add ? "Added" : "Applied"} “${t.name}”`,
-    add
-      ? `${made.length} more on ${cfg.sym}.`
-      : `${cfg.sym} now shows only this template's ${made.length} stud${made.length === 1 ? "y" : "ies"}. Ctrl Z puts the old set back.`,
-  );
-}
-
-function paintInd(filter = "") {
-  const cfg = state.charts[state.sel];
-  const tpls = tplList();
-  $("#indFams").innerHTML =
-    FAMS.map(([id, n]) => {
-      const count = Object.values(STUDIES).filter((s) => s.fam === id).length;
-      return `<div class="fam ${famSel === id ? "on" : ""} ${id === "journal" ? "jd" : ""}" data-f="${id}">${n}<b>${count}</b></div>`;
-    }).join("") +
-    `<div class="tpl-g">
-       <div class="mh">Templates</div>
-       ${
-         tpls.length
-           ? tpls
-               .map(
-                 (t) =>
-                   `<div class="tpl" data-t="${t.name.replace(/"/g, "&quot;")}">
-                      <button class="tpl-n" data-apply title="Replace the studies on this chart with this set">${t.name}<span>${t.studies.length}</span></button>
-                      <button class="tpl-b" data-add title="Add this set on top of what is already here">+</button>
-                      <button class="tpl-b" data-del title="Delete this template">✕</button>
-                    </div>`,
-               )
-               .join("")
-           : `<p class="hint">No templates yet. Set a chart up the way you read it, then save it here and drop it onto any symbol.</p>`
-       }
-       <button class="btn sm" id="tplSave">Save this chart's studies</button>
-     </div>` +
-    `<p class="hint" style="margin-top:8px">Every study here computes for real on this chart. Add the same one twice with different lengths — there is no per-chart cap.</p>`;
-  $$("#indFams .fam").forEach(
-    (f) =>
-      (f.onclick = () => {
-        famSel = f.dataset.f;
-        paintInd($("#indSearch").value);
-      }),
-  );
-  $("#tplSave").onclick = saveTemplate;
-  $$("#indFams .tpl").forEach((el) => {
-    const name = el.dataset.t;
-    el.querySelector("[data-apply]").onclick = () => applyTemplate(name, false);
-    el.querySelector("[data-add]").onclick = () => applyTemplate(name, true);
-    el.querySelector("[data-del]").onclick = () => {
-      tplSave(tplList().filter((t) => t.name !== name));
-      paintInd($("#indSearch").value);
-      toast(`Template “${name}” deleted`);
-    };
-  });
-  const q = filter.trim().toLowerCase();
-  const rows = Object.entries(STUDIES).filter(([id, S]) =>
-    q ? (S.name + S.desc).toLowerCase().includes(q) : S.fam === famSel,
-  );
-  $("#indList").innerHTML = rows.length
-    ? rows
-        .map(([id, S]) => {
-          const on = cfg.studies.filter((s) => s.id === id).length;
-          return `<div class="ir ${on ? "added" : ""}" data-i="${id}"><div><div class="ir-n">${S.name}<span class="ir-w">${S.where === "sub" ? "own pane" : "on price"}</span></div>
-      <div class="ir-d">${S.desc}</div></div><span class="ir-a">${on ? on + " on chart · add another" : "Add"}</span></div>`;
-        })
-        .join("")
-    : `<div class="empty">Nothing matches “${filter}”.</div>`;
-  $$("#indList .ir").forEach(
-    (r) =>
-      (r.onclick = () => {
-        pushUndo();
-        cfg.studies.push(makeStudy(r.dataset.i));
-        paintInd($("#indSearch").value);
-        paintIndCount();
-        draw();
-      }),
-  );
-  paintIndSettings();
-}
-function paintIndSettings() {
-  const cfg = state.charts[state.sel];
-  $("#indSettings").innerHTML = cfg.studies.length
-    ? cfg.studies
-        .map((s) => {
-          const S = STUDIES[s.id];
-          const fields = Object.keys(S.params)
-            .map((k) => {
-              const v = s.params[k];
-              if (k === "source")
-                return `<div class="sp-r"><span>Source</span><select data-uid="${s.uid}" data-k="${k}">
-        ${["close", "open", "high", "low", "hl2", "hlc3"].map((o) => `<option ${o === v ? "selected" : ""}>${o}</option>`).join("")}</select></div>`;
-              return `<div class="sp-r"><span>${k}</span><input type="number" step="${k === "mult" ? 0.1 : 1}" value="${v}" data-uid="${s.uid}" data-k="${k}"></div>`;
-            })
-            .join("");
-          return `<div class="sp"><div class="sp-h">${S.name}<label class="study-visibility"><input type="checkbox" data-study-visible="${s.uid}" ${s.visible !== false ? "checked" : ""}> Show</label><button data-rm="${s.uid}">remove</button></div>
-      ${fields || '<div class="sp-r"><span>No parameters</span><span>—</span></div>'}
-      <div class="sp-r"><span>Colour</span><input type="color" value="${hexOf(s.color)}" data-uid="${s.uid}" data-k="__color"></div>
-      <div class="sp-r"><span>Pane</span><span>${S.where === "sub" ? "separate" : "on price"}</span></div>
-      ${S.where === "sub" ? `<div class="sp-r"><span>Pane height</span><input type="range" min="8" max="34" value="${Math.round(s.h * 100)}" data-uid="${s.uid}" data-k="__h"></div>` : ""}
-    </div>`;
-        })
-        .join("")
-    : `<div class="empty">Nothing added yet.</div>`;
-  $$("#indSettings [data-k]").forEach((f) => {
-    const ev = f.type === "range" ? "oninput" : "onchange";
-    f[ev] = () => {
-      const s = cfg.studies.find((x) => x.uid === f.dataset.uid);
-      if (!s) return;
-      const k = f.dataset.k;
-      if (k === "__color") s.color = f.value;
-      else if (k === "__h") s.h = +f.value / 100;
-      else s.params[k] = f.type === "number" ? +f.value : f.value;
-      draw();
-    };
-  });
-  $("#indSettings [data-study-visible]").forEach((input) => {
-    input.onchange = () => {
-      const study = cfg.studies.find((x) => x.uid === input.dataset.studyVisible);
-      if (!study) return;
-      study.visible = input.checked;
-      draw();
-    };
-  });
-  $("#indSettings [data-rm]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        pushUndo();
-        cfg.studies = cfg.studies.filter((x) => x.uid !== b.dataset.rm);
-        paintInd($("#indSearch").value);
-        paintIndCount();
-        draw();
-      }),
-  );
-}
+/* Library, active controls and study properties: charts-indicators.js. */
 function hexOf(c) {
   const v = c && c.startsWith("--") ? css(c) : c;
   return /^#[0-9a-f]{6}$/i.test(v || "") ? v : "#4C6BF5";
 }
-function openStudyCfg(slot, uid) {
-  select(slot);
-  show("#indModal");
-  paintInd(($("#indSearch").value = ""));
-  const el = $(`#indSettings [data-uid="${uid}"]`);
-  if (el) el.closest(".sp").scrollIntoView({ block: "center" });
-}
-
 /* ══════════════════════════════════════════════════════════════
    chart settings
    ══════════════════════════════════════════════════════════════ */
@@ -1769,58 +1489,48 @@ function paintSettings() {
   const row = (label, ctrl, note) =>
     `<div class="set-r"><div><b>${label}</b>${note ? `<span>${note}</span>` : ""}</div>${ctrl}</div>`;
   const chk = (k, on) =>
-    `<label class="sw2"><input type="checkbox" data-look="${k}" ${on ? "checked" : ""}><i></i></label>`;
+    `<label class="sw2"><input type="checkbox" aria-label="${k.replace(/([A-Z])/g, " $1")}" data-look="${k}" ${on ? "checked" : ""}><i></i></label>`;
+  const colour = (key, label, fallback) => `<input type="color" data-look="${key}" aria-label="${label}" title="${label}" value="${L[key] || fallback}">`;
+  const pair = (key, label) => `<span class="settings-colours">${colour(key+"Up", "Rising "+label,L.up||hexOf("--up"))}${colour(key+"Dn","Falling "+label,L.dn||hexOf("--dn"))}</span>`;
   $("#setBody").innerHTML = `
-    <div class="set-g"><span class="lbl">Candles</span>
-      ${row("Up colour", `<input type="color" data-look="up" value="${L.up || hexOf("--up")}">`)}
-      ${row("Down colour", `<input type="color" data-look="dn" value="${L.dn || hexOf("--dn")}">`)}
-      ${row("Wicks match the body", chk("wickMatch", L.wickMatch))}
-    </div>
-    <div class="set-g"><span class="lbl">Grid and axes</span>
-      ${row("Horizontal grid", chk("gridH", L.gridH))}
-      ${row("Vertical grid", chk("gridV", L.gridV))}
-      ${row("Session breaks", chk("sessions", L.sessions), "dotted line at each new day")}
-      ${row("Countdown to bar close", chk("countdown", L.countdown))}
-      ${row(
-        "Price scale",
-        `<select data-scale="mode">${[
-          ["normal", "Regular"],
-          ["log", "Logarithmic"],
-          ["pct", "Percent"],
-        ]
-          .map(
-            ([v, n]) =>
-              `<option value="${v}" ${cfg.scale.mode === v ? "selected" : ""}>${n}</option>`,
-          )
-          .join("")}</select>`,
-      )}
-      ${row("Invert the price scale", `<label class="sw2"><input type="checkbox" data-invert ${cfg.scale.invert ? "checked" : ""}><i></i></label>`, "up is down — a chart you cannot read as a rising line is the fastest bias check there is")}
-    </div>
-    <div class="set-g"><span class="lbl">Cursor</span>
-      ${row(
-        "Crosshair",
-        `<select data-look="cross">${[
-          ["free", "Free"],
-          ["bar", "Snap to bar"],
-        ]
-          .map(
-            ([v, n]) =>
-              `<option value="${v}" ${L.cross === v ? "selected" : ""}>${n}</option>`,
-          )
-          .join("")}</select>`,
-      )}
-      ${row("Data window", chk("dataWin", L.dataWin), "OHLC and every study value under the cursor")}
-      ${row("Sync crosshair across the layout", chk("syncCross", L.syncCross))}
-      ${row("Sync symbol across the layout", chk("syncSymbol", L.syncSymbol))}
-    </div>
-    <div class="set-g"><span class="lbl">This chart</span>
-      ${row("Volume profile of the visible range", `<label class="sw2"><input type="checkbox" data-vp ${cfg.vp ? "checked" : ""}><i></i></label>`)}
-      ${row("Live simulated ticks", `<label class="sw2"><input type="checkbox" data-live ${state.live ? "checked" : ""}><i></i></label>`, "the last bar moves; history never changes")}
-    </div>`;
+    <section class="set-g" data-settings-section="Symbol"><h3 class="settings-section-title">Candles</h3>
+      ${row("Body", `<span class="settings-colours">${chk("candleBodies", L.candleBodies !== false)}${colour("up","Rising candle body",hexOf("--up"))}${colour("dn","Falling candle body",hexOf("--dn"))}</span>`)}
+      ${row("Borders", `<span class="settings-colours">${chk("candleBorders",L.candleBorders !== false)}${pair("border","border")}</span>`)}
+      ${row("Wicks", `<span class="settings-colours">${chk("candleWicks",L.candleWicks !== false)}${pair("wick","wick")}</span>`)}
+      ${row("Wicks match body",chk("wickMatch",L.wickMatch))}
+      ${row("Candle width", `<input aria-label="Candle width" type="range" min="0.2" max="0.95" step="0.05" data-look="candleWidth" value="${L.candleWidth||0.68}">`)}
+      <p class="settings-help">Colours apply to this workspace. Save the workspace to keep your appearance.</p>
+    </section>
+    <section class="set-g" data-settings-section="Status line"><h3 class="settings-section-title">Chart information</h3>
+      ${row("OHLC values",chk("showOhlc",L.showOhlc!==false),"Shown when the chart’s Details row is expanded")}
+      ${row("Indicator legend",chk("showStudyLegend",L.showStudyLegend!==false))}
+      ${row("Data window",chk("dataWin",L.dataWin),"OHLC and study values under the crosshair")}
+      ${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode() ? "" : row("Countdown to bar close",chk("countdown",L.countdown))}
+    </section>
+    <section class="set-g" data-settings-section="Scales and lines"><h3 class="settings-section-title">Price and time scales</h3>
+      ${row("Price scale",`<select aria-label="Price scale" data-scale="mode">${[["normal","Regular"],["log","Logarithmic"],["pct","Percent"]].map(([v,n])=>`<option value="${v}" ${cfg.scale.mode===v?"selected":""}>${n}</option>`).join("")}</select>`)}
+      ${row("Invert price scale",`<label class="sw2"><input type="checkbox" data-invert ${cfg.scale.invert?"checked":""} aria-label="Invert price scale"><i></i></label>`)}
+      ${row("Use UTC time",chk("utc",L.utc!==false),"Switch off to use your browser’s local timezone")}
+      ${row("Sync crosshair",chk("syncCross",L.syncCross))}
+      ${row("Sync symbol",chk("syncSymbol",L.syncSymbol))}
+    </section>
+    <section class="set-g" data-settings-section="Canvas"><h3 class="settings-section-title">Background and grid</h3>
+      ${row("Background",colour("background","Chart background",hexOf("--bg")))}
+      ${row("Horizontal grid",chk("gridH",L.gridH))}
+      ${row("Vertical grid",chk("gridV",L.gridV))}
+      ${row("Session breaks",chk("sessions",L.sessions),"A divider at the start of each UTC day")}
+      ${row("Crosshair",`<select data-look="cross" aria-label="Crosshair mode">${[["free","Free"],["bar","Snap to candle"]].map(([v,n])=>`<option value="${v}" ${L.cross===v?"selected":""}>${n}</option>`).join("")}</select>`)}
+    </section>
+    <section class="set-g" data-settings-section="Studies"><h3 class="settings-section-title">Studies and source</h3>
+      ${window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode()?'<p class="settings-help">Your database stores bid OHLC candles without volume. Volume-based studies and profiles are unavailable for these archives.</p>':row("Visible-range volume profile",`<label class="sw2"><input type="checkbox" data-vp ${cfg.vp?"checked":""} aria-label="Visible-range volume profile"><i></i></label>`)}
+      <p class="settings-help">Add or configure indicators from the Indicators button. Alerts are managed in the right-side panel.</p>
+    </section>`;
   $$("#setBody [data-look]").forEach((f) => {
     f.onchange = () => {
       const k = f.dataset.look;
-      state.look[k] = f.type === "checkbox" ? f.checked : f.value;
+      state.look[k] = f.type === "checkbox" ? f.checked : f.type === "range" ? Number(f.value) : f.value;
+      if (k === "wickUp" || k === "wickDn") {state.look.wickMatch=false;$('#setBody [data-look="wickMatch"]').checked=false;}
+      if (k === "utc") { Store.settings.patch({chartsUtc:state.look.utc}); paintClock(); }
       draw();
     };
   });
@@ -1928,20 +1638,21 @@ function makeSymbolSearchRow(symbol, instrument, index, options = {}) {
   const market = document.createElement("span"); market.className = "sr-market";
   market.textContent = String(instrument.cls || instrument.market || "Instrument").replaceAll("_", " ");
   const provider = instrument.provider;
+  const stored = window.THEONEPERCENT_CHART_ARCHIVE && Feed.hasStoredHistory(symbol);
   const source = document.createElement("span"); source.className = "sr-source";
   source.dataset.source = options.unavailableSource?.id || provider || "reference";
   if (options.unavailableSource) row.dataset.provider = options.unavailableSource.id;
   const venue = String(instrument.venue || "MT5").split(" · ").at(-1);
-  source.textContent = options.unavailableSource
+  source.textContent = stored ? "Candles" : options.unavailableSource
     ? options.unavailableSource.name
     : provider === "binance" ? "Binance · spot" : provider === "exness_mt5" ? `Exness · ${venue}` : "Reference";
   const status = document.createElement("span");
-  status.className = `sr-access ${provider && !options.unavailableSource ? "available" : "unavailable"}`;
+  status.className = `sr-access ${(stored || provider) && !options.unavailableSource ? "available" : "unavailable"}`;
   status.title = options.conflict
     ? "Cannot select: source identity conflicts"
     : options.unavailableSource
       ? `${options.unavailableSource.name} feed is not connected; instrument coverage is unverified.`
-      : provider ? "Historical candles available from this source" : "Reference instrument; no verified market feed connected";
+      : stored ? "Stored candles available without sign-in" : provider ? "Historical candles available from this source" : "Reference instrument; no verified market feed connected";
   status.setAttribute("aria-label", status.title);
   const statusDot = document.createElement("span"); statusDot.className = "sr-status-dot"; statusDot.setAttribute("aria-hidden", "true");
   status.appendChild(statusDot);
@@ -2033,6 +1744,7 @@ function paintSymSearch(q = "") {
   /* A class tab narrows the list; typing searches across everything, because
      a ticker you can spell is a stronger signal than a tab you last clicked. */
   let rows = Object.entries(SYMBOLS);
+  if (window.THEONEPERCENT_CHART_ARCHIVE) rows=rows.filter(([symbol])=>Feed.hasStoredHistory(symbol));
   if (!supportedCategories.has(symCls) && !["recent", "watch"].includes(symCls)) rows = [];
   if (s)
     rows = rows.filter(([k, S]) =>
@@ -2060,6 +1772,7 @@ function paintSymSearch(q = "") {
         rank(a) - rank(b) || known(a) - known(b) || a[0].localeCompare(b[0])
       );
     });
+  if (window.THEONEPERCENT_CHART_ARCHIVE) rows=rows.filter(([symbol])=>Feed.hasStoredHistory(symbol));
   symRows = rows.map(([k]) => k);
   symSel = Math.max(0, Math.min(symSel, symRows.length - 1));
 
@@ -2069,7 +1782,7 @@ function paintSymSearch(q = "") {
   const sourceChoices = symSource === "all"
     ? FOREX_SOURCE_CHOICES
     : FOREX_SOURCE_CHOICES.filter((source) => source.id === symSource);
-  const brokerRows = s.length >= 3
+  const brokerRows = !window.THEONEPERCENT_CHART_ARCHIVE && s.length >= 3
     ? matchingRows
       .filter(([, instrument]) => instrument.cls === "Forex")
       .slice(0, 5)
@@ -2313,7 +2026,12 @@ function ask(title, label, value = "", type = "text") {
       inp.focus();
       inp.select();
     }, 30);
+    let settled = false;
+    const dismissed = () => done(null);
     const done = (v) => {
+      if (settled) return;
+      settled = true;
+      m.removeEventListener("pplx-dismiss", dismissed);
       hide(m);
       inp.onkeydown = null;
       res(v);
@@ -2321,7 +2039,7 @@ function ask(title, label, value = "", type = "text") {
     /* Escape reaches this dialog through the global stack too, so a dismissal
        from there has to resolve the promise rather than leave the caller
        waiting on a sheet that is no longer on screen. */
-    m.addEventListener("pplx-dismiss", () => done(null), { once: true });
+    m.addEventListener("pplx-dismiss", dismissed, { once: true });
     $("#askOk").onclick = () => done(inp.value.trim() || null);
     $("#askCancel").onclick = () => done(null);
     inp.onkeydown = (e) => {
@@ -2345,233 +2063,7 @@ const DRAW_COLORS = [
   "#9FB0CE",
   "#FFFFFF",
 ];
-let drawEdit = null; /* {chart, obj} */
-
-function editDrawing(chart, obj) {
-  drawEdit = { chart, obj, historyPushed: false };
-  obj.style = Object.assign({}, DRAW_STYLE_DEFAULTS, obj.style || {});
-  paintDrawSettings();
-  show("#drawModal");
-}
-function ensureDrawEditUndo() {
-  if (!drawEdit || drawEdit.historyPushed) return;
-  pushUndo();
-  drawEdit.historyPushed = true;
-}
-function paintDrawSettings() {
-  if (!drawEdit) return;
-  const { obj: o, chart: c } = drawEdit,
-    st = o.style;
-  const name = DRAW[o.t] ? DRAW[o.t].name : o.t;
-  const fibDefaults = o.t === "fibchannel"
-    ? [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.618]
-    : o.t === "fibfan"
-      ? [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
-      : FIBS;
-  const isShape = [
-    "rect", "channel", "ellipse", "triangle", "callout", "gannbox",
-    "regression", "fibchannel", "fibfan", "brush", "highlighter", "text", "prange",
-  ].includes(o.t);
-  const isLine = ![
-    "text", "flag", "prange", "drange", "dprange", "position", "shortpos",
-  ].includes(o.t);
-  const canExtend = ["trend", "arrow"].includes(o.t);
-  const canLabel = ["hline", "trend", "ray", "xline"].includes(o.t);
-  $("#drawSub").textContent = `${name} · ${c.cfg.sym} ${c.cfg.iv}`;
-  $("#drawBody").innerHTML = `
-    <div class="set-g">
-      <div class="mh">Line</div>
-      <div class="set-r"><span>Colour</span>
-        <span class="sw-row">
-          ${DRAW_COLORS.map((h) => `<button class="sw2c ${h.toLowerCase() === String(st.color).toLowerCase() ? "on" : ""}" data-col="${h}" style="background:${h}" title="${h}"></button>`).join("")}
-          <input type="color" data-k="color" value="${st.color}" />
-        </span>
-      </div>
-      <div class="set-r"><span>Thickness</span>
-        <span class="sw-row"><input type="range" min="1" max="5" step="0.5" data-k="width" value="${st.width}" />
-        <b class="mono" style="width:26px;text-align:right">${(+st.width).toFixed(1)}</b></span></div>
-      ${
-        isLine
-          ? `<div class="set-r"><span>Style</span>
-        <select data-k="dash">
-          ${[
-            ["solid", "Solid"],
-            ["dash", "Dashed"],
-            ["dot", "Dotted"],
-          ]
-            .map(
-              ([v, l]) =>
-                `<option value="${v}" ${st.dash === v ? "selected" : ""}>${l}</option>`,
-            )
-            .join("")}
-        </select></div>`
-          : ""
-      }
-      ${
-        isShape
-          ? `<div class="set-r"><span>Fill opacity</span>
-        <span class="sw-row"><input type="range" min="0" max="60" step="2" data-k="fill" value="${st.fill}" />
-        <b class="mono" style="width:30px;text-align:right">${st.fill}%</b></span></div>`
-          : ""
-      }
-      ${
-        ["fib", "fibext", "fibchannel", "fibfan"].includes(o.t)
-          ? `<div class="set-r"><span>Fibonacci levels</span><input type="text" data-k="levels" value="${drawingLevelsFor(o, fibDefaults).join(", ")}" aria-label="Comma-separated Fibonacci levels" placeholder="0, 0.236, 0.5, 0.618, 1" style="width:220px" /></div><small class="muted">Comma-separated ratios; legacy drawings keep the default levels.</small>`
-          : ""
-      }
-    </div>
-
-    ${
-      canExtend || canLabel
-        ? `<div class="set-g">
-      <div class="mh">Behaviour</div>
-      ${
-        canExtend
-          ? `<div class="set-r"><span>Extend to the right</span><button class="sw2 ${st.extendR ? "on" : ""}" data-t="extendR"><i></i></button></div>
-      <div class="set-r"><span>Extend to the left</span><button class="sw2 ${st.extendL ? "on" : ""}" data-t="extendL"><i></i></button></div>`
-          : ""
-      }
-      ${canLabel ? `<div class="set-r"><span>Price label on the axis</span><button class="sw2 ${st.label !== false ? "on" : ""}" data-t="label"><i></i></button></div>` : ""}
-    </div>`
-        : ""
-    }
-
-    <div class="set-g">
-      <div class="mh">Note</div>
-      <div class="set-r"><span>Text on the chart</span>
-        <input type="text" data-k="text" value="${(o.text || "").replace(/"/g, "&quot;")}" placeholder="optional" style="width:180px" /></div>
-      ${
-        o.t === "text"
-          ? `<div class="set-r"><span>Font size</span>
-        <span class="sw-row"><input type="range" min="9" max="20" step="1" data-k="font" value="${st.font || 11}" />
-        <b class="mono" style="width:26px;text-align:right">${st.font || 11}</b></span></div>`
-          : ""
-      }
-    </div>
-
-    <div class="set-g">
-      <div class="mh">This object</div>
-      <div class="set-r"><span>Locked — cannot be dragged</span><button class="sw2 ${o.locked ? "on" : ""}" data-o="locked"><i></i></button></div>
-      <div class="set-r"><span>Hidden on the chart</span><button class="sw2 ${o.hidden ? "on" : ""}" data-o="hidden"><i></i></button></div>
-    </div>`;
-
-  /* colour swatches + native picker */
-  $$("#drawBody [data-col]").forEach(
-    (b) => (b.onclick = () => setStyle("color", b.dataset.col)),
-  );
-  $$("#drawBody [data-k]").forEach((el) => {
-    const k = el.dataset.k;
-    const handler = () => {
-      if (k === "text") {
-        ensureDrawEditUndo();
-        o.text = el.value;
-        draw();
-        return;
-      }
-      if (k === "levels") {
-        const parts = el.value.split(",").map((part) => part.trim());
-        const parsed = parts.filter(Boolean).map(Number);
-        const valid = parts.length > 0 && parsed.length === parts.length && parsed.every(Number.isFinite);
-        const normalized = valid ? normalizeDrawingLevels(parsed) : [];
-        el.setAttribute("aria-invalid", !normalized.length);
-        if (!normalized.length) return;
-        ensureDrawEditUndo();
-        o.levels = normalized;
-        draw();
-        return;
-      }
-      setStyle(
-        k,
-        el.type === "range" || k === "width" || k === "fill" || k === "font"
-          ? +el.value
-          : el.value,
-        el.type === "range",
-      );
-    };
-    if (k !== "levels") el.oninput = handler;
-    el.onchange = handler;
-  });
-  $$("#drawBody [data-t]").forEach(
-    (b) => (b.onclick = () => { ensureDrawEditUndo(); setStyle(b.dataset.t, !st[b.dataset.t]); }),
-  );
-  $$("#drawBody [data-o]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        ensureDrawEditUndo();
-        o[b.dataset.o] = !o[b.dataset.o];
-        paintDrawSettings();
-        paintObjects();
-        draw();
-      }),
-  );
-}
-function setStyle(k, v, quiet) {
-  if (!drawEdit) return;
-  ensureDrawEditUndo();
-  drawEdit.obj.style[k] = v;
-  if (k === "color") state.drawColor = v;
-  draw();
-  if (!quiet) paintDrawSettings();
-  else {
-    const b = $(`#drawBody [data-k="${k}"]`);
-    if (b && b.nextElementSibling)
-      b.nextElementSibling.textContent =
-        k === "fill" ? v + "%" : k === "width" ? (+v).toFixed(1) : v;
-  }
-}
-$("#drawApplyType").onclick = () => {
-  if (!drawEdit) return;
-  const { obj: o, chart: c } = drawEdit,
-    n = c.drw.filter((x) => x.t === o.t).length;
-  ensureDrawEditUndo();
-  c.drw.forEach((x) => {
-    if (x.t === o.t) {
-      x.style = Object.assign({}, o.style);
-      if (Array.isArray(o.levels)) x.levels = o.levels.slice();
-      else delete x.levels;
-    }
-  });
-  draw();
-  toast(
-    "Style applied",
-    `${n} ${DRAW[o.t] ? DRAW[o.t].name.toLowerCase() : o.t} object${n > 1 ? "s" : ""} on this chart now match.`,
-  );
-};
-$("#drawDefault").onclick = () => {
-  if (!drawEdit) return;
-  state.drawStyle = Object.assign({}, drawEdit.obj.style);
-  state.drawColor = state.drawStyle.color;
-  toast(
-    "Default style set",
-    "New drawings will be created with this colour, thickness and line style.",
-    "up",
-  );
-};
-$("#drawClone").onclick = () => {
-  if (!drawEdit) return;
-  pushUndo();
-  const { obj: o, chart: c } = drawEdit;
-  const c2 = JSON.parse(JSON.stringify(o));
-  c2.id = "o" + Date.now();
-  c2.pts.forEach((q) => (q.i += 4));
-  c.drw.push(c2);
-  state.selObj = c2.id;
-  drawEdit.obj = c2;
-  paintObjects();
-  paintDrawSettings();
-  draw();
-};
-$("#drawRemove").onclick = () => {
-  if (!drawEdit) return;
-  pushUndo();
-  const { obj: o, chart: c } = drawEdit;
-  state.drawings[c.key] = c.drw.filter((x) => x.id !== o.id);
-  state.selObj = null;
-  drawEdit = null;
-  hide("#drawModal");
-  paintObjects();
-  draw();
-};
+/* Drawing properties live in charts-drawing-settings.js. */
 
 /* ══════════════════════════════════════════════════════════════
    right-click menu
@@ -2705,96 +2197,9 @@ document.addEventListener(
 /* ══════════════════════════════════════════════════════════════
    alert builder
    ══════════════════════════════════════════════════════════════ */
-let condRows = [{ l: "Price", op: "crosses up", r: "" }];
-function openAlert(px, sym, sub) {
-  const S = SYMBOLS[sym];
-  condRows = [{ l: "Price", op: "crosses up", r: px.toFixed(S.digits) }];
-  $("#alSub").textContent = sub || `on ${sym} · ${state.charts[state.sel].iv}`;
-  paintCond();
-  show("#alertModal");
-}
-function paintCond() {
-  const L = [
-    "Price",
-    "RSI 14",
-    "EMA 21",
-    "Day risk used",
-    "My drawn level",
-    "Volume",
-    "Position P&L in R",
-  ];
-  const OP = [
-    "crosses up",
-    "crosses down",
-    "is above",
-    "is below",
-    "enters",
-    "leaves",
-  ];
-  $("#condRows").innerHTML = condRows
-    .map(
-      (c, i) => `
-    <div class="cr" data-c="${i}">
-      <select data-k="l">${L.map((x) => `<option ${x === c.l ? "selected" : ""}>${x}</option>`).join("")}</select>
-      <select data-k="op">${OP.map((x) => `<option ${x === c.op ? "selected" : ""}>${x}</option>`).join("")}</select>
-      <input data-k="r" value="${c.r}" placeholder="value">
-      ${i ? '<button class="rm">✕</button>' : "<span></span>"}
-    </div>`,
-    )
-    .join("");
-  $$("#condRows .cr").forEach((row) => {
-    const i = +row.dataset.c;
-    row
-      .querySelectorAll("[data-k]")
-      .forEach(
-        (f) => (f.onchange = () => (condRows[i][f.dataset.k] = f.value)),
-      );
-    const rm = row.querySelector(".rm");
-    if (rm)
-      rm.onclick = () => {
-        condRows.splice(i, 1);
-        paintCond();
-      };
-  });
-}
-const DELIV = ["Push", "Email", "In-app", "Webhook", "SMS"];
-function paintDeliv() {
-  $("#alDeliv").innerHTML = DELIV.map(
-    (d, i) =>
-      `<button class="chip ${i < 2 ? "on" : ""}" data-d="${d}">${d}</button>`,
-  ).join("");
-  $$("#alDeliv .chip").forEach(
-    (b) => (b.onclick = () => b.classList.toggle("on")),
-  );
-}
-function checkAlerts() {
-  state.alerts.forEach((a) => {
-    if (!a.on || !a.px || a.fired) return;
-    const d = getSeries(a.sym, state.charts[state.sel].iv),
-      b = d[d.length - 1];
-    if (!b) return;
-    const hit = a.dir === "down" ? b.c <= a.px : b.c >= a.px;
-    if (hit) {
-      a.fired = true;
-      state.fired.unshift({
-        title: a.title,
-        when: new Date().toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-        px: fmt(b.c, a.sym),
-      });
-      paintAlerts();
-      draw();
-      toast(
-        "Alert fired · " + a.title,
-        "Fired inside replay too, so the alert is tested before it is trusted.",
-        "warn",
-      );
-    }
-  });
-}
+function openAlert(px, sym, sub) { if (window.ChartAlerts) ChartAlerts.open(px, sym, sub); }
+function paintDeliv() {} // Channels are owned by the in-app price alert editor.
+function checkAlerts() { if (window.ChartAlerts) ChartAlerts.evaluate(); }
 
 /* ══════════════════════════════════════════════════════════════
    command palette
@@ -3002,65 +2407,8 @@ const writeWS = (w) => {
     Store.settings.patch({ chartsWorkspaces: w });
   } catch (e) {}
 };
-async function saveWorkspace() {
-  const name = await ask(
-    "Save workspace",
-    "Name this workspace",
-    "Session · " + new Date().toLocaleDateString("en-GB"),
-  );
-  if (!name) return;
-  const w = readWS();
-  w.unshift({
-    name,
-    at: new Date().toISOString(),
-    data: JSON.parse(snapshotState()),
-    look: state.look,
-    watch: state.watch,
-    type: state.type,
-  });
-  writeWS(w.slice(0, 20));
-  toast(
-    "Workspace saved",
-    "Symbols, intervals, studies with their parameters, drawings and the layout. Stored on this device only.",
-    "up",
-  );
-}
-function paintWorkspaces() {
-  const w = readWS();
-  $("#wsList").innerHTML = w.length
-    ? w
-        .map(
-          (
-            x,
-            i,
-          ) => `<div class="ws"><div><b>${x.name}</b><span>${new Date(x.at).toLocaleString("en-GB")} · ${x.data.charts.length} charts</span></div>
-    <div><button class="btn sm" data-load="${i}">Load</button><button class="btn sm" data-del="${i}">Delete</button></div></div>`,
-        )
-        .join("")
-    : `<div class="empty">No saved workspaces yet. Save one from the toolbar, or with Ctrl+S.</div>`;
-  $$("#wsList [data-load]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        const x = readWS()[+b.dataset.load];
-        pushUndo();
-        state.look = x.look || state.look;
-        state.watch = x.watch || state.watch;
-        state.type = x.type || state.type;
-        applySnap(JSON.stringify(x.data));
-        hide("#wsModal");
-        toast("Workspace loaded", x.name);
-      }),
-  );
-  $$("#wsList [data-del]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        const w2 = readWS();
-        w2.splice(+b.dataset.del, 1);
-        writeWS(w2);
-        paintWorkspaces();
-      }),
-  );
-}
+function saveWorkspace() { if (window.ChartWorkspaces) return ChartWorkspaces.save(); }
+function paintWorkspaces() { if (window.ChartWorkspaces) ChartWorkspaces.paint(); }
 /* ── snapshot ──────────────────────────────────────────────────
    A chart image leaves this app and gets posted in a group chat, so it has to
    carry two things the live screen does not need: where it came from, and that
@@ -3220,9 +2568,8 @@ function annotatedShot(chart) {
   }
 }
 function lastPx() {
-  const c = charts[state.sel];
-  const d = c.data;
-  return d[d.length - 1].c;
+  const d = charts[state.sel]?.data || [];
+  return d.length ? d[d.length - 1].c : null;
 }
 
 /* Chart state worth restoring later: enough to put the screen back the
@@ -3384,7 +2731,8 @@ function paintWorkspaceData() {
   const bar = data[index];
   if (!bar) return;
   const cfg = state.charts[state.sel];
-  const rows = [["Time", clock(bar.t)], ["Open", fmt(bar.o, cfg.sym)],
+  const provenance = window.ChartHistory?.status(cfg.sym,cfg.iv);
+  const rows = [...(provenance?.state === "ready" ? [["Source", provenance.source], ["Last stored candle", provenance.lastLabel], ["Feed", "Historical · not live"], ["Volume", "Unavailable in this archive"]] : []), ["Time", clock(bar.t)], ["Open", fmt(bar.o, cfg.sym)],
     ["High", fmt(bar.h, cfg.sym)], ["Low", fmt(bar.l, cfg.sym)],
     ["Close", fmt(bar.c, cfg.sym)]];
   (chart.studies || []).filter(s => s.visible).forEach(study => {
@@ -3501,7 +2849,7 @@ Feed.subscribe(() => {
   }
 });
 setInterval(() => {
-  if (state.look.countdown && !state.replay.on) draw();
+  if (state.look.countdown && !state.replay.on && !(window.THEONEPERCENT_CHART_ARCHIVE && !Feed.isDemoMode())) draw();
 }, 1000);
 
 /* ══════════════════════════════════════════════════════════════
@@ -3937,41 +3285,6 @@ $("#undoBtn").onclick = undo;
 $("#redoBtn").onclick = redo;
 $("#alertBtn").onclick = () => openAlert(lastPx(), state.charts[state.sel].sym);
 $("#newAlert").onclick = () => openAlert(lastPx(), state.charts[state.sel].sym);
-$("#addCond").onclick = () => {
-  condRows.push({ l: "RSI 14", op: "is above", r: "70" });
-  paintCond();
-};
-$$(".ao").forEach(
-  (b) =>
-    (b.onclick = () => {
-      $$(".ao").forEach((x) => x.classList.remove("on"));
-      b.classList.add("on");
-    }),
-);
-$("#alCreate").onclick = () => {
-  const c = condRows[0],
-    sym = state.charts[state.sel].sym,
-    px = parseFloat(c.r);
-  state.alerts.unshift({
-    id: Date.now(),
-    on: true,
-    title: `${sym} ${c.op} ${c.r}`,
-    cond: `${c.l.toLowerCase()} ${c.op} ${c.r} · ${condRows.length > 1 ? condRows.length + " conditions · " : ""}${[...$$("#alDeliv .chip.on")].map((x) => x.textContent.toLowerCase()).join(" + ") || "in-app"}`,
-    px: isNaN(px) ? null : px,
-    dir: c.op.includes("down") || c.op.includes("below") ? "down" : "up",
-    sym,
-  });
-  saveAlerts();
-  paintAlerts();
-  switchTab("alerts");
-  hide("#alertModal");
-  draw();
-  toast(
-    "Alert created",
-    "It will fire in replay as well, so you can test it on history before you trust it.",
-    "up",
-  );
-};
 $$(".wsub-b").forEach((b) => {
   b.onclick = () => switchWatchView(b.dataset.wsub);
   /* Left and right arrows across a tablist, which is what a tablist promises. */

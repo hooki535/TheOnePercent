@@ -193,7 +193,7 @@ test("chart labels distinguish historical spot data and never synthesize bid/ask
   assert.match(engineSource, /Spot historical/);
   assert.match(engineSource, /Number\.isFinite\(quote\.bid\).*Number\.isFinite\(quote\.ask\)/s);
   assert.doesNotMatch(engineSource, /Live · Dukascopy/);
-  assert.match(chartSource, /No provider candles are available for this symbol/);
+  assert.match(fs.readFileSync("assets/charts-watchlist.js", "utf8"), /No candles available for this timeframe/);
   assert.match(chartSource, /partial_fallback/);
   assert.match(chartSource, /known Binance spot symbol/);
   assert.match(chartSource, /newChart\("BTCUSDT", "1H"\)/);

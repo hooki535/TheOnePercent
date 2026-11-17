@@ -12,6 +12,7 @@
       content="Plan the trade on the chart: candles, studies, drawings and a position tool sized from your balance and your risk rule, then saved straight into the journal."
     />
     <script src="../assets/theme.js"></script>
+    <script>if (!Theme.isExplicit()) document.documentElement.setAttribute("data-theme", "light");</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/cloud.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,12 +25,18 @@
     <link rel="stylesheet" href="../assets/components.css" />
     <link rel="stylesheet" href="../assets/charts.css" />
     <link rel="stylesheet" href="../assets/charts-terminal.css" />
-    <link rel="stylesheet" href="../assets/charts-desk.css?v=2" />
+    <link rel="stylesheet" href="../assets/charts-desk.css?v=guest1" />
+    <link rel="stylesheet" href="../assets/charts-research.css?v=rail2" />
+  <link rel="stylesheet" href="../assets/charts-drawing-settings.css?v=position-video1">
+  <link rel="stylesheet" href="../assets/charts-indicators.css?v=1">
+      <link rel="stylesheet" href="../assets/charts-watchlist.css?v=1">
+      <link rel="stylesheet" href="../assets/charts-alerts.css?v=1">
+      <link rel="stylesheet" href="../assets/charts-workspaces.css?v=2">
   </head>
 
   <body data-page="charts" data-depth="1" data-shell="nav" class="chart-first">
     <nav class="desk-top" aria-label="Chart workspace navigation">
-      <a class="desk-brand" href="../index.html" aria-label="TheOnePercent home"><b>1%</b><span>THEONEPERCENT</span></a>
+      <a class="desk-brand" href="../index.html" aria-label="TheOnePercent home"><img src="../assets/home/logo.svg" alt=""><span>TheOnePercent</span></a>
       <div class="desk-navigation"><a href="charts.html" aria-current="page">Charts</a><a href="journal.html">Journal</a></div>
       <span class="desk-top-spacer"></span>
       <button type="button" class="desk-save" data-desk-action="wsBtn" title="Open saved workspaces">Save workspace</button>
@@ -508,36 +515,21 @@
       </div>
     </div>
 
-    <!-- Alerts -->
+    <!-- Local, one-time price alerts -->
     <div class="modal" id="alertModal" hidden>
       <div class="sheet">
-        <div class="sheet-h">
-          <div>
-            <b>New alert</b>
-            <div class="sh-sub" id="alSub"></div>
-          </div>
-          <button class="x" data-close aria-label="Close">✕</button>
+        <div class="sheet-h"><div><b id="priceAlertTitle">Create price alert</b><div class="sh-sub" id="alSub"></div></div><button class="x" data-close aria-label="Close price alert">✕</button></div>
+        <div class="pa-editor">
+          <label class="pa-field"><span>Symbol</span><input id="paSymbol" readonly></label>
+          <label class="pa-field"><span>Timeframe</span><select id="paInterval"></select></label>
+          <label class="pa-field"><span>Condition</span><select id="paOp"></select></label>
+          <label class="pa-field"><span>Price</span><input id="paPrice" type="number" min="0" step="any"></label>
+          <label class="pa-field"><span>Name</span><input id="paName" maxlength="80"></label>
+          <label class="pa-field message"><span>Message</span><textarea id="paMessage" maxlength="240" placeholder="Optional reminder for your setup"></textarea></label>
+          <div class="pa-method"><strong>One-time · In-app notification</strong><span id="paMode"></span><p>Evaluated on observed candle closes while this page is open. Moves between observations can be missed. No email, SMS or background delivery.</p></div>
+          <p id="paError" role="alert"></p>
         </div>
-        <div class="sheet-b">
-          <div id="condRows" class="cond"></div>
-          <div class="cond-actions">
-            <button class="btn sm" id="addCond">+ Add condition</button>
-          </div>
-          <div class="mh">Fires</div>
-          <div class="chips small" id="alWindow"></div>
-          <div class="mh">All or any</div>
-          <div class="andor">
-            <button class="ao on" data-ao="all">All conditions</button>
-            <button class="ao" data-ao="any">Any condition</button>
-          </div>
-          <div class="deliv">
-            <div class="mh">Notify</div>
-            <div class="chips small" id="alDeliv"></div>
-          </div>
-        </div>
-        <div class="sheet-f">
-          <button class="btn primary" id="alCreate">Create alert</button>
-        </div>
+        <div class="sheet-f"><button class="btn" id="paCancel">Cancel</button><button class="btn primary" id="alCreate">Create alert</button></div>
       </div>
     </div>
 
@@ -774,13 +766,21 @@
     <script src="../assets/store.js"></script>
     <script src="../assets/instruments.js"></script>
     <script src="../assets/market-config.js"></script>
+    <script src="../assets/charts-history.js"></script>
+    <script>window.THEONEPERCENT_CHART_ARCHIVE = true;</script>
     <script src="../assets/feed.js"></script>
     <script src="../assets/shell.js"></script>
-    <script src="../assets/charts-engine.js"></script>
-    <script src="../assets/charts-shapes.js"></script>
-    <script src="../assets/charts-rail.js"></script>
-    <script src="../assets/charts.js?v=desk1"></script>
+    <script src="../assets/charts-engine.js?v=position-video1"></script>
+    <script src="../assets/charts-shapes.js?v=settings3"></script>
+    <script src="../assets/charts-rail.js?v=positions4"></script>
+    <script src="../assets/charts.js?v=position-video1"></script>
     <script src="../assets/charts-workspace.js"></script>
-    <script src="../assets/charts-desk.js?v=2"></script>
+    <script src="../assets/charts-desk.js?v=guest1"></script>
+    <script src="../assets/charts-research.js?v=position-video1"></script>
+    <script src="../assets/charts-drawing-settings.js?v=position-video1"></script>
+    <script src="../assets/charts-indicators.js?v=1"></script>
+    <script src="../assets/charts-watchlist.js?v=1"></script>
+    <script src="../assets/charts-alerts.js?v=1"></script>
+    <script src="../assets/charts-workspaces.js?v=2"></script>
   </body>
 </html>

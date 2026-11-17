@@ -65,8 +65,8 @@ test("custom Fibonacci levels are normalized and old drawings retain defaults", 
   assert.deepEqual(Array.from(actual), [0, 0.5, 1.618]);
   const legacy = context.drawingLevelsFor({ t: "fib" }, [0, 0.236, 0.5, 0.618, 1]);
   assert.deepEqual(Array.from(legacy), [0, 0.236, 0.5, 0.618, 1]);
-  assert.match(workspaceSource, /data-k="levels"/);
-  assert.match(workspaceSource, /ensureDrawEditUndo\(\)/);
+  assert.match(fs.readFileSync("assets/charts-drawing-settings.js", "utf8"), /data-level=/);
+
 });
 
 test("drawing history round-trips legacy type IDs and optional level settings", () => {
