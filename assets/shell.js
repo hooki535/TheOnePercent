@@ -239,8 +239,16 @@ window.Shell = (() => {
     ["Glossary", P.learn + "#glossary"],
   ];
 
+  const DASHBOARD_NAV = [
+      { id: "markets", label: "Markets", href: P.home + "#market-summary" },
+      { id: "charts", label: "Charts", href: P.charts },
+      { id: "community", label: "Community", href: P.home + "#trade-ideas" },
+      { id: "learn", label: "Learn", href: P.learn },
+      { id: "dashboard", label: "Dashboard", href: P.dashboard },
+    ];
+
   function navHTML() {
-    const links = NAV.map(
+    const links = (page === "dashboard" ? DASHBOARD_NAV : NAV).map(
       (n) =>
         `<a href="${n.href}"${page === n.id ? ' aria-current="page"' : ""}>${n.label}</a>`,
     ).join("");
@@ -252,10 +260,20 @@ window.Shell = (() => {
 
     const more = MORE_LINKS.map(([l, href]) => `<a href="${href}">${l}</a>`).join("");
 
+    const avatarMarkup = (() => {
+      if (page !== "dashboard") return initials;
+      const meta = user && user.user_metadata || {};
+      const raw = meta.avatar_url || meta.picture || "";
+      try {
+        const url = new URL(raw);
+        if (url.protocol !== "https:") return initials;
+        return `<img src="${url.href.replace(/[&"<>]/g, c => ({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[c]))}" alt="" referrerpolicy="no-referrer" />`;
+      } catch (_) { return initials; }
+    })();
     const actions = authed
       ? `<div class="dd">
            <button class="avatar-trigger" data-dd="account" aria-expanded="false" aria-controls="dd-account">
-             <span class="avatar" aria-hidden="true">${initials}</span>
+             <span class="avatar" aria-hidden="true">${avatarMarkup}</span>
              <span class="who">${displayName}</span>
              ${ICON.caret}
            </button>
@@ -274,20 +292,20 @@ window.Shell = (() => {
 
     return `<div class="wrap nav-row">
       <a class="brand" href="${P.home}" aria-label="TheOnePercent home">
-        <span class="brand-mark" aria-hidden="true">1%</span>
+        ${page === "dashboard" ? `<img class="workspace-brand" src="../assets/home/logo.svg" alt="" width="29" height="32">` : `<span class="brand-mark" aria-hidden="true">1%</span>`}
         <span class="brand-name">TheOnePercent</span>
       </a>
 
       <nav class="nav-links" aria-label="Primary">
         ${links}
-        <div class="dd">
+        ${page === "dashboard" ? "" : `<div class="dd">
           <button class="dd-trigger" data-dd="markets" aria-expanded="false" aria-controls="dd-markets">Markets ${ICON.caret}</button>
           <div class="dd-panel" id="dd-markets">${markets}</div>
         </div>
         <div class="dd">
           <button class="dd-trigger" data-dd="more" aria-expanded="false" aria-controls="dd-more">More ${ICON.caret}</button>
           <div class="dd-panel" id="dd-more">${more}</div>
-        </div>
+        </div>`}
       </nav>
 
       <div class="nav-search">
@@ -308,7 +326,7 @@ window.Shell = (() => {
   }
 
   function sheetHTML() {
-    const links = NAV.map(
+    const links = (page === "dashboard" ? DASHBOARD_NAV : NAV).map(
       (n) =>
         `<a class="sheet-link" href="${n.href}"${page === n.id ? ' aria-current="page"' : ""}>${n.label}</a>`,
     ).join("");

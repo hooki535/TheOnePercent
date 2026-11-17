@@ -6,7 +6,7 @@
     <title>Dashboard — TheOnePercent</title>
     <meta
       name="description"
-      content="Your TheOnePercent dashboard: a guided start until your first trade is logged."
+      content="Review your journal performance, open positions and trading risk in one workspace."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,248 +14,59 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233654ff'/%3E%3Ctext x='16' y='21' font-family='monospace' font-size='13' font-weight='600' fill='white' text-anchor='middle'%3E1%25%3C/text%3E%3C/svg%3E"
-    />
+    <link rel="icon" href="../assets/home/logo.svg" type="image/svg+xml" />
     <script src="../assets/theme.js"></script>
+    <script>if (!Theme.isExplicit()) document.documentElement.dataset.theme = "light";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/cloud.js"></script>
     <link rel="stylesheet" href="../assets/shell.css" />
     <link rel="stylesheet" href="../assets/components.css" />
     <link rel="stylesheet" href="../assets/dashboard.css" />
   </head>
-  <!-- one folder deep, logged-in state inferred from the onboarding profile -->
-  <body data-page="dashboard" data-depth="1">
+  <body data-page="dashboard" data-depth="1" data-shell="nav">
+    <aside class="workspace-nav" aria-label="Dashboard workspace">
+      <div class="workspace-caption">WORKSPACE</div>
+      <nav>
+        <a href="#main" aria-current="page"><span data-dash-icon="grid"></span>Overview</a>
+        <a href="journal.html"><span data-dash-icon="book"></span>Trading Journal</a>
+        <a href="#performance"><span data-dash-icon="chart"></span>Analytics</a>
+        <a href="calculators.html"><span data-dash-icon="bank"></span>Risk tools</a>
+        <a href="charts.html"><span data-dash-icon="layers"></span>Chart workspace</a>
+        <a href="settings.html"><span data-dash-icon="settings"></span>Settings</a>
+      </nav>
+      <div class="workspace-note"><span data-dash-icon="bookmark"></span><strong>Discipline compounds.</strong><p>Plan the risk.<br>Journal the decision.<br>Review the process.</p><a href="learn.html">Explore the Academy →</a></div>
+      <button class="workspace-theme" id="dashboard-theme"><span data-dash-icon="moon"></span>Switch colour theme</button>
+    </aside>
     <main id="main">
-      <header class="page-head">
-        <div class="wrap dh-row">
-          <div>
-            <h1 id="greeting">Welcome back</h1>
-            <p id="sub">Loading your preferences…</p>
-            <div class="chip-row" id="chips"></div>
-          </div>
-          <!-- one filter for the whole screen: every widget below obeys it -->
-          <div class="dh-filter">
-            <label class="sel">
-              <span>Account</span>
-              <select id="f-account"></select>
-            </label>
-            <label class="sel">
-              <span>Period</span>
-              <select id="f-range">
-                <option value="7">Last 7 days</option>
-                <option value="30" selected>Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="all">All time</option>
-              </select>
-            </label>
-          </div>
-          <nav class="dash-quick-links" aria-label="Quick links">
-            <a class="btn btn-quiet" href="journal.html">Journal</a>
-            <a class="btn btn-quiet" href="charts.html">Charts</a>
-            <a class="btn btn-quiet" href="calculators.html">Calculator</a>
-          </nav>
-        </div>
+      <header class="dashboard-heading"><div><div class="workspace-caption">PERSONAL WORKSPACE</div><h1>Your trading overview</h1><p id="greeting">Welcome back</p><p id="sub">Plan clearly. Review consistently.</p><div id="chips" class="chip-row"></div></div>
+        <div class="heading-actions"><label class="sel"><span>Account</span><select id="f-account"><option value="all">All accounts</option></select></label><label class="sel"><span>Period</span><select id="f-range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></label><a class="btn btn-primary" href="journal.html"><span data-dash-icon="plus"></span>Add journal trade</a></div>
       </header>
-
-      <section class="dash">
-        <div class="wrap">
-          <section class="account-overview" aria-labelledby="account-overview-title">
-            <div class="account-overview-head">
-              <div>
-                <h2 id="account-overview-title">Account overview</h2>
-                <p id="account-overview-note">The balance setting is shared across account labels and is for sizing. Current exposure includes all open positions for the selected account, regardless of opening date. Performance uses journal dates because close timestamps are not stored; trade currency units are not recorded.</p>
-              </div>
-            </div>
-            <div class="stat-grid account-grid" id="account-summary" aria-live="polite"></div>
-          </section>
-
-          <!-- shown only when onboarding saved nothing -->
-          <div class="notice" id="notice" hidden>
-            <span>
-              <b>Nothing saved yet</b>
-              <small
-                >You skipped onboarding, so there are no markets or experience
-                level on file.</small
-              >
-            </span>
-            <a class="btn btn-primary" href="onboarding.html"
-              >Pick my markets</a
-            >
-          </div>
-
-          <!-- guardrails: filled by dashboard.js from Store.guardrails() -->
-          <div class="notice guard" id="guard-warn" hidden></div>
-
-          <!-- every figure here is computed from the journal, never stored -->
-          <div class="stat-grid" id="stats"></div>
-
-          <div class="dash-grid" id="live-grid" hidden>
-            <div class="panel">
-              <div class="panel-head">
-                <h2>Cumulative P/L of fully closed trades</h2>
-                <span id="eq-note">unavailable: compatible units not recorded</span>
-              </div>
-              <div class="panel-body">
-                <div class="eq-wrap">
-                  <canvas
-                    id="equity"
-                    height="180"
-                    aria-label="Equity curve built from your logged trades"
-                  ></canvas>
-                  <!-- hover readout: filled by dashboard.js, follows the cursor -->
-                  <div class="eq-tip" id="eq-tip" hidden></div>
-                </div>
-                <div class="eq-legend">
-                  <span
-                    ><i class="dot brand"></i> ordered by journal date; no close timestamps</span
-                  >
-                  <span id="eq-dd"></span>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-head">
-                <h2>Where the R goes</h2>
-                <span>by setup</span>
-              </div>
-              <div class="panel-body" id="by-setup"></div>
-            </div>
-
-            <!-- the only forward-looking panel on the screen -->
-            <div class="panel span-2" id="panel-open" hidden>
-              <div class="panel-head">
-                <h2>Open positions</h2>
-                <span id="or-note">open positions</span>
-              </div>
-              <div class="panel-body" id="open-risk"></div>
-            </div>
-
-            <!-- diagnosis, not description: what to change tomorrow -->
-            <div class="panel span-2" id="panel-leaks">
-              <div class="panel-head">
-                <h2>What is costing you money</h2>
-                <span id="lk-note"></span>
-              </div>
-              <div class="panel-body" id="leaks"></div>
-            </div>
-
-            <div class="panel span-2">
-              <div class="panel-head">
-                <h2>Recent trades</h2>
-                <a class="panel-link" href="journal.html">Open the journal →</a>
-              </div>
-              <div class="rt-scroll">
-                <table id="recent">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Symbol</th>
-                      <th>Setup</th>
-                      <th class="num">R</th>
-                      <th class="num">Net P/L (calculation units)</th>
-                      <th class="num">Discipline</th>
-                    </tr>
-                  </thead>
-                  <tbody id="recent-body"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <div class="dash-grid" id="empty-grid">
-            <!-- guided empty state, per the roadmap: point at the journal,
-             never a wall of zeroes -->
-            <div class="panel">
-              <div class="panel-head">
-                <h2>Start here</h2>
-                <span>3 steps</span>
-              </div>
-              <div class="panel-body empty">
-                <h3>Your dashboard fills itself in</h3>
-                <p>
-                  Nothing here is real yet — every widget on this screen is
-                  built from your own journal entries, so the first trade you
-                  log is what switches it on.
-                </p>
-                <ol class="steps">
-                  <li>
-                    <span class="num">1</span>
-                    <span
-                      ><b>Size the position first</b
-                      ><small
-                        >Risk one percent, let the calculator turn that into
-                        lots or contracts.</small
-                      ></span
-                    >
-                  </li>
-                  <li>
-                    <span class="num">2</span>
-                    <span
-                      ><b>Log the trade as you take it</b
-                      ><small
-                        >Entry, stop, target, screenshot and how you felt —
-                        while it is still honest.</small
-                      ></span
-                    >
-                  </li>
-                  <li>
-                    <span class="num">3</span>
-                    <span
-                      ><b>Review it at the end of the week</b
-                      ><small
-                        >The journal groups by setup, so patterns show up long
-                        before your balance does.</small
-                      ></span
-                    >
-                  </li>
-                </ol>
-                <div class="empty-cta">
-                  <a class="btn btn-primary" href="journal.html"
-                    >Log your first trade</a
-                  >
-                  <a class="btn btn-quiet" href="charts.html">Open charts</a>
-                  <a class="btn btn-quiet" href="calculators.html"
-                    >Open the calculator</a
-                  >
-                </div>
-              </div>
-            </div>
-
-            <!-- proves the onboarding choices carried through -->
-            <div class="panel">
-              <div class="panel-head">
-                <h2>Your markets</h2>
-                <span id="wl-source">from onboarding</span>
-              </div>
-              <div id="watchlist"></div>
-              <div class="panel-foot" id="wl-foot">
-                Indicative prices. Add or remove symbols from the rail.
-              </div>
-            </div>
-          </div>
-        </div>
+      <section aria-label="Account summary"><div class="stat-grid account-grid" id="account-summary" aria-live="polite"></div>
+        <details class="calculation-note"><summary>About these figures</summary><p>The shared balance is a sizing setting, not account equity. Current exposure includes all open positions in the selected account, regardless of opening date. Performance uses journal dates because close timestamps are not stored. The selected period applies to performance; compatible trade currency units are not recorded. Unavailable totals are never estimated.</p></details>
       </section>
-    </main>
-
-    <footer class="site-foot">
-      <div class="wrap">
-        <div class="foot-base">
-          <span>TheOnePercent · Discipline compounds.</span>
-          <span
-            >Educational and journaling tools only. No broker execution, no
-            investment advice.</span
-          >
-        </div>
+      <div class="dashboard-layout" id="live-grid">
+        <section class="panel performance-panel" id="performance" aria-labelledby="performance-title"><div class="panel-head"><h2 id="performance-title">Trading performance</h2><span>Selected period</span></div>
+          <div class="performance-tabs" role="tablist" aria-label="Performance view"><button id="tab-overview" role="tab" aria-selected="true" aria-controls="view-overview" tabindex="0" data-performance="overview">Overview</button><button id="tab-r" role="tab" aria-selected="false" aria-controls="view-r" tabindex="-1" data-performance="r">R multiples</button><button id="tab-drawdown" role="tab" aria-selected="false" aria-controls="view-drawdown" tabindex="-1" data-performance="drawdown">Drawdown</button></div>
+          <div id="view-overview" role="tabpanel" aria-labelledby="tab-overview"><div class="performance-empty" id="performance-empty"><span data-dash-icon="chart"></span><h3>Your performance starts with a closed trade</h3><p id="performance-empty-note">Close and review a journal trade to populate this view.</p><a class="btn btn-primary" href="journal.html">Open journal</a></div><div class="panel-body" id="equity-wrap"><div class="eq-wrap"><canvas id="equity" height="180" aria-label="Cumulative realised journal P/L"></canvas><div class="eq-tip" id="eq-tip" hidden></div></div><div class="eq-legend"><span id="eq-note"></span><span id="eq-dd"></span></div></div></div>
+          <div id="view-r" role="tabpanel" aria-labelledby="tab-r" class="panel-body" hidden><h3>Average R by setup</h3><p class="muted-note">Eligible closed trades · based on the recorded stop</p><div id="by-setup"></div></div>
+          <div id="view-drawdown" role="tabpanel" aria-labelledby="tab-drawdown" class="performance-empty" hidden><span data-dash-icon="chart"></span><h3>Drawdown unavailable</h3><p>Compatible P/L units are not recorded, so a money-based drawdown cannot be calculated.</p><a class="panel-link" href="journal.html">Review journal records →</a></div>
+          <div class="stat-grid performance-metrics" id="stats"></div>
+        </section>
+        <section class="panel risk-panel" aria-labelledby="risk-title"><div class="panel-head"><h2 id="risk-title"><span data-dash-icon="shield"></span>Risk discipline</h2></div><div class="panel-body"><dl class="risk-facts" id="risk-facts"></dl><div id="guard-warn" hidden></div><a class="panel-link" href="settings.html#guardrails">Review risk settings →</a></div></section>
+        <section class="panel recent-panel" aria-labelledby="recent-title"><div class="panel-head"><h2 id="recent-title">Recent journal entries</h2><a class="panel-link" href="journal.html">View all →</a></div><div class="rt-scroll"><table id="recent"><thead><tr><th>Date</th><th>Symbol / Direction</th><th>Status</th><th class="num">Entry</th><th class="num">Result (R)</th><th class="num">Net P/L (calculation units)</th></tr></thead><tbody id="recent-body"></tbody></table></div></section>
+        <section class="panel checklist-panel"><div class="panel-head"><h2><span data-dash-icon="watchlist"></span>Session checklist</h2><span id="checklist-count" aria-live="polite">0 / 3</span></div><div class="panel-body"><label><input type="checkbox" data-session-check>Review higher-timeframe bias</label><label><input type="checkbox" data-session-check>Mark key levels</label><label><input type="checkbox" data-session-check>Define risk before entry</label><div class="checklist-footer"><small>For this visit</small><button id="reset-checklist" type="button">Reset</button></div></div></section>
+        <details class="panel exposure-panel" id="panel-open" hidden><summary class="panel-head"><h2>Open position details</h2><span id="or-note"></span></summary><div class="panel-body" id="open-risk"></div></details>
+        <details class="panel insights-panel" id="panel-leaks"><summary class="panel-head"><h2>Review insights</h2><span id="lk-note">Calculation notes</span></summary><div class="panel-body" id="leaks"></div></details>
       </div>
-    </footer>
-
+      <section class="panel market-shortcuts" id="empty-grid"><div class="panel-head"><h2>Your markets</h2><span id="wl-source">Market shortcuts</span></div><div id="watchlist"></div><div class="panel-foot" id="wl-foot"></div></section>
+      <div id="notice" hidden><a class="panel-link" href="onboarding.html">Personalise your market preferences →</a></div>
+      <footer class="dashboard-footer"><span>TheOnePercent · Discipline compounds.</span><a href="charts.html">Open charts ↗</a><span>Journal analytics · No broker execution</span></footer>
+    </main>
     <script src="../assets/store.js"></script>
     <script src="../assets/instruments.js"></script>
     <script src="../assets/lessons.js"></script>
     <script src="../assets/shell.js"></script>
+    <script src="../assets/home-icons.js"></script>
     <script src="../assets/dashboard.js"></script>
   </body>
 </html>

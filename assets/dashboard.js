@@ -80,16 +80,17 @@
       : "";
 
     const cards = [
-      { k: "Shared balance setting", v: money(s.balance), n: "saved position-sizing input; not account equity" },
-      { k: "Net P/L of fully closed trades", v: "Unavailable", n: stats.eligiblePL + " individually valid of " + stats.closed + " closed · " + stats.aggregatePLReason },
-      { k: "Currently open positions", v: String(open.n), n: "selected account; all opening dates included" },
-      { k: "Aggregate open risk", v: open.n ? "Unavailable" : "—", n: open.n ? open.measurable + " individually measurable · " + open.aggregateReason + missingStops : "no open positions" },
+      { k: "Shared sizing balance", v: money(s.balance), n: "Position-sizing setting · not equity", icon: "bank" },
+      { k: "Realised net P/L", v: "Unavailable", n: stats.eligiblePL + " eligible of " + stats.closed + " closed · Compatible units not recorded", icon: "chart" },
+      { k: "Open journal positions", v: String(open.n), n: "Selected account · all opening dates", icon: "layers" },
+      { k: "Aggregate open risk", v: open.n ? "Unavailable" : "—", n: open.n ? "Compatible units not recorded" + missingStops : "No open positions", icon: "shield" },
     ];
 
+    [cards[1], cards[2]] = [cards[2], cards[1]];
     $("#account-summary").innerHTML = cards
       .map(
         (c) =>
-          `<div class="stat"><div class="k">${esc(c.k)}</div>` +
+          `<div class="stat"><div class="stat-top"><div class="k">${esc(c.k)}</div>${HomeIcons.ui(c.icon || "chart")}</div>` +
           `<div class="v ${c.cls || ""}">${esc(c.v)}</div><div class="n">${esc(c.n)}</div></div>`
       )
       .join("");
@@ -99,10 +100,8 @@
 
   function renderStats(trades) {
     const s = Store.stats(trades, settings());
-    const streak = Store.streak(trades);
     const limit = settings().riskPct;
     const factor = s.profitFactor === null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2);
-    const hasClosed = s.closed > 0;
 
     const cards = [
       {
@@ -160,18 +159,11 @@
       },
     ];
 
-    if (streak > 0) {
-      cards[3].n = streak + " day streak · " + cards[3].n;
-    }
 
-    $("#stats").innerHTML = cards
-      .map(
-        (c) =>
-          `<div class="stat"><div class="k">${esc(c.k)}</div>` +
-          `<div class="v ${c.cls || ""}">${esc(c.v)}</div><div class="n">${esc(c.n)}</div></div>`
-      )
-      .join("");
-
+    const primary = cards.slice(1, 4);
+    const secondary = cards.slice(4);
+    const metricCard = (c) => `<div class="stat"><div class="k">${esc(c.k)}</div><div class="v ${c.cls || ""}">${esc(c.v)}</div><details class="metric-note"><summary>Calculation details</summary><p>${esc(c.n)}</p></details></div>`;
+    $("#stats").innerHTML = primary.map(metricCard).join("") + `<details class="more-metrics"><summary>More metrics</summary><div class="secondary-metrics">${secondary.map(metricCard).join("")}</div></details>`;
     return s;
   }
 
@@ -195,12 +187,18 @@
     g.clearRect(0, 0, w, h);
 
     const pts = stats.realizedCurve;
+    const unavailable = !pts || pts.length < 2;
+    $("#performance-empty").hidden = !unavailable;
+    $("#equity-wrap").hidden = unavailable;
+    $("#performance-empty-note").textContent = !stats.closed
+      ? "Close a journal trade to begin reviewing your results. No returns are estimated."
+      : "A money-based curve is unavailable because compatible P/L units are not recorded. Review eligible R metrics above.";
     if (!pts) {
       eq = null;
       g.fillStyle = css("--faint");
       g.font = "13px " + (css("--sans") || "sans-serif");
       g.textAlign = "center";
-      g.fillText("Curve unavailable: compatible P/L units are not recorded.", w / 2, h / 2);
+
       $("#eq-note").textContent = "Unavailable";
       $("#eq-dd").textContent = "";
       return;
@@ -392,10 +390,10 @@
         return `<tr>
           <td class="t-date"><b>${String(t.date).slice(5, 10)}</b></td>
           <td><div class="t-sym"><span class="side ${t.side === "Short" ? "short" : "long"}">${esc(t.side)}</span><b>${esc(t.symbol)}</b></div></td>
-          <td>${esc(t.setup || "—")}</td>
+          <td><span class="trade-status ${c.open ? "is-open" : ""}">${c.open ? "Open" : "Closed"}</span></td>
+          <td class="num">${esc(t.entry == null ? "—" : t.entry)}</td>
           <td class="num ${c.r === null ? "" : dir(c.r)}">${c.open ? '<span class="t-open">open</span>' : rfmt(c.r)}</td>
           <td class="num ${c.open ? "" : dir(c.netPL)}">${c.open ? "—" : bare(c.netPL, true)}</td>
-          <td class="num"><span class="disc"><span>${d}</span><span class="disc-bar ${band}"><i style="width:${d}%"></i></span></span></td>
         </tr>`;
       })
       .join("") : '<tr><td colspan="6" class="muted-note">No trades match this account and period.</td></tr>';
@@ -466,69 +464,6 @@
     const box = $("#leaks");
     if (!box || !Store.leaks) return;
     box.innerHTML = '<p class="muted-note">Setup cost summaries are unavailable because compatible trade and risk units are not recorded. R-based setup averages are shown separately.</p>';
-    return;
-
-    const L = Store.leaks(filtered(), settings());
-
-    if (!L.closed) {
-      $("#lk-note").textContent = "";
-      box.innerHTML =
-        '<p class="muted-note">Nothing closed in this period, so there is nothing to diagnose. ' +
-        "This panel reads your own journal — it has no opinions of its own until you give it some.</p>";
-      return;
-    }
-
-    $("#lk-note").textContent = L.closed + " closed trades in view";
-
-    /* the small-sample state is a first-class state, not an error */
-    if (!L.enough && !L.findings.length) {
-      box.innerHTML =
-        '<p class="muted-note">' + L.closed + " closed trade" + (L.closed === 1 ? "" : "s") +
-        " is not enough to tell a leak from a run of bad luck. This panel starts naming patterns at 6, " +
-        "and it will flag a broken rule — an oversized trade, a stop that moved — from the first one.</p>";
-      return;
-    }
-
-    const cost = (f) =>
-      f.costR === 0
-        ? '<span class="lk-cost none">not measurable</span>'
-        : '<span class="lk-cost">' + esc(rfmt(f.costR)) + "<small>conditional R; recorded-stop basis</small></span>";
-
-    const cards = L.findings
-      .slice(0, 5)
-      .map(
-        (f) =>
-          '<div class="lk ' + f.basis + '">' +
-          '<div class="lk-top"><span class="lk-tag">' + (f.basis === "rule" ? "Rule broken" : "Pattern · " + f.n + " trades") +
-          "</span>" + cost(f) + "</div>" +
-          "<b>" + esc(f.title) + "</b><p>" + esc(f.text) + "</p>" +
-          "</div>"
-      )
-      .join("");
-
-    const wins = L.wins.length
-      ? '<div class="lk-wins"><h3>And what is working</h3>' +
-        L.wins.map((w) => "<div class=\"lk-win\"><b>" + esc(w.title) + "</b><p>" + esc(w.text) + "</p></div>").join("") +
-        "</div>"
-      : "";
-
-    const conc = L.concentration
-      ? '<p class="lk-conc">' + esc(L.concentration.text) +
-        (L.concentration.gap > 0
-          ? " A period carried by a handful of trades is not a proven edge yet, in either direction."
-          : "") +
-        "</p>"
-      : "";
-
-    box.innerHTML =
-      (cards
-        ? '<div class="lk-grid">' + cards + "</div>"
-        : '<p class="muted-note">No broken rules and no losing pattern big enough to name, across ' +
-          L.closed + " closed trades. That is the result this panel is built to be able to say.</p>") +
-      conc +
-      wins +
-      '<p class="lk-fine">Costs are measured against the rest of your journal, not against zero, and one R is priced at ' +
-      "a calculation-unit conversion that is unavailable across unverified instrument units.</p>";
   }
 
   /* ------------------------------------------------------------ greeting */
@@ -539,6 +474,18 @@
      "should there be another one today". Store.guardrails() does the
      thinking; this only draws it, and it draws nothing when nothing is
      broken, because a banner that is always there is wallpaper. */
+  function renderRiskDiscipline() {
+    const s = settings();
+    const g = Store.guardrails(Store.trades.list(), s);
+    const o = Store.openRisk(accountTrades(), s);
+    const status = {notConfigured: "Not configured", unavailable: "Unavailable", breached: "Limit breached", withinLimit: "Within limit", within: "Within limit", ok: "Within limit"};
+    $("#risk-facts").innerHTML = [
+      ["Risk per trade", Number.isFinite(Number(s.riskPct)) ? pct(Number(s.riskPct)) + " configured" : "Not configured"],
+      ["Daily loss · all accounts", g.muted ? "Guardrails disabled" : status[g.dailyLossStatus] || "Unavailable"],
+      ["Current exposure", o.n + (o.n === 1 ? " open position" : " open positions")],
+    ].map(([k,v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("") + '<div class="risk-scope">Selected account · all opening dates</div>';
+  }
+
   function renderGuardrails() {
     const box = document.getElementById("guard-warn");
     if (!box || !Store.guardrails) return;
@@ -551,17 +498,17 @@
     }
 
     box.innerHTML =
-      "<span><b>" +
+      '<span><details' + (g.breaches.length ? ' open' : '') + '><summary>' +
       (g.breaches.length ? (g.breaches.length === 1 ? "A configured limit is breached" : g.breaches.length + " configured limits are breached") : "Guardrail assessment unavailable") +
-      "</b><ul>" +
+      "</summary><ul>" +
       g.breaches.map((b) => "<li>" + esc(b.text) + "</li>").join("") +
       g.unavailableReasons.map((x) => "<li>Assessment unavailable: " + esc(x) + "</li>").join("") +
-      '</ul><small>Advisory journal assessment; no broker orders are controlled.</small></span><a class="btn btn-quiet" href="settings.html#guardrails">Review rules</a>';
+      '</ul><small>Advisory journal assessment; no broker orders are controlled.</small></details></span><a class="btn btn-quiet" href="settings.html#guardrails">Review rules</a>';
     box.hidden = false;
   }
 
   function renderGreeting() {
-    const me = Shell.profile();
+    const me = document.body.dataset.preview === "empty" ? null : Shell.profile();
     const hour = new Date().getHours();
     const part = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
     const total = Store.trades.list().length;
@@ -569,8 +516,7 @@
     if (!me) {
       $("#notice").hidden = false;
       $("#greeting").textContent = part;
-      $("#sub").textContent =
-        "You are signed in as a guest with no preferences saved. Pick your markets and experience level and this page starts adapting to you.";
+      $("#sub").textContent = "Plan clearly. Journal your decisions. Review consistently.";
       return;
     }
 
@@ -580,20 +526,18 @@
     if (total) {
       const s = Store.stats(filtered(), settings());
       $("#sub").textContent =
-        s.closed >= 1
+        s.eligibleR >= 1
           ? "You have closed " + s.closed + " trade" + (s.closed > 1 ? "s" : "") +
             " in this period at " + rfmt(s.expectancy) + " a trade. " +
-            (s.expectancy > 0
-              ? "Keep the size where it is."
-              : "The size is the first thing to check, not the strategy.")
-          : "Trades are logged but none are closed yet, so there is nothing to measure.";
+            "Review your setups and risk before the next session."
+          : "Review your open trades. Eligible results appear after trades are closed.";
     } else {
       const exp = (me.experience || "").toLowerCase();
       $("#sub").textContent =
         exp.indexOf("new") >= 0 || exp.indexOf("begin") >= 0
-          ? "You told us you are new to trading, so the Learn path is unlocked first and position sizes stay capped at one percent until ten trades are logged."
+          ? "Start with the Academy, then size and log your first trade."
           : exp.indexOf("exp") >= 0 || exp.indexOf("adv") >= 0
-          ? "You told us you are experienced, so the journal opens with the full field set and the risk cap is yours to set."
+          ? "Your journal and risk tools are ready for the next session."
           : "Your preferences are saved. The journal and calculators are ready when you are.";
     }
 
@@ -606,7 +550,7 @@
   /* ------------------------------------------------------------ watchlist */
 
   function renderWatchlist() {
-    const me = Shell.profile();
+    const me = document.body.dataset.preview === "empty" ? null : Shell.profile();
     const picked = me && me.markets && me.markets.length ? me.markets.map((m) => String(m).toLowerCase()) : null;
     const rows = picked
       ? Shell.quotes.filter((q) =>
@@ -621,55 +565,13 @@
     const show = rows.length ? rows : Shell.quotes;
 
     $("#wl-source").textContent = picked && rows.length ? "from onboarding" : "defaults";
-    $("#watchlist").innerHTML = show
-      .map((q) => {
-        const up = q.chg >= 0;
-        return `<div class="wl-row">
-          <span><b>${esc(q.symbol)}</b><small>${esc(q.name)} · ${esc(q.cls)}</small></span>
-          <span class="wl-price">${q.price.toLocaleString("en-US", {
-            minimumFractionDigits: q.dec,
-            maximumFractionDigits: q.dec,
-          })}
-          <small class="chg ${up ? "up" : "down"}">${(up ? "+" : "−") + Math.abs(q.chg).toFixed(2)}%</small></span>
-        </div>`;
-      })
-      .join("");
-
-    if (!picked) {
-      $("#wl-foot").textContent = "Showing the default five until you pick your markets in onboarding.";
-    }
+    $("#watchlist").innerHTML = show.map((q) => `<a class="wl-row" href="charts.html?source=overview&amp;symbol=${encodeURIComponent(q.symbol)}"><span><b>${esc(q.symbol)}</b><small>${esc(q.name)} · ${esc(q.cls)}</small></span><span class="panel-link">Open chart ↗</span></a>`).join("");
+    $("#wl-foot").textContent = "Market shortcuts · Prices and available history are shown in Charts.";
   }
 
   /* ------------------------------------------------------------ render */
 
   function render() {
-    const trades = filtered();
-    const exposureTrades = accountTrades();
-    const hasAny = Store.trades.list().length > 0;
-
-    $("#live-grid").hidden = !hasAny;
-    /* the guided block keeps its place until the journal is genuinely
-       started — an empty period is not an empty journal */
-    $("#empty-grid").classList.toggle("started", hasAny);
-    $$("#empty-grid .panel").forEach((p) => {
-      if (p.querySelector("#watchlist")) return;
-      p.hidden = hasAny;
-    });
-
-    const stats = renderStats(trades);
-    renderAccountSummary(exposureTrades, stats);
-    renderGreeting();
-    renderGuardrails();
-    renderWatchlist();
-
-    if (hasAny) {
-      drawEquity(stats);
-      renderBySetup(trades);
-      renderOpenRisk();
-      renderLeaks();
-      renderRecent(trades);
-    }
-
     const accounts = Array.from(new Set(Store.trades.list().map((t) => t.account).filter(Boolean)));
     const sel = $("#f-account");
     const want = accounts.join("|");
@@ -680,9 +582,56 @@
       sel.value = accounts.indexOf(state.account) >= 0 ? state.account : "all";
       state.account = sel.value;
     }
+    const trades = filtered();
+    const exposureTrades = accountTrades();
+
+    $("#live-grid").hidden = false;
+    const stats = renderStats(trades);
+    renderAccountSummary(exposureTrades, stats);
+    renderGreeting();
+    renderGuardrails();
+    renderRiskDiscipline();
+    renderWatchlist();
+
+    {
+      drawEquity(stats);
+      renderBySetup(trades);
+      renderOpenRisk();
+      renderLeaks();
+      renderRecent(trades);
+    }
+
+
   }
 
   function init() {
+    document.querySelectorAll("[data-dash-icon]").forEach((el) => { el.innerHTML = HomeIcons.ui(el.dataset.dashIcon); });
+    $("#dashboard-theme").addEventListener("click", () => Theme.toggle());
+    const tabs = $$("[data-performance]");
+    function selectTab(tab) {
+      tabs.forEach((button) => {
+        const active = button === tab;
+        button.setAttribute("aria-selected", String(active));
+        button.tabIndex = active ? 0 : -1;
+        $("#view-" + button.dataset.performance).hidden = !active;
+      });
+      if (tab.dataset.performance === "overview") drawEquity(Store.stats(filtered(), settings()));
+    }
+    tabs.forEach((tab, i) => {
+      tab.addEventListener("click", () => selectTab(tab));
+      tab.addEventListener("keydown", (e) => {
+        let next;
+        if (e.key === "ArrowRight") next = tabs[(i + 1) % tabs.length];
+        if (e.key === "ArrowLeft") next = tabs[(i + tabs.length - 1) % tabs.length];
+        if (e.key === "Home") next = tabs[0];
+        if (e.key === "End") next = tabs[tabs.length - 1];
+        if (next) { e.preventDefault(); selectTab(next); next.focus(); }
+      });
+    });
+    const checks = $$("[data-session-check]");
+    const updateChecks = () => { $("#checklist-count").textContent = checks.filter(c => c.checked).length + " / 3"; };
+    checks.forEach(c => c.addEventListener("change", updateChecks));
+    $("#reset-checklist").addEventListener("click", () => { checks.forEach(c => { c.checked = false; }); updateChecks(); });
     $("#f-range").addEventListener("change", (e) => {
       state.range = e.target.value;
       render();
@@ -722,7 +671,7 @@
     render();
   }
 
-  /* shell.js loads after this file, so wait for it before reading the profile */
+  /* The shell and data layer are loaded before dashboard interactions. */
   if (window.Shell) init();
   else window.addEventListener("load", init);
 })();
