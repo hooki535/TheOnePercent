@@ -1,0 +1,9 @@
+# Journal Analytics
+
+Analytics replaces the old Journal Insights panel and is directly addressable at `pages/journal.html#view-insights`. It shares the existing account, journal-date period, search, and advanced filters. Exact market/setup filters, group comparisons, and review queues reuse the same filtered trade list and existing review/edit workspace. Clear selection removes an analytic drilldown; Reset analytics filters restores all accounts, a 90-day period, and clears other filters.
+
+`assets/journal-analytics.js` is a pure model and renderer consuming `Store.compute` results. It does not modify trades or storage. Average R, positive-R win rate (breakevens included), and profit factor in R are explicitly distinct from monetary measures. Open/partial trades are excluded from realised metrics. Eligible-average denominators and unavailable closed records are visible. Cumulative R, R drawdown, group totals, and profit factor are unavailable when their required results are incomplete. Invalid journal dates additionally block the time-ordered curves.
+
+The R sequence starts at zero and uses journal dates, then stored IDs for ties. It is neither account equity nor return percentage; missing close timestamps and immutable initial-risk snapshots are disclosed. Chart points and an accessible latest-20-values table open the recorded trade. Stop-honoured percentages exclude missing answers and show that denominator. Plan/review coverage uses all matching trades.
+
+Validation: 160 Node tests pass. Browser checks used isolated example records to verify exact group drilldown, open-only/empty states, filter reset, chart-to-review links, no-plan and missing-R queues, and both themes. An imported test record with zero risk correctly blocked complete totals and curves. Preview reload resets all sample changes. Signed-in account data and mobile viewport checks were not repeated.
