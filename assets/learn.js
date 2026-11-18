@@ -1042,13 +1042,7 @@
   function init() {
     if (!C || !window.Store) return;
 
-    $("#lh-sub").textContent =
-      C.lessons.length +
-      " lessons across four blocks, beginner to advanced, about " +
-      C.totalMinutes +
-      " minutes of reading. Each block ends in a ten-question quiz and the next one opens at " +
-      Math.round(PASS * 100) +
-      "% — the same bar the rest of the app holds you to.";
+    $("#lh-sub").textContent = "Build your foundation with masterclasses, a structured core path, resources and practical chart lessons.";
 
     $("#gl-q").addEventListener("input", (e) => renderGlossary(e.target.value));
 

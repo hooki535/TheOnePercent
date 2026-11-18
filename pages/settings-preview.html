@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design preview · Settings — TheOnePercent</title>
+<meta name="description" content="Your account, your risk rules, your guardrails and your data — every number the rest of TheOnePercent reads, in one place.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/home/logo.svg" type="image/svg+xml">
+<script src="../assets/theme.js"></script>
+<script>if(!Theme.isExplicit())document.documentElement.dataset.theme="light";</script>
+
+
+<link rel="stylesheet" href="../assets/shell.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/settings.css">
+<link rel="stylesheet" href="../assets/workspace-modern.css">
+</head>
+<!-- one folder deep; the shell infers the logged-in state from the profile -->
+<body data-page="settings" data-depth="1" data-shell="nav" class="workspace-modern">
+
+<main id="main"><div class="workspace-preview-banner"><strong>Design preview · Example inputs</strong> · Changes stay in memory and reset on reload. <a href="settings.html">Open your workspace →</a></div>
+  <div class="wrap">
+
+    <header class="page-head">
+      <h1>Workspace Settings</h1>
+      <p>Manage your sizing defaults, trading rules, appearance and data.</p>
+    </header>
+
+    <!-- jump list, because this page is long by nature -->
+    <nav class="set-jump" aria-label="Sections">
+      <a href="#account">Account</a>
+      <a href="#rules">Risk rules</a>
+      <a href="#guardrails">Guardrails</a>
+      <a href="#trading">Trading profile</a>
+      <a href="#appearance">Appearance</a>
+      <a href="#data">Your data</a>
+    </nav>
+
+    <div class="notice" id="storage-notice" hidden>
+      <b>Storage is blocked in this browser</b>
+      <small id="storage-note"></small>
+    </div>
+
+    <!-- ============================================================ account -->
+    <div class="settings-layout">
+    <section class="panel" id="account">
+      <div class="panel-head"><h2>Account</h2><span>Sizing inputs · Not account equity</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld">
+            <span>Account name</span>
+            <input id="st-name" type="text" autocomplete="off" placeholder="Demo account">
+          </label>
+          <label class="fld">
+            <span>Currency</span>
+            <select id="st-currency"></select>
+          </label>
+          <label class="fld">
+            <span>Shared sizing balance</span>
+            <input id="st-balance" type="number" step="any" min="0" inputmode="decimal">
+          </label>
+        </div>
+        <p class="hint" id="st-balance-note"></p>
+      </div>
+    </section>
+
+    <!-- ============================================================ rules -->
+    <section class="panel" id="rules">
+      <div class="panel-head"><h2>Risk rules</h2><span>what the discipline score grades you against</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld">
+            <span>Risk per trade <small>% of balance</small></span>
+            <input id="st-risk" type="number" step="any" min="0" max="100" inputmode="decimal">
+          </label>
+          <label class="fld">
+            <span>Minimum planned R:R</span>
+            <input id="st-minrr" type="number" step="any" min="0" inputmode="decimal">
+          </label>
+          <label class="fld">
+            <span>Time zone</span>
+            <select id="st-tz"></select>
+          </label>
+        </div>
+        <p class="hint" id="st-risk-note"></p>
+      </div>
+    </section>
+
+    <!-- ============================================================ guardrails -->
+    <section class="panel" id="guardrails">
+      <div class="panel-head">
+        <h2>Guardrails</h2>
+        <span>the rules that stop the next trade, not grade the last one</span>
+      </div>
+      <div class="panel-body">
+
+        <label class="toggle">
+          <input id="st-guard-on" type="checkbox">
+          <span class="toggle-box" aria-hidden="true"></span>
+          <span class="toggle-text">
+            <b>Warn me when I break a rule</b>
+            <small>The journal and the dashboard show a banner the moment a limit below is reached. Nothing is ever blocked — you can always log the trade. The point is that you log it knowing.</small>
+          </span>
+        </label>
+
+        <div class="grid-3 guard-fields">
+          <label class="fld">
+            <span>Daily loss stop <small>% of balance</small></span>
+            <input id="st-maxloss" type="number" step="any" min="0" inputmode="decimal">
+          </label>
+          <label class="fld">
+            <span>Max trades a day</span>
+            <input id="st-maxtrades" type="number" step="1" min="0" inputmode="numeric">
+          </label>
+          <label class="fld">
+            <span>Cool off after <small>losses in a row</small></span>
+            <input id="st-cooloff" type="number" step="1" min="0" inputmode="numeric">
+          </label>
+        </div>
+        <p class="hint">Set any of them to 0 to switch that one rail off.</p>
+
+        <div class="guard-live" id="guard-live" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ trading profile -->
+    <section class="panel" id="trading">
+      <div class="panel-head"><h2>Trading profile</h2><span>from onboarding, editable here</span></div>
+      <div class="panel-body">
+        <fieldset class="chips">
+          <legend>Markets you trade</legend>
+          <div class="chip-picks" id="st-markets"></div>
+        </fieldset>
+
+        <fieldset class="chips">
+          <legend>Experience</legend>
+          <div class="chip-picks" id="st-exp"></div>
+        </fieldset>
+
+        <p class="hint">Markets drive your watchlist and which instrument the calculators open on.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ appearance -->
+    <section class="panel" id="appearance">
+      <div class="panel-head"><h2>Appearance</h2><span>Choose the appearance of your workspace</span></div>
+      <div class="panel-body">
+        <div class="chip-picks" id="st-theme" role="group" aria-label="Theme"></div>
+        <p class="hint">Choose light or dark. Your explicit preference is used across the workspace.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ data -->
+    <section class="panel" id="data">
+      <div class="panel-head"><h2>Your data</h2><span id="st-driver">stored on this device</span></div>
+      <div class="panel-body">
+
+        <div class="stat-grid" id="st-stats"></div>
+
+        <div class="row-actions">
+          <button class="btn btn-quiet" id="st-export-json">Export everything (JSON)</button>
+          <button class="btn btn-quiet" id="st-export-csv">Export trades (CSV)</button>
+          <button class="btn btn-quiet" id="st-import">Import a backup</button>
+          <input id="st-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="hint">A JSON export is a complete backup: trades, settings and preferences. Import replaces what is here, so export first.</p>
+
+        <div class="danger-zone">
+          <b>Irreversible</b>
+          <div class="row-actions">
+            <button class="btn btn-quiet danger" id="st-clear-trades">Delete all trades</button>
+            <button class="btn btn-quiet danger" id="st-clear-all">Reset the whole account</button>
+          </div>
+          <p class="hint">Deletion cannot be undone through this screen. Export a backup first.</p>
+        </div>
+
+      </div>
+    </section>
+
+    </div>
+    <p class="fine">Settings use the active data connection shown above. Export a JSON backup before replacing or deleting records.</p>
+
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="../assets/store.js"></script>
+<script src="../assets/workspace-preview.js"></script>
+<script src="../assets/home-icons.js"></script>
+<script src="../assets/workspace-shell.js"></script>
+<script src="../assets/instruments.js"></script>
+<script src="../assets/settings.js"></script>
+<!-- the curriculum is loaded here only so the shell search box can find
+     lessons, glossary terms and library files from any screen -->
+<script src="../assets/lessons.js"></script>
+<script src="../assets/shell.js"></script></body>
+</html>

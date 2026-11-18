@@ -173,19 +173,21 @@
   /* ------------------------------------------------------------ 1 · position size */
 
   function psInputs() {
-    const inst = I.find($("#ps-symbol").value);
+    const original = I.find($("#ps-symbol").value);
+    const inst = original ? {...original,contract:num($("#ps-contract")),pip:num($("#ps-pip")),unitValue:num($("#ps-unit-value"))} : null;
     const mode = $("#ps-risk-mode").value;
     const s = settings();
     const riskIn = num($("#ps-risk"));
-    const riskMoney = mode === "pct" ? (riskIn === null ? null : (s.balance * riskIn) / 100) : riskIn;
+    const balance=num($("#s-balance"));
+    const riskMoney = mode === "pct" ? (riskIn === null || balance === null || balance<=0 ? null : (balance * riskIn) / 100) : riskIn;
     const riskPctOf = mode === "pct" ? riskIn : riskIn === null || !s.balance ? null : (riskIn / s.balance) * 100;
     return {
-      inst,
+      inst, currency:s.currency, step:num($("#ps-step")),
       side: $("#ps-side").value,
       entry: num($("#ps-entry")),
       stop: num($("#ps-stop")),
       target: num($("#ps-target")),
-      fees: num($("#ps-fees")) || 0,
+      fees: num($("#ps-fees")),
       lev: parseFloat($("#ps-lev").value) || 1,
       fx: num($("#ps-fx")),
       riskMoney,
@@ -196,94 +198,26 @@
   let lastSize = null;
 
   function renderPositionSize() {
-    const v = psInputs();
-    const s = settings();
-    const out = $("#ps-out");
-    const verdict = $("#ps-verdict");
+    const v=psInputs(),s=settings();
+    lastSize=null;
+    $("#ps-risk-unit").textContent=$("#ps-risk-mode").value === "pct" ? "% of sizing balance" : "in "+s.currency;
+    $("#ps-fx-label").textContent=v.inst?v.inst.quote+" → "+s.currency:"quote → account";
+    const same=v.inst && v.inst.quote===s.currency;
+    $("#ps-fx").readOnly=!!same;if(same){v.fx=1;$("#ps-fx").value=1;}
+    const r=RiskSizing.calculate(I,v);
+    $("#ps-journal").disabled=$("#ps-chart").disabled=!r.ok;
+    $("#risk-spec-note").textContent=v.inst ? "Quote currency: "+v.inst.quote+" · "+(same?"Same-currency conversion is 1.":"Conversion starts from indicative reference rates. Enter your own current conversion.") : "Choose an instrument.";
+    if(!r.ok){$("#ps-out").innerHTML='<strong class="risk-size">—</strong><p>Position unavailable</p>';$("#ps-verdict").textContent=r.error;$("#risk-levels").textContent=r.error;return;}
+    lastSize={v,r,rr:r.rr};
+    $("#ps-out").innerHTML=`<strong class="risk-size">${qty(r.lots)} <small>${v.inst.market==="Futures"?"contracts":"lots"}</small></strong><p class="risk-units">${qty(r.units)} units · rounded down to ${qty(v.step)} step</p><dl>${[["Risk budget",money(v.riskMoney)],["Risk at stop + fees",money(r.riskAtStop)],["Stop distance",qty(r.stopPips)+" pips / ticks"],["Net reward at target",r.reward===null?"—":money(r.reward)],["Price reward / risk",r.rr===null?"—":r.rr.toFixed(2)+" R"],["Net R at target",r.netRR===null?"—":r.netRR.toFixed(2)+" R"],["Margin estimate",money(r.margin)]].map(([label,value])=>`<dt>${label}</dt><dd>${value}</dd>`).join("")}</dl>`;
+    $("#ps-verdict").textContent="Estimate uses the specification shown. Fees are included in the risk budget. Net R uses price-stop risk, matching the journal. Margin depends on broker rules."+(v.riskPct>s.riskPct?" Above your saved "+pct(s.riskPct)+" risk rule.":"");
+    $("#risk-levels").innerHTML=[["Target",v.target,"target"],["Entry",v.entry,"entry"],["Stop",v.stop,"stop"]].map(([label,value,cls])=>`<div class="${cls}"><span>${label}</span><strong>${value===null?"Not set":px(value,v.inst)}</strong><i></i></div>`).join("");
+  }
 
-    $("#ps-risk-unit").textContent = $("#ps-risk-mode").value === "pct" ? "% of balance" : "in " + s.currency;
-    $("#ps-fx-label").textContent = v.inst ? v.inst.quote + " → " + s.currency : "quote → account";
-
-    if (!v.inst || v.entry === null || v.stop === null || v.riskMoney === null) {
-      lastSize = null;
-      out.innerHTML =
-        cell("Risk", "—") + cell("Stop distance", "—") + cell("Position size", "—") +
-        cell("Lots", "—") + cell("Value per pip", "—") + cell("Margin needed", "—");
-      verdict.textContent = "Pick an instrument, then type an entry and a stop. Without a stop there is no risk, and without risk there is no size to compute.";
-      $("#ps-journal").disabled = true;
-      return;
-    }
-
-    if (v.entry === v.stop) {
-      lastSize = null;
-      out.innerHTML = cell("Stop distance", "0") + cell("Position size", "—") + cell("Lots", "—");
-      verdict.textContent = "The stop is on top of the entry. That is not a trade with a tight stop, it is a trade with no stop.";
-      $("#ps-journal").disabled = true;
-      return;
-    }
-
-    /* a long with the stop above entry (or the reverse) is almost always a
-       typo, and silently sizing it would hide the mistake */
-    const wrongSide =
-      (v.side === "Long" && v.stop > v.entry) || (v.side === "Short" && v.stop < v.entry);
-
-    const r = I.positionSize({
-      instrument: v.inst,
-      entry: v.entry,
-      stop: v.stop,
-      riskMoney: v.riskMoney,
-      accountCurrency: s.currency,
-      fxOverride: v.fx,
-    });
-
-    if (!r) {
-      out.innerHTML = cell("Position size", "—");
-      verdict.textContent = "That instrument's currency cannot be converted to " + s.currency + " with the rates on file.";
-      $("#ps-journal").disabled = true;
-      return;
-    }
-
-    const margin = r.notionalAccount / (v.lev || 1);
-    const rr =
-      v.target === null ? null : Math.abs(v.target - v.entry) / Math.abs(v.entry - v.stop);
-    const reward = v.target === null ? null : v.riskMoney * rr - v.fees;
-
-    lastSize = { v, r, rr };
-
-    out.innerHTML =
-      cell("Risk", money(v.riskMoney), v.riskPct !== null && v.riskPct > s.riskPct ? "warn" : "") +
-      cell("Stop distance", qty(r.stopPips) + " pips") +
-      cell("Position size", qty(r.units) + " units") +
-      cell("Lots", qty(r.lots)) +
-      cell("Value per pip", money(r.pipValueAccount)) +
-      cell("Margin at 1:" + v.lev, money(margin)) +
-      cell("Notional", money(r.notionalAccount)) +
-      cell("Planned R:R", rr === null ? "—" : rr.toFixed(2)) +
-      cell("If target hits", reward === null ? "—" : money(reward), reward === null ? "" : "up");
-
-    const bits = [];
-    if (wrongSide)
-      bits.push(
-        "Check the direction: a " + v.side.toLowerCase() + " with the stop on the other side of entry is usually a typo."
-      );
-    if (v.riskPct !== null && v.riskPct > s.riskPct)
-      bits.push(
-        "That is " + pct(v.riskPct) + " of the account against your own " + pct(s.riskPct) + " rule — " +
-        qty((v.riskPct / s.riskPct)) + "× your limit. The rule is the edge; this is the trade that breaks it."
-      );
-    else if (v.riskPct !== null && v.riskPct > 0)
-      bits.push(
-        "Inside your " + pct(s.riskPct) + " rule. Risking " + pct(v.riskPct) +
-        " a trade, it takes " + Math.ceil(Math.log(0.5) / Math.log(1 - v.riskPct / 100)) +
-        " straight losses to halve the account — that is what the rule is buying you."
-      );
-    if (rr !== null && rr < 1)
-      bits.push("The target pays less than the stop risks, so you need to be right more than " + pct((1 / (1 + rr)) * 100, 0) + " of the time to break even.");
-    if (margin > s.balance)
-      bits.push("The margin alone is more than the account holds at 1:" + v.lev + ".");
-    verdict.innerHTML = bits.map(esc).join(" ");
-
-    $("#ps-journal").disabled = false;
+  function seedSpecification(){
+    const inst=I.find($("#ps-symbol").value);if(!inst)return;
+    $("#ps-contract").value=inst.contract;$("#ps-pip").value=inst.pip;$("#ps-unit-value").value=inst.unitValue;
+    $("#ps-step").value=inst.market==="Futures"?1:inst.market==="Crypto"?.000001:.01;
   }
 
   function sendToJournal() {
@@ -297,11 +231,16 @@
       stop: v.stop,
       target: v.target === null ? "" : v.target,
       size: Number(r.units.toFixed(6)),
-      contractValue: v.inst.unitValue,
+      contractValue: v.inst.unitValue*r.fx,
+      manualSizing:{accountCurrency:settings().currency,quoteCurrency:v.inst.quote,fx:r.fx,contract:v.inst.contract,pip:v.inst.pip,step:v.step,riskBudget:v.riskMoney},
       fees: v.fees,
       tags: ["sized"],
     };
 
+    if(Store.driver() === "workspace-example-memory") {
+      window.location.href = "journal-preview.html#draft=" + encodeURIComponent(JSON.stringify(draft));
+      return;
+    }
     Store.draft.set(draft);
 
     /* Storage is not always available — private windows and embedded
@@ -364,6 +303,7 @@
     $("#ps-stop").value = (inst.price - 25 * inst.pip).toFixed(inst.dp);
     $("#ps-target").value = (inst.price + 50 * inst.pip).toFixed(inst.dp);
     syncFx("#ps-symbol", "#ps-fx");
+    seedSpecification();
   }
 
   /* quote-currency money in the account currency, using the traded pair's
@@ -410,7 +350,7 @@
 
     $("#rr-note").textContent =
       exp === null
-        ? "Add your win rate and this turns into expectancy — the number that actually predicts survival."
+        ? "Enter a win-rate assumption to model expectancy. This is a hypothetical calculation."
         : exp > 0
         ? "Positive expectancy: at " + pct(wr, 0) + " you make " + exp.toFixed(2) + "R a trade on average. Size small enough to survive the variance and this compounds."
         : "Negative expectancy at " + pct(wr, 0) + ". Either the target has to pay more, or the win rate has to rise — position size cannot fix this.";
@@ -471,17 +411,17 @@
     out.innerHTML =
       cell("Margin needed", inCcy(margin, s.currency), share !== null && share > 50 ? "warn" : "") +
       cell("Notional", inCcy(notional, s.currency)) +
-      cell("Of your balance", pct(share, 1), share !== null && share > 50 ? "warn" : "") +
-      cell("Free after", inCcy(margin === null ? null : s.balance - margin, s.currency));
+      cell("Of sizing balance", pct(share, 1), share !== null && share > 50 ? "warn" : "") +
+      cell("Sizing balance less margin", inCcy(margin === null ? null : s.balance - margin, s.currency));
 
     $("#mg-note").textContent =
       share === null
         ? ""
         : share > 100
-        ? "You cannot open this position: the margin is more than the account."
+        ? "Estimated margin exceeds the shared sizing balance. Actual broker requirements can differ."
         : share > 50
         ? "Over half the account would be tied up as margin, which leaves almost nothing to absorb a drawdown."
-        : "Margin is what the broker holds, not what you risk. The stop decides the risk — this only decides whether the position fits.";
+        : "Illustrative margin estimate using reference prices and leverage. This does not show broker available margin.";
   }
 
   /* ------------------------------------------------------------ 5 · profit and loss */
@@ -681,7 +621,7 @@
   /* one line each, in the second person, saying what question it answers —
      a dropdown of eight nouns does not tell a beginner which to pick */
   const WHAT = {
-    ps: "How many lots, given your balance, your risk rule and where your stop is. Start here — it is the only one that can stop you oversizing.",
+    ps: "Estimate size from a risk budget, stop distance and manual instrument specification.",
     rr: "Whether the trade is worth taking at all: what you stand to make against what you are risking, and the win rate that would need.",
     mg: "How much of your balance the broker will lock up to hold the position, and what is left for everything else.",
     pv: "What one pip is worth in your account currency, so a 20-pip stop stops being an abstraction.",
@@ -717,6 +657,7 @@
       history.replaceState(null, "", "#" + next);
     }
 
+    $$("[data-risk-calc]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.riskCalc===next)));
     renderAll();
   }
 
@@ -731,6 +672,7 @@
   }
 
   function wirePicker() {
+    $$("[data-risk-calc]").forEach(button=>button.onclick=()=>show(button.dataset.riskCalc,true));
     $("#calc-which").addEventListener("change", (e) => show(e.target.value, true));
     $("#calc-prev").addEventListener("click", () => step(-1));
     $("#calc-next").addEventListener("click", () => step(1));
@@ -797,6 +739,7 @@
       $("#ps-stop").value = (i.price - 25 * i.pip).toFixed(i.dp);
       $("#ps-target").value = (i.price + 50 * i.pip).toFixed(i.dp);
       syncFx("#ps-symbol", "#ps-fx");
+      seedSpecification();
       renderAll();
     });
 
@@ -820,6 +763,8 @@
       renderCurrency();
     };
 
+    $("#s-currency").addEventListener("change",()=>{syncFx("#ps-symbol","#ps-fx");renderAll();});
+    $("#ps-chart").onclick=()=>{if(lastSize)location.href="charts.html?source=overview&symbol="+encodeURIComponent(lastSize.v.inst.symbol);};
     $("#ps-journal").onclick = sendToJournal;
     $("#ps-copy").onclick = copySummary;
     $("#ps-reset").onclick = () => {

@@ -8,23 +8,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233654ff'/%3E%3Ctext x='16' y='21' font-family='monospace' font-size='13' font-weight='600' fill='white' text-anchor='middle'%3E1%25%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="../assets/home/logo.svg" type="image/svg+xml">
 <script src="../assets/theme.js"></script>
+<script>if(!Theme.isExplicit())document.documentElement.dataset.theme="light";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/cloud.js"></script>
 <link rel="stylesheet" href="../assets/shell.css">
 <link rel="stylesheet" href="../assets/components.css">
 <link rel="stylesheet" href="../assets/settings.css">
+<link rel="stylesheet" href="../assets/workspace-modern.css">
 </head>
 <!-- one folder deep; the shell infers the logged-in state from the profile -->
-<body data-page="settings" data-depth="1">
+<body data-page="settings" data-depth="1" data-shell="nav" class="workspace-modern">
 
 <main id="main">
   <div class="wrap">
 
     <header class="page-head">
-      <h1>Settings</h1>
-      <p>Everything the calculators, the journal and the dashboard read. Change a number here and every screen follows it.</p>
+      <h1>Workspace Settings</h1>
+      <p>Manage your sizing defaults, trading rules, appearance and data.</p>
     </header>
 
     <!-- jump list, because this page is long by nature -->
@@ -43,8 +45,9 @@
     </div>
 
     <!-- ============================================================ account -->
+    <div class="settings-layout">
     <section class="panel" id="account">
-      <div class="panel-head"><h2>Account</h2><span>the basis of every calculation</span></div>
+      <div class="panel-head"><h2>Account</h2><span>Sizing inputs · Not account equity</span></div>
       <div class="panel-body">
         <div class="grid-3">
           <label class="fld">
@@ -56,7 +59,7 @@
             <select id="st-currency"></select>
           </label>
           <label class="fld">
-            <span>Starting balance</span>
+            <span>Shared sizing balance</span>
             <input id="st-balance" type="number" step="any" min="0" inputmode="decimal">
           </label>
         </div>
@@ -143,10 +146,10 @@
 
     <!-- ============================================================ appearance -->
     <section class="panel" id="appearance">
-      <div class="panel-head"><h2>Appearance</h2><span>dark by default, light is first class</span></div>
+      <div class="panel-head"><h2>Appearance</h2><span>Choose the appearance of your workspace</span></div>
       <div class="panel-body">
         <div class="chip-picks" id="st-theme" role="group" aria-label="Theme"></div>
-        <p class="hint">Dark is the default on purpose — the system preference is deliberately not consulted, because most desktops report light and that would quietly undo the decision.</p>
+        <p class="hint">Choose light or dark. Your explicit preference is used across the workspace.</p>
       </div>
     </section>
 
@@ -171,13 +174,14 @@
             <button class="btn btn-quiet danger" id="st-clear-trades">Delete all trades</button>
             <button class="btn btn-quiet danger" id="st-clear-all">Reset the whole account</button>
           </div>
-          <p class="hint">There is no undo and no copy on a server. Export first.</p>
+          <p class="hint">Deletion cannot be undone through this screen. Export a backup first.</p>
         </div>
 
       </div>
     </section>
 
-    <p class="fine">Settings live on this device until the backend lands (step 11 of the plan). Exporting is how you move them to another machine.</p>
+    </div>
+    <p class="fine">Settings use the active data connection shown above. Export a JSON backup before replacing or deleting records.</p>
 
   </div>
 </main>
@@ -185,6 +189,8 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="../assets/store.js"></script>
+<script src="../assets/home-icons.js"></script>
+<script src="../assets/workspace-shell.js"></script>
 <script src="../assets/instruments.js"></script>
 <script src="../assets/settings.js"></script>
 <!-- the curriculum is loaded here only so the shell search box can find

@@ -401,6 +401,7 @@
      searchable, and so a future version can reopen it rather than asking
      the user to read it back off a picture. Cleared with the form. */
   let pendingChartState = null;
+  let pendingSizing = null;
 
   function readForm() {
     const f = $("#trade-form");
@@ -454,6 +455,7 @@
       shot: shotData,
       exitShot: exitShotData,
       chartState: pendingChartState || (existing && existing.chartState) || null,
+      manualSizing: pendingSizing || (existing && existing.manualSizing) || null,
     };
   }
 
@@ -675,6 +677,7 @@
     $("#exit-shot-preview").hidden = true;
     $("#exit-shot-preview").innerHTML = "";
     pendingChartState = null;
+    pendingSizing = null;
     $("#shot-preview").hidden = true;
     $("#shot-preview").innerHTML = "";
 
@@ -760,6 +763,7 @@
           showShot();
         }
         if (prefill.chartState) pendingChartState = prefill.chartState;
+        if (prefill.manualSizing && typeof prefill.manualSizing === "object") pendingSizing = prefill.manualSizing;
 
         $("#fm-title").textContent =
           prefill.source === "charts" ? "Log the trade you just planned" : "Log the trade you just sized";
