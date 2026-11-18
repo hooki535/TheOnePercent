@@ -329,6 +329,8 @@
 
   /* ------------------------------------------------------------ detail */
 
+  let returnToReview = null;
+
   function openDetail(id) {
     const t = Store.trades.find(id);
     if (!t) return;
@@ -336,72 +338,28 @@
     const d = Store.discipline(t, settings());
     const dt = new Date(t.date);
 
-    $("#dr-title").textContent = t.symbol + " · " + dayKey(dt);
-    $("#dr-body").innerHTML = `
-      <div class="dr-hero">
-        <span class="side ${t.side === "Short" ? "short" : "long"}">${esc(t.side)}</span>
-        <b>${esc(t.symbol)}</b>
-        <span class="tag">${esc(t.market || "—")}</span>
-        <span class="dr-r ${c.open ? "" : dir(c.r)}">${c.open ? "Open" : rfmt(c.r)}</span>
-      </div>
-      ${t.exitShot ? `<h3>Exit screenshot</h3><img class="dr-shot" src="${esc(t.exitShot)}" alt="Exit screenshot for ${esc(t.symbol)}">` : ""}
-      ${t.shot ? `<h3>Entry screenshot</h3><img class="dr-shot" src="${esc(t.shot)}" alt="Chart screenshot for ${esc(t.symbol)}">` : ""}
-      <dl class="kv">
-        <div><dt>Entry</dt><dd>${esc(t.entry)}</dd></div>
-        <div><dt>Stop</dt><dd>${esc(t.stop)}</dd></div>
-        <div><dt>Target</dt><dd>${t.target ? esc(t.target) : "—"}</dd></div>
-        <div><dt>Avg exit</dt><dd>${c.avgExit === null ? "—" : c.avgExit.toFixed(5).replace(/0+$/, "")}</dd></div>
-        <div><dt>Size</dt><dd>${esc(t.size)}</dd></div>
-        <div><dt>Risk</dt><dd>${money(c.riskMoney)}${c.riskPct === null ? "" : " · " + pct(c.riskPct, 2)}</dd></div>
-        <div><dt>Planned R:R</dt><dd>${c.plannedRR === null ? "—" : c.plannedRR.toFixed(2)}</dd></div>
-        <div><dt>Fees</dt><dd>${money(c.fees)}</dd></div>
-        <div><dt>Gross P/L</dt><dd class="${c.open ? "" : dir(c.grossPL)}">${c.open ? "—" : money(c.grossPL, true)}</dd></div>
-        <div><dt>Net P/L</dt><dd class="${c.open ? "" : dir(c.netPL)}">${c.open ? "—" : money(c.netPL, true)}</dd></div>
-      </dl>
-
-      <div class="dr-sec">
-        <h3>Discipline ${d}/100</h3>
-        <span class="disc-bar ${d >= 75 ? "" : d >= 50 ? "mid" : "low"}" style="width:100%;display:block"><i style="width:${d}%"></i></span>
-        <p style="margin-top:8px;font-size:14px">${esc(disciplineNote(t, c, d))}</p>
-      </div>
-
-      ${
-        (t.exits || []).length
-          ? `<div class="dr-sec"><h3>Exits</h3><ul class="exit-list">${t.exits
-              .map((e) => `<li><span>${esc(e.size)} @ ${esc(e.price)}</span><span>${esc(e.note || "")}</span></li>`)
-              .join("")}</ul></div>`
-          : `<div class="dr-sec"><h3>Exits</h3><p>Still open — no exit legs recorded.</p></div>`
-      }
-
-      ${
-        t.plan
-          ? `<div class="dr-sec"><h3>The plan</h3><p>${esc(t.plan)}</p></div>`
-          : `<div class="dr-sec"><h3>The plan</h3><p class="muted-note">No reason was written before this one.</p></div>`
-      }
-      ${
-        (t.unmet || []).length
-          ? `<div class="dr-sec off-plan"><h3>Taken off plan</h3><p>${esc(
-              (t.unmet || []).map((k) => HUMAN_LABEL[k] || (CHECK_LABEL[k] || k).toLowerCase()).join(", ")
-            )} — unmet when this was logged.</p></div>`
-          : ""
-      }
-      ${t.review ? `<div class="dr-sec"><h3>Review</h3><p>${esc(t.review)}</p></div>` : ""}
-      ${
-        (t.tags || []).length
-          ? `<div class="dr-sec"><h3>Tags</h3><div class="tag-row">${t.tags.map((x) => `<span class="tag">${esc(x)}</span>`).join("")}</div></div>`
-          : ""
-      }
-      <div class="dr-sec"><h3>Account</h3><p>${esc(t.account || "—")}${t.emotion ? " · felt " + esc(t.emotion.toLowerCase()) : ""}</p></div>
-
-      <div class="dr-foot">
-        <button class="btn btn-primary" id="dr-edit">Edit trade</button>
-        <button class="btn btn-quiet danger" id="dr-del">Delete</button>
-      </div>`;
-
-    $("#dr-edit").onclick = () => {
+    const cohort = rowsFor().map(row => row.t.id);
+    const index = cohort.indexOf(t.id);
+    $("#dr-title").textContent = t.symbol || "Trade review";
+    $("#dr-body").innerHTML = JournalReview.render(t, c, {
+      note: disciplineNote(t,c,d), discipline:d, index, count:cohort.length,
+    });
+    const edit = section => {
       close($("#drawer"));
-      openForm(t.id);
+      openForm(t.id, null, section);
+      returnToReview = t.id;
     };
+    $("#dr-edit").onclick = () => edit();
+    $$("[data-review-edit]",$("#dr-body")).forEach(button => button.onclick = () => edit(button.dataset.reviewEdit));
+    $("#dr-prev").onclick = () => { if(index>0) openDetail(cohort[index-1]); };
+    $("#dr-next").onclick = () => { if(index>=0 && index<cohort.length-1) openDetail(cohort[index+1]); };
+    $$("[data-evidence]",$("#dr-body")).forEach(button => button.onclick = () => {
+      const field = button.dataset.evidence;
+      $("#evidence-title").textContent = (field === "shot" ? "Entry" : "Exit")+" screenshot · "+t.symbol;
+      $("#evidence-image").src = t[field];
+      $("#evidence-image").alt = $("#evidence-title").textContent;
+      $("#evidence-viewer").showModal();
+    });
     $("#dr-del").onclick = () => {
       if (!confirm("Delete this trade? It will not be recoverable.")) return;
       Store.trades.remove(t.id);
@@ -409,7 +367,9 @@
       toast("Trade deleted");
     };
 
-    open($("#drawer"));
+    if ($("#drawer").getAttribute("aria-hidden") === "true") open($("#drawer"));
+    else $(".drawer-panel",$("#drawer")).focus();
+    $("#dr-body").scrollTop = 0;
   }
 
   /* Plain-language reason, so the score teaches instead of grading. */
@@ -440,6 +400,7 @@
     div.innerHTML = `
       <label class="fld"><span>Exit price</span><input class="ex-price" type="number" step="any" inputmode="decimal" value="${e.price === undefined ? "" : esc(e.price)}"></label>
       <label class="fld"><span>Size closed</span><input class="ex-size" type="number" step="any" inputmode="decimal" value="${e.size === undefined ? "" : esc(e.size)}"></label>
+      <label class="fld exit-note"><span>Exit note</span><input class="ex-note" value="${esc(e.note || "")}" placeholder="Optional note"></label>
       <button type="button" class="icon-btn" aria-label="Remove exit">✕</button>`;
     $("button", div).onclick = () => {
       div.remove();
@@ -478,6 +439,7 @@
       ...(row._journalExit || {}),
       price: parseFloat($(".ex-price", row).value),
       size: parseFloat($(".ex-size", row).value),
+      note: $(".ex-note", row) ? $(".ex-note", row).value.trim() : (row._journalExit || {}).note,
     })).filter((e) => Number.isFinite(e.price) && Number.isFinite(e.size));
 
     /* the balance is captured with the trade so that a later deposit
@@ -508,6 +470,8 @@
         .filter(Boolean),
       stopHonoured: fd.get("stopHonoured") === "on",
       review: String(fd.get("review") || "").trim(),
+      whatWentWell: String(fd.get("whatWentWell") || "").trim(),
+      nextTime: String(fd.get("nextTime") || "").trim(),
       /* the pre-trade record: the reason, and the two things the app cannot
          verify for itself. Kept on the trade so the journal can later show
          what planned trades did against unplanned ones. */
@@ -728,7 +692,8 @@
      screenshot, so the entry carries the reason and the picture without
      the user retyping either. `chartState` rides along unshown — it is
      what lets a later version reopen the exact chart. */
-  function openForm(id, prefill) {
+  function openForm(id, prefill, section) {
+    returnToReview = null;
     const f = $("#trade-form");
     f.reset();
     $("#exits").innerHTML = "";
@@ -779,6 +744,8 @@
       f.tags.value = (t.tags || []).join(", ");
       f.stopHonoured.checked = t.stopHonoured !== false;
       f.review.value = t.review || "";
+      f.whatWentWell.value = t.whatWentWell || "";
+      f.nextTime.value = t.nextTime || "";
       f.plan.value = t.plan || "";
       f.chkStop.checked = !!(t.checks && t.checks.stopInvalidates);
       f.chkNotRevenge.checked = !!(t.checks && t.checks.notRevenge);
@@ -835,7 +802,13 @@
 
     liveCalc();
     open($("#form-drawer"));
-    setTimeout(() => f.symbol.focus(), 240);
+    $(".trade-form-layout").scrollTop = 0;
+    setTimeout(() => {
+      if ($("#form-drawer").getAttribute("aria-hidden") !== "false") return;
+      const target = section ? document.getElementById("trade-"+section) : null;
+      if(target){ target.scrollIntoView({block:"start"}); target.focus({preventScroll:true}); }
+      else f.symbol.focus();
+    }, 240);
   }
 
   function showShot(kind = "entry") {
@@ -969,7 +942,7 @@
 
   const CSV_COLS = ["date", "symbol", "market", "side", "setup", "session", "entry", "stop",
     "target", "size", "contractValue", "fees", "exitPrice", "exitSize", "emotion", "tags",
-    "stopHonoured", "plan", "offPlan", "review"];
+    "stopHonoured", "plan", "offPlan", "review", "whatWentWell", "nextTime"];
 
   function exportCsv() {
     const rows = rowsFor().map(({ t, c, d }) => ({
@@ -979,6 +952,7 @@
       exitPrice: c.avgExit === null ? "" : c.avgExit, exitSize: c.closedSize,
       emotion: t.emotion, tags: (t.tags || []).join("|"),
       stopHonoured: t.stopHonoured !== false, review: t.review,
+      whatWentWell: t.whatWentWell || "", nextTime: t.nextTime || "",
       plan: t.plan || "", offPlan: (t.unmet || []).join("|"),
       netPL: c.netPL, r: c.r, riskPct: c.riskPct, discipline: d,
     }));
@@ -1061,6 +1035,7 @@
         tags: g("tags") ? g("tags").split(/[|;]/).map((s) => s.trim()).filter(Boolean) : [],
         stopHonoured: !/false|no|0/i.test(g("stopHonoured")),
         review: g("review"),
+        whatWentWell: g("whatWentWell"), nextTime: g("nextTime"),
       });
       n++;
     });
@@ -1165,9 +1140,14 @@
   }
 
   function close(d) {
+    const viewer = $("#evidence-viewer");
+    if (viewer && viewer.open) viewer.close();
     d.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
     if (lastFocus && lastFocus.focus) lastFocus.focus();
+    if (d.id === "form-drawer" && returnToReview) {
+      const id = returnToReview; returnToReview = null; openDetail(id);
+    }
   }
 
   /* ------------------------------------------------------------ chips */
@@ -1461,7 +1441,10 @@
       b.onclick = () => close(b.closest(".drawer"));
     });
 
+    $("#evidence-close").onclick = () => $("#evidence-viewer").close();
+    $("#evidence-viewer").addEventListener("close", () => { $("#evidence-image").removeAttribute("src"); });
     document.addEventListener("keydown", (e) => {
+      if ($("#evidence-viewer").open) return;
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "").toUpperCase());
       if (e.key === "Tab") {
         const drawer = $('.drawer[aria-hidden="false"]');
@@ -1478,7 +1461,7 @@
         if (openDrawer) close(openDrawer);
         return;
       }
-      if (!typing && (e.key === "n" || e.key === "N") && !e.metaKey && !e.ctrlKey) {
+      if (!typing && !$('.drawer[aria-hidden="false"]') && (e.key === "n" || e.key === "N") && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         openForm(null);
       }
