@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const src=fs.readFileSync('assets/charts-watchlist.js','utf8');const c={};vm.createContext(c);vm.runInContext(src.split('(function(){')[0]+';globalThis.model=WatchlistModel;',c);const m=c.model;
+const c={window:{}};vm.createContext(c);vm.runInContext(fs.readFileSync('assets/watchlist-model.js','utf8'),c);const m=c.window.WatchlistModel;
 const bar=(t,o,h,l,close)=>({t:Date.parse(t),o,h,l,c:close});
 test('watchlist snapshots use the latest full UTC date, not just the day number',()=>{const bars=[bar('2026-10-06T12:00Z',10,20,8,15),bar('2026-11-06T00:00Z',100,110,95,105),bar('2026-11-06T00:05Z',105,115,98,112)];const q=m.snapshot(bars);assert.equal(q.open,100);assert.equal(q.low,95);assert.equal(q.high,115);assert.equal(q.price,112);assert.equal(q.percent,12);assert.equal(q.rangeAt,85);assert.equal(q.date,'2026-11-06');assert.equal(bars[0].o,10);});
 test('empty data stays unavailable; flat days and zero opens do not invent percentages',()=>{assert.equal(m.snapshot([]),null);assert.equal(m.snapshot([{t:1,c:NaN}]),null);const q=m.snapshot([bar('2026-11-06T00:00Z',1,1,1,1)]);assert.equal(q.rangeAt,50);assert.equal(q.percent,0);assert.equal(m.snapshot([bar('2026-11-06T00:00Z',0,1,0,1)]).percent,null);});

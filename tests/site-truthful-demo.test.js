@@ -24,7 +24,8 @@ test("static calendar, news and ideas remain labelled examples", () => {
   assert.match(home, /A live news provider is not connected/);
   assert.match(home, /Educational examples/);
   assert.match(home, /Community publishing will be designed separately/);
-  assert.doesNotMatch(home, /pages\/markets\.html/);
+  assert.match(home, /pages\/markets\.html/);
+  assert.ok(fs.existsSync("pages/markets.html"));
 });
 
 test("chart details and tour are available on demand without auto-opening", () => {

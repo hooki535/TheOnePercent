@@ -197,7 +197,7 @@ test("chart labels distinguish historical spot data and never synthesize bid/ask
   assert.match(chartSource, /partial_fallback/);
   assert.match(chartSource, /known Binance spot symbol/);
   assert.match(chartSource, /newChart\("BTCUSDT", "1H"\)/);
-  assert.match(chartSource, /Crypto: \["BTCUSDT", "ETHUSDT", "SOLUSDT"\]/);
+  assert.match(fs.readFileSync("assets/watchlist-model.js", "utf8"), /Crypto:\["BTCUSDT","ETHUSDT","SOLUSDT"\]/);
   assert.match(chartSource, /Verified specifications are unavailable/);
   assert.match(engineSource, /SYMBOLS\[S\]\.tick > 0 \? `  \$\{ticks\.toFixed/);
   assert.match(engineSource, /price units/);
