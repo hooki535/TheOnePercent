@@ -129,6 +129,8 @@
      something they actually trade rather than always on EURUSD. Read
      through Shell.profile() — no screen touches storage directly. */
   function preferred() {
+    const requested=new URLSearchParams(location.search).get("symbol");
+    if(requested && I.find(requested.toUpperCase()))return requested.toUpperCase();
     const me = window.Shell && Shell.profile ? Shell.profile() : null;
     const markets = me && Array.isArray(me.markets) ? me.markets : [];
     for (const m of markets) {

@@ -252,29 +252,9 @@ const state = {
    a Kampala trader who chose Forex open this screen to USDUGX instead
    of a list of US index CFDs they will never trade. */
 
-const WATCH_DEFAULTS = {
-  Forex: ["EURUSD", "GBPUSD", "USDJPY", "GBPJPY", "USDUGX", "USDKES"],
-  Crypto: ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
-  Indices: ["US500", "US30", "NAS100", "DE40"],
-  Commodities: ["XAUUSD", "XAGUSD"],
-  Futures: ["NQ1!", "ES1!", "CL1!"],
-};
-
 function seedWatch() {
   const me = (window.Shell && Shell.profile ? Shell.profile() : null) || {};
-  const picked = (me.markets || []).map((m) => String(m).toLowerCase());
-  const keys = Object.keys(WATCH_DEFAULTS).filter((k) =>
-    picked.some(
-      (p) => k.toLowerCase().includes(p) || p.includes(k.toLowerCase()),
-    ),
-  );
-  const out = [];
-  (keys.length ? keys : ["Forex", "Commodities", "Crypto"]).forEach((k) => {
-    WATCH_DEFAULTS[k].forEach((s) => {
-      if (Instruments.find(s) && out.indexOf(s) < 0) out.push(s);
-    });
-  });
-  return out.slice(0, 14);
+  return WatchlistModel.seed(me, symbol => Instruments.find(symbol));
 }
 
 /* One read of the shared settings, mirrored into state.risk. Called at
@@ -299,7 +279,7 @@ function syncSettings() {
   const saved = Array.isArray(s.chartsWatch)
     ? s.chartsWatch.filter((x) => Instruments.find(x) || Feed.symbol(x))
     : null;
-  state.watch = saved && saved.length ? saved : seedWatch();
+  state.watch = saved ? saved : seedWatch();
   if (typeof s.chartsUtc === "boolean") state.look.utc = s.chartsUtc;
   if (typeof s.chartsWatchView === "string")
     state.watchView = s.chartsWatchView;

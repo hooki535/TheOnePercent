@@ -43,7 +43,7 @@ window.Shell = (() => {
     calculators: root + "pages/calculators.html",
     settings: root + "pages/settings.html",
     learn: root + "pages/learn.html",
-    markets: root + "index.html#summary",
+    markets: root + "pages/markets.html",
   };
 
   /* ---------------------------------------------------------- storage
@@ -240,14 +240,14 @@ window.Shell = (() => {
   ];
 
   const DASHBOARD_NAV = [
-      { id: "markets", label: "Markets", href: P.home + "#market-summary" },
+      { id: "markets", label: "Markets", href: P.markets },
       { id: "charts", label: "Charts", href: P.charts },
       { id: "community", label: "Community", href: P.home + "#trade-ideas" },
       { id: "learn", label: "Learn", href: P.learn },
       { id: "dashboard", label: "Dashboard", href: P.dashboard },
     ];
 
-  const modernWorkspace = ["dashboard", "journal", "calculators", "settings", "learn"].includes(page);
+  const modernWorkspace = ["dashboard", "journal", "calculators", "settings", "learn", "markets"].includes(page);
 
   function navHTML() {
     const links = (modernWorkspace ? DASHBOARD_NAV : NAV).map(
