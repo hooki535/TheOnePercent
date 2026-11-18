@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design preview · Risk & Position Sizing — TheOnePercent</title>
+<meta name="description" content="Position size, risk to reward, pip value, margin, break-even and compounding — pre-filled from your account balance, currency and risk rule.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/home/logo.svg" type="image/svg+xml">
+<script src="../assets/theme.js"></script>
+<script>if(!Theme.isExplicit())document.documentElement.dataset.theme="light";</script>
+
+
+<link rel="stylesheet" href="../assets/shell.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/calculators.css">
+<link rel="stylesheet" href="../assets/workspace-modern.css">
+</head>
+<!-- one folder deep; the shell infers the logged-in state from the profile -->
+<body data-page="calculators" data-depth="1" data-shell="nav" class="workspace-modern">
+
+<main id="main"><div class="workspace-preview-banner"><strong>Design preview · Example inputs</strong> · Changes stay in memory and reset on reload. <a href="calculators.html">Open your workspace →</a></div>
+
+  <header class="page-head">
+    <div class="wrap ch-row">
+      <div>
+        <h1>Risk &amp; Position Sizing</h1>
+        <p>Define your risk, check the specification, then review your plan.</p>
+      </div>
+      <!-- the three values every calculator on this page reads -->
+      <div class="acct" id="acct">
+        <div class="acct-head">
+          <b>Shared sizing inputs</b>
+          <small>Not account equity</small>
+        </div>
+        <div class="acct-fields">
+          <label class="fld"><span>Sizing balance</span><input id="s-balance" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Currency</span><select id="s-currency"></select></label>
+          <label class="fld"><span>Risk rule <small>%</small></span><input id="s-risk" type="number" step="any" inputmode="decimal"></label>
+        </div>
+        <p class="acct-note" id="acct-note">Saved to your settings as you type.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <!-- ------------------------------------------------ the picker
+         Eight calculators on one scrolling page meant the answer you wanted
+         was always somewhere below the fold. One at a time, chosen here. -->
+    <div class="calc-pick" id="calc-pick">
+      <label class="fld">
+        <span>Calculator</span>
+        <select id="calc-which" aria-describedby="calc-what">
+          <optgroup label="Before you enter">
+            <option value="ps">Position size</option>
+            <option value="rr">Risk to reward</option>
+            <option value="mg">Margin</option>
+            <option value="pv">Pip value</option>
+          </optgroup>
+          <optgroup label="What it would mean">
+            <option value="sim">Profit and loss</option>
+            <option value="be">Break-even</option>
+            <option value="cp">Compounding</option>
+          </optgroup>
+          <optgroup label="Quick conversions">
+            <option value="conv">Converters</option>
+          </optgroup>
+        </select>
+      </label>
+      <p class="calc-what" id="calc-what"></p>
+      <div class="calc-step">
+        <button class="icon-btn" id="calc-prev" aria-label="Previous calculator" title="Previous">‹</button>
+        <button class="icon-btn" id="calc-next" aria-label="Next calculator" title="Next">›</button>
+      </div>
+    </div>
+
+    <div class="notice warn" id="storage-warn" hidden>
+      <span>
+        <b>This browser is blocking storage</b>
+        <small>Changes to your balance and risk rule will work for this visit but will not survive a reload.</small>
+      </span>
+    </div>
+
+    <!-- honesty badge: the formulas are exact, the rates behind them are not -->
+    <div class="notice demo">
+      <span>
+        <b>Demo rates <i class="badge">DEMO</i></b>
+        <small id="demo-note"></small>
+      </span>
+    </div>
+
+    <div class="calc-views" id="calc-views">
+
+    <!-- ------------------------------------------------ position size -->
+    <section class="panel primary" id="ps" data-calc="ps">
+      <div class="panel-head"><h2>Plan your position</h2><span>Manual inputs · Sizing estimate</span></div>
+      <div class="risk-plan-layout"><form id="ps-form" novalidate><div class="risk-section"><h3>Instrument &amp; risk</h3><div class="grid-3">
+      <label class="fld"><span>Instrument</span><select id="ps-symbol"></select></label>
+      <label class="fld"><span>Direction</span><select id="ps-side"><option>Long</option><option>Short</option></select></label>
+      <label class="fld"><span>Risk <small id="ps-risk-unit">% of balance</small></span><div class="split"><input id="ps-risk" type="number" step="any" inputmode="decimal"><select id="ps-risk-mode" aria-label="Risk expressed as"><option value="pct">%</option><option value="money">money</option></select></div></label>
+      </div></div><div class="risk-section"><h3>Trade levels</h3><div class="grid-3"><label class="fld"><span>Entry</span><input id="ps-entry" type="number" step="any" inputmode="decimal"></label><label class="fld"><span>Stop</span><input id="ps-stop" type="number" step="any" inputmode="decimal"></label><label class="fld"><span>Target <small>optional</small></span><input id="ps-target" type="number" step="any" inputmode="decimal"></label></div><div id="risk-levels" class="risk-levels" aria-live="polite"></div></div>
+      <details class="risk-spec" open><summary>Instrument specification</summary><p class="hint">Reference defaults are editable. Check contract size, pip size, point value and volume step against your broker.</p><div class="grid-3"><label class="fld"><span>Units per lot / contract</span><input id="ps-contract" type="number" step="any"></label><label class="fld"><span>Pip / tick size</span><input id="ps-pip" type="number" step="any"></label><label class="fld"><span>Value per price point / unit</span><input id="ps-unit-value" type="number" step="any"></label><label class="fld"><span>Lot / contract step</span><input id="ps-step" type="number" step="any"></label><label class="fld"><span>Leverage</span><select id="ps-lev"></select></label><label class="fld"><span>Fees in account currency</span><input id="ps-fees" type="number" step="any" value="0"></label><label class="fld"><span>Conversion rate <small id="ps-fx-label">quote → account</small></span><input id="ps-fx" type="number" step="any"></label></div><p class="hint" id="risk-spec-note"></p></details></form>
+      <aside class="risk-estimate"><div class="risk-estimate-title">POSITION ESTIMATE</div><div id="ps-out" aria-live="polite"></div><p class="hint" id="ps-verdict"></p><div class="risk-actions"><button class="btn btn-primary" id="ps-chart">View instrument chart</button><button class="btn btn-quiet" id="ps-journal">Log planned trade</button><button class="btn btn-quiet sm" id="ps-copy">Copy estimate</button><button class="btn btn-quiet sm" id="ps-reset">Reset position</button></div><p class="risk-footnote">Planning tools only. No broker order is placed. The chart button opens the instrument; it does not add a position drawing.</p></aside></div>
+    </section>
+
+    <section class="panel" id="rr" data-calc="rr">
+      <div class="panel-head"><h2>Risk to reward</h2><span>before you take it</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Entry</span><input id="rr-entry" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Stop</span><input id="rr-stop" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Target</span><input id="rr-target" type="number" step="any" inputmode="decimal"></label>
+        </div>
+        <label class="fld mt"><span>Your win rate <small>%, from your own journal if you have one</small></span><input id="rr-wr" type="number" step="any" inputmode="decimal"></label>
+        <div class="calc two" id="rr-out" aria-live="polite"></div>
+        <p class="hint" id="rr-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="pv" data-calc="pv">
+      <div class="panel-head"><h2>Pip value</h2><span>in your account currency</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="pv-symbol"></select></label>
+          <label class="fld"><span>Size</span><input id="pv-size" type="number" step="any" inputmode="decimal" value="1"></label>
+          <label class="fld"><span>Size unit</span>
+            <select id="pv-unit"><option value="lots">lots</option><option value="units">units</option></select>
+          </label>
+        </div>
+        <div class="calc two" id="pv-out" aria-live="polite"></div>
+        <p class="hint" id="pv-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="mg" data-calc="mg">
+      <div class="panel-head"><h2>Margin</h2><span>before the broker tells you</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="mg-symbol"></select></label>
+          <label class="fld"><span>Lots</span><input id="mg-lots" type="number" step="any" inputmode="decimal" value="0.1"></label>
+          <label class="fld"><span>Leverage</span><select id="mg-lev"></select></label>
+        </div>
+        <div class="calc two" id="mg-out" aria-live="polite"></div>
+        <p class="hint" id="mg-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="sim" data-calc="sim">
+      <div class="panel-head"><h2>Profit and loss</h2><span>what a win and a loss actually mean</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="sim-symbol"></select></label>
+          <label class="fld"><span>Direction</span><select id="sim-side"><option>Long</option><option>Short</option></select></label>
+          <label class="fld"><span>Lots</span><input id="sim-lots" type="number" step="any" inputmode="decimal" value="0.1"></label>
+          <label class="fld"><span>Entry</span><input id="sim-entry" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Stop</span><input id="sim-stop" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Target</span><input id="sim-target" type="number" step="any" inputmode="decimal"></label>
+        </div>
+        <div class="calc three" id="sim-out" aria-live="polite"></div>
+        <p class="hint" id="sim-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="be" data-calc="be">
+      <div class="panel-head"><h2>Break-even</h2><span>spread and fees included</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Instrument</span><select id="be-symbol"></select></label>
+          <label class="fld"><span>Direction</span><select id="be-side"><option>Long</option><option>Short</option></select></label>
+          <label class="fld"><span>Lots</span><input id="be-lots" type="number" step="any" inputmode="decimal" value="0.1"></label>
+          <label class="fld"><span>Entry</span><input id="be-entry" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Spread <small>pips</small></span><input id="be-spread" type="number" step="any" inputmode="decimal" value="1"></label>
+          <label class="fld"><span>Fees <small>round trip</small></span><input id="be-fees" type="number" step="any" inputmode="decimal" value="0"></label>
+        </div>
+        <div class="calc two" id="be-out" aria-live="polite"></div>
+        <p class="hint" id="be-note"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="cp" data-calc="cp">
+      <div class="panel-head"><h2>Compounding</h2><span>what one percent really does</span></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <label class="fld"><span>Starting balance</span><input id="cp-start" type="number" step="any" inputmode="decimal"></label>
+          <label class="fld"><span>Gain per period <small>%</small></span><input id="cp-rate" type="number" step="any" inputmode="decimal" value="1"></label>
+          <label class="fld"><span>Period</span>
+            <select id="cp-period">
+              <option value="252">trading day</option>
+              <option value="52" selected>week</option>
+              <option value="12">month</option>
+            </select>
+          </label>
+        </div>
+        <label class="fld mt"><span>For how long <small id="cp-span-unit">periods</small></span><input id="cp-n" type="number" step="1" inputmode="numeric" value="52"></label>
+        <div class="calc two" id="cp-out" aria-live="polite"></div>
+        <div class="milestones" id="cp-table"></div>
+        <p class="hint" id="cp-note"></p>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------ converters -->
+    <section class="panel" id="conv" data-calc="conv">
+      <div class="panel-head">
+        <h2>Converters</h2>
+        <span>the three that come up while trading</span>
+      </div>
+      <div class="panel-body conv-grid">
+
+        <div class="conv-unit">
+          <h3>Currency</h3>
+          <div class="conv-row">
+            <label class="fld"><span>Amount</span><input id="cv-amt" type="number" step="any" inputmode="decimal" value="100"></label>
+            <label class="fld"><span>From</span><select id="cv-from"></select></label>
+            <label class="fld"><span>To</span><select id="cv-to"></select></label>
+            <button class="icon-btn" id="cv-swap" aria-label="Swap the two currencies" title="Swap">⇄</button>
+          </div>
+          <p class="conv-out" id="cv-out" aria-live="polite"></p>
+        </div>
+
+        <div class="conv-unit">
+          <h3>Pips and points</h3>
+          <div class="conv-row">
+            <label class="fld"><span>Instrument</span><select id="pp-symbol"></select></label>
+            <label class="fld"><span>Amount</span><input id="pp-amt" type="number" step="any" inputmode="decimal" value="10"></label>
+            <label class="fld"><span>Unit</span>
+              <select id="pp-unit"><option value="pips">pips</option><option value="points">points</option><option value="price">price move</option></select>
+            </label>
+          </div>
+          <p class="conv-out" id="pp-out" aria-live="polite"></p>
+        </div>
+
+        <div class="conv-unit">
+          <h3>Lots and units</h3>
+          <div class="conv-row">
+            <label class="fld"><span>Instrument</span><select id="lu-symbol"></select></label>
+            <label class="fld"><span>Amount</span><input id="lu-amt" type="number" step="any" inputmode="decimal" value="1"></label>
+            <label class="fld"><span>Unit</span>
+              <select id="lu-unit"><option value="lots">lots</option><option value="units">units</option></select>
+            </label>
+          </div>
+          <p class="conv-out" id="lu-out" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    </div>
+
+    <p class="fine">
+      Nothing on this screen is advice, and none of it is a broker quote. The arithmetic is exact;
+      the prices and conversion rates behind it are indicative demo values you can type over.
+      Check the size against your broker's own calculator before you place the trade — that check
+      is part of the definition of done for this page, not an apology for it.
+    </p>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="../assets/store.js"></script>
+<script src="../assets/workspace-preview.js"></script>
+<script src="../assets/home-icons.js"></script>
+<script src="../assets/workspace-shell.js"></script>
+<script src="../assets/instruments.js"></script>
+<script src="../assets/risk-sizing.js"></script>
+<script src="../assets/calculators.js"></script>
+<!-- the curriculum is loaded here only so the shell search box can find
+     lessons, glossary terms and library files from any screen -->
+<script src="../assets/lessons.js"></script>
+<script src="../assets/shell.js"></script></body>
+</html>

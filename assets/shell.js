@@ -247,7 +247,7 @@ window.Shell = (() => {
       { id: "dashboard", label: "Dashboard", href: P.dashboard },
     ];
 
-  const modernWorkspace = ["dashboard", "journal"].includes(page);
+  const modernWorkspace = ["dashboard", "journal", "calculators", "settings", "learn"].includes(page);
 
   function navHTML() {
     const links = (modernWorkspace ? DASHBOARD_NAV : NAV).map(

@@ -128,8 +128,7 @@
     const risk = (s.balance * s.riskPct) / 100;
 
     $("#st-balance-note").textContent =
-      "Trades already logged keep the balance they were opened against, so changing this never rewrites your history — " +
-      "it only changes what the next trade is sized from.";
+      "Shared sizing input, not broker account equity. Existing trades retain their saved balance-at-open input.";
 
     $("#st-risk-note").textContent =
       "At " + s.riskPct + "% of " + money(s.balance, s.currency) + " that is " + money(risk, s.currency) +
@@ -165,7 +164,7 @@
       ) +
       rail(
         "Losses in a row",
-        String(g.consecutiveLosses),
+        g.lossStreakStatus === "unavailable" ? "Unavailable" : String(g.consecutiveLosses),
         s.coolOffAfterLosses > 0 ? "cool off at " + s.coolOffAfterLosses : "no cool-off",
         g.breaches.some((b) => b.kind === "coolOff")
       );
@@ -327,12 +326,12 @@
       stat("Trades stored", String(trades.length), first ? "since " + String(first).slice(0, 10) : "nothing logged yet") +
       stat("Closed", String(st.closed), st.open + " still open") +
       stat("Discipline average", st.discipline === null ? "—" : st.discipline + " / 100", "needs 20 trades to rank") +
-      stat("Where it lives", Store.driver() === "local" ? "This device" : Store.driver(), "no server copy yet");
+      stat("Active storage driver", Store.driver(), "Account sync follows the active connection");
 
     $("#st-driver").textContent =
       Store.storageBlocked()
         ? "this browser is blocking storage"
-        : "stored on this device · " + Store.driver() + " driver";
+        : "active data driver · " + Store.driver();
 
     const blocked = Store.storageBlocked();
     $("#storage-notice").hidden = !blocked;
