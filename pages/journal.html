@@ -61,7 +61,7 @@
         tabindex="-1"
       >
         <div class="drawer-head">
-          <h2 id="dr-title">Trade</h2>
+          <div><div class="workspace-caption">TRADING JOURNAL / TRADE REVIEW</div><h2 id="dr-title">Trade review</h2></div>
           <button class="icon-btn" data-close aria-label="Close">✕</button>
         </div>
         <div class="drawer-body" id="dr-body"></div>
@@ -229,6 +229,7 @@
                 placeholder="What did you see, what did you do, and what would you repeat?"
               ></textarea>
             </label>
+            <div class="review-lessons"><label class="fld"><span>What went well</span><textarea name="whatWentWell" rows="3" placeholder="What would you repeat?"></textarea></label><label class="fld"><span>Next time</span><textarea name="nextTime" rows="3" placeholder="One change for the next setup"></textarea></label></div>
           </div>
           <div class="fs" id="trade-attachments" tabindex="-1"><h3>Chart screenshots</h3><p class="hint">Keep your entry idea and exit execution together. Images are optional and resized before saving.</p><div class="trade-attachment-grid">
             <div class="trade-upload"><label class="fld"><span>Entry screenshot</span><input type="file" name="shot" id="fm-shot" accept="image/*"></label><div id="shot-preview" class="shot-preview" hidden></div></div>
@@ -308,11 +309,13 @@
       </aside>
     </div>
 
+    <dialog id="evidence-viewer" aria-labelledby="evidence-title"><header><h2 id="evidence-title">Chart screenshot</h2><button type="button" class="btn btn-quiet" id="evidence-close">Close image</button></header><img id="evidence-image" alt="Chart screenshot"></dialog>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script src="../assets/store.js"></script>
     <script src="../assets/home-icons.js"></script>
     <script src="../assets/journal-calendar.js"></script>
+    <script src="../assets/journal-review.js"></script>
     <script src="../assets/journal.js"></script>
     <script src="../assets/instruments.js"></script>
     <script src="../assets/lessons.js"></script>
