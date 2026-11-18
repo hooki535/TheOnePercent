@@ -14,259 +14,40 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233654ff'/%3E%3Ctext x='16' y='21' font-family='monospace' font-size='13' font-weight='600' fill='white' text-anchor='middle'%3E1%25%3C/text%3E%3C/svg%3E"
-    />
+    <link rel="icon" href="../assets/home/logo.svg" type="image/svg+xml">
     <script src="../assets/theme.js"></script>
+    <script>if(!Theme.isExplicit())document.documentElement.dataset.theme="light";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/cloud.js"></script>
     <link rel="stylesheet" href="../assets/shell.css" />
     <link rel="stylesheet" href="../assets/components.css" />
     <link rel="stylesheet" href="../assets/journal.css" />
+    <link rel="stylesheet" href="../assets/journal-workspace.css" />
   </head>
-  <!-- one folder deep; the shell infers the logged-in state from the profile -->
-  <body data-page="journal" data-depth="1">
+  <body data-page="journal" data-depth="1" data-shell="nav">
+    <aside class="journal-sidebar" aria-label="Journal workspace"><div class="workspace-caption">WORKSPACE</div><nav>
+      <a href="dashboard.html"><span data-j-icon="grid"></span>Overview</a>
+      <a href="#main" aria-current="page"><span data-j-icon="book"></span>Trading Journal</a>
+      <a href="#view-insights" data-j-tab="insights"><span data-j-icon="chart"></span>Analytics</a>
+      <a href="calculators.html"><span data-j-icon="shield"></span>Risk tools</a>
+      <a href="charts.html"><span data-j-icon="layers"></span>Chart workspace</a>
+      <a href="settings.html"><span data-j-icon="settings"></span>Settings</a>
+    </nav><a class="journal-academy" href="learn.html"><span data-j-icon="book"></span>Academy <span data-j-icon="external"></span></a><button type="button" id="journal-theme"><span data-j-icon="moon"></span>Switch colour theme</button></aside>
     <main id="main">
-      <header class="page-head">
-        <div class="wrap jh-row">
-          <div>
-            <h1>Journal</h1>
-            <p>
-              Every trade, with what you risked, what you got back in R, and how
-              you felt while you held it.
-            </p>
-          </div>
-          <div class="jh-actions">
-            <label class="sel">
-              <span>Account</span>
-              <select id="f-account"></select>
-            </label>
-            <label class="sel">
-              <span>Period</span>
-              <select id="f-range">
-                <option value="30">Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="365">Last 12 months</option>
-                <option value="all" selected>All time</option>
-              </select>
-            </label>
-            <button class="btn btn-primary" id="new-trade">
-              Log trade <kbd>N</kbd>
-            </button>
-            <div class="dd">
-              <button
-                class="btn btn-quiet"
-                id="more-trigger"
-                aria-expanded="false"
-                aria-haspopup="true"
-              >
-                More
-              </button>
-              <div class="dd-panel right" id="jmore">
-                <button type="button" data-act="import">
-                  Import from CSV…
-                </button>
-                <button type="button" data-act="export">Export CSV</button>
-                <button type="button" data-act="sample">
-                  Load 20 sample trades
-                </button>
-                <button type="button" data-act="wipe" class="danger">
-                  Delete all trades
-                </button>
-              </div>
-            </div>
-            <input type="file" id="csv-input" accept=".csv,text/csv" hidden />
-          </div>
-        </div>
-      </header>
-
-      <div class="wrap">
-        <!-- data-honesty banner: shown only when storage is unavailable -->
-        <div class="notice warn" id="storage-warn" hidden>
-          <span>
-            <b>This browser is blocking storage</b>
-            <small
-              >Trades you log will work for this visit but will not survive a
-              reload. Open the site in a normal tab to keep them.</small
-            >
-          </span>
-        </div>
-
-        <!-- guardrails: the rules that look forward, filled by journal.js -->
-        <div class="notice guard" id="guard-warn" hidden></div>
-
-        <!-- filtered summary — recomputed from whatever the filters leave behind -->
-        <div class="stat-grid" id="summary"></div>
-
-        <div class="filters" role="search">
-          <div class="search-field jf-search">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <circle
-                cx="7"
-                cy="7"
-                r="4.6"
-                stroke="currentColor"
-                stroke-width="1.5"
-              />
-              <path
-                d="M10.6 10.6 14 14"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-            <input
-              id="f-q"
-              type="search"
-              placeholder="Symbol, setup, tag or note"
-              autocomplete="off"
-              aria-label="Search trades"
-            />
-          </div>
-          <div class="journal-advanced-filters" role="group" aria-label="Additional trade filters">
-            <label>Symbol <input id="f-symbol" type="search" placeholder="EURUSD" autocomplete="off"></label>
-            <label>Direction <select id="f-side"><option value="all">Both</option><option value="Long">Long</option><option value="Short">Short</option></select></label>
-            <label>From <input id="f-from" type="date"></label>
-            <label>To <input id="f-to" type="date"></label>
-            <label>Setup / tag <input id="f-setup" type="search" placeholder="Setup or tag" autocomplete="off"></label>
-          </div>
-          <div
-            class="chip-set"
-            id="f-result"
-            role="group"
-            aria-label="Filter by result"
-          ></div>
-          <div
-            class="chip-set"
-            id="f-market"
-            role="group"
-            aria-label="Filter by market"
-          ></div>
-          <div
-            class="chip-set"
-            id="f-emotion"
-            role="group"
-            aria-label="Filter by emotion"
-          ></div>
-          <button class="btn btn-quiet sm" id="f-clear" hidden>
-            Clear filters
-          </button>
-        </div>
-
-        <div class="tabs" role="tablist" aria-label="Journal views">
-          <button
-            role="tab"
-            id="tab-trades"
-            aria-controls="view-trades"
-            aria-selected="true"
-          >
-            Trades
-          </button>
-          <button
-            role="tab"
-            id="tab-calendar"
-            aria-controls="view-calendar"
-            aria-selected="false"
-          >
-            Calendar
-          </button>
-          <button
-            role="tab"
-            id="tab-insights"
-            aria-controls="view-insights"
-            aria-selected="false"
-          >
-            Insights
-          </button>
-        </div>
-
-        <section
-          id="view-trades"
-          role="tabpanel"
-          aria-labelledby="tab-trades"
-          class="panel"
-        >
-          <div class="table-scroll">
-            <table id="trades">
-              <thead>
-                <tr>
-                  <th data-sort="date">Date</th>
-                  <th>Symbol</th>
-                  <th>Setup</th>
-                  <th class="num" data-sort="riskPct">Risk %</th>
-                  <th class="num" data-sort="r">R</th>
-                  <th class="num" data-sort="netPL">
-                    <span class="lg">Net P/L</span><span class="xs">P/L</span>
-                    <span class="cur"></span>
-                  </th>
-                  <th>Emotion</th>
-                  <th class="num" data-sort="discipline">
-                    <span class="lg">Discipline</span
-                    ><span class="xs">Disc</span>
-                  </th>
-                  <th class="shot-col"><span class="sr">Chart</span></th>
-                </tr>
-              </thead>
-              <tbody id="trades-body"></tbody>
-            </table>
-          </div>
-          <div class="empty" id="empty" hidden></div>
-        </section>
-
-        <section
-          id="view-calendar"
-          role="tabpanel"
-          aria-labelledby="tab-calendar"
-          class="panel"
-          hidden
-        >
-          <div class="panel-head">
-            <h2 id="cal-title">Calendar</h2>
-            <div class="cal-nav">
-              <button
-                class="icon-btn"
-                id="cal-prev"
-                aria-label="Previous month"
-              >
-                ‹
-              </button>
-              <button class="icon-btn" id="cal-next" aria-label="Next month">
-                ›
-              </button>
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="cal" id="cal"></div>
-            <p class="cal-key">
-              <span class="sw up"></span> green day &nbsp;
-              <span class="sw down"></span> red day &nbsp;
-              <span class="sw flat"></span> logged, flat &nbsp;
-              <span class="sw none"></span> nothing logged
-            </p>
-          </div>
-        </section>
-
-        <section
-          id="view-insights"
-          role="tabpanel"
-          aria-labelledby="tab-insights"
-          class="panel"
-          hidden
-        >
-          <div class="panel-head">
-            <h2>What the record says</h2>
-            <span>Grouped by expectancy in R, worst first</span>
-          </div>
-          <div class="panel-body ins-grid" id="insights"></div>
-        </section>
-
-        <p class="fine">
-          Nothing on this screen is advice. R multiples are computed from your
-          own entries and stops, net of the fees you enter — they are only as
-          honest as the log.
-        </p>
-      </div>
+      <header class="journal-heading"><div><div class="workspace-caption">YOUR TRADING RECORD</div><h1>Trading Journal</h1><p>Track performance. Understand your decisions.</p></div><div class="jh-actions">
+        <div class="dd"><button class="btn btn-quiet" id="more-trigger" aria-expanded="false" aria-haspopup="true"><span data-j-icon="external"></span>Import / Export</button><div class="dd-panel right" id="jmore"><button type="button" data-act="import">Import from CSV…</button><button type="button" data-act="export">Export CSV</button><button type="button" data-act="sample">Load 20 sample trades</button><button type="button" data-act="wipe" class="danger">Delete all trades</button></div></div>
+        <button class="btn btn-primary" id="new-trade"><span data-j-icon="plus"></span>Log trade <kbd>N</kbd></button><input type="file" id="csv-input" accept=".csv,text/csv" hidden>
+      </div></header>
+      <div class="journal-filter-bar" role="search"><label class="sel"><span class="sr">Account</span><select id="f-account"></select></label><label class="sel"><span class="sr">Period</span><select id="f-range"><option value="month" selected>This month</option><option value="lastMonth">Last month</option><option value="quarter">This quarter</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="all">All time</option></select></label><div class="search-field jf-search"><span data-j-icon="search"></span><input id="f-q" type="search" placeholder="Search symbol, setup, tag or note" autocomplete="off" aria-label="Search trades"></div><button class="btn btn-quiet" id="toggle-filters" aria-expanded="false" aria-controls="advanced-filters"><span data-j-icon="settings"></span>Filters</button><button class="btn btn-quiet sm" id="f-clear" hidden>Clear filters</button></div>
+      <div id="advanced-filters" hidden><div class="journal-advanced-filters" role="group" aria-label="Additional trade filters"><label>Symbol<input id="f-symbol" type="search" placeholder="EURUSD" autocomplete="off"></label><label>Direction<select id="f-side"><option value="all">Both</option><option value="Long">Long</option><option value="Short">Short</option></select></label><label>From<input id="f-from" type="date"></label><label>To<input id="f-to" type="date"></label><label>Setup / tag<input id="f-setup" type="search" placeholder="Setup or tag" autocomplete="off"></label></div><div class="journal-chip-filters"><div class="chip-set" id="f-result" role="group" aria-label="Filter by result"></div><div class="chip-set" id="f-market" role="group" aria-label="Filter by market"></div><div class="chip-set" id="f-emotion" role="group" aria-label="Filter by emotion"></div></div></div>
+      <div class="notice warn" id="storage-warn" hidden><span><b>This browser is blocking storage</b><small>Records saved in this visit may not survive reload. Export your trades before leaving.</small></span></div>
+      <div class="stat-grid journal-summary" id="summary" aria-live="polite"></div><details class="journal-method"><summary>Calculation details and additional metrics</summary><p>Money totals require compatible currency units. R uses the recorded stop, which can change after entry. Cohort uses journal date because close timestamps are absent. All views use the current account, period and search filters.</p><div class="stat-grid" id="more-summary"></div></details>
+      <div class="notice guard" id="guard-warn" hidden></div>
+      <section class="journal-content"><div class="journal-view-head"><h2 id="journal-view-title">Performance calendar</h2><div class="tabs" role="tablist" aria-label="Journal views"><button role="tab" id="tab-trades" aria-controls="view-trades" aria-selected="false" tabindex="-1">Trades</button><button role="tab" id="tab-calendar" aria-controls="view-calendar" aria-selected="true" tabindex="0">Calendar</button><button role="tab" id="tab-insights" aria-controls="view-insights" aria-selected="false" tabindex="-1">Insights</button></div><div class="calendar-modes" role="group" aria-label="Calendar values"><button data-cal-mode="r" aria-pressed="true">R multiples</button><button data-cal-mode="count" aria-pressed="false">Trade count</button></div></div>
+        <section id="view-calendar" role="tabpanel" aria-labelledby="tab-calendar"><div class="calendar-layout"><div class="calendar-main"><div class="calendar-heading"><button class="icon-btn" id="cal-prev" aria-label="Previous month"><span data-j-icon="chevron-left"></span></button><h3 id="cal-title">Calendar</h3><button class="icon-btn" id="cal-next" aria-label="Next month"><span data-j-icon="chevron-right"></span></button><button class="btn btn-quiet sm" id="cal-today">Today</button></div><div class="cal" id="cal" aria-label="Journal dates"></div><p class="cal-key">Journal dates · R for eligible fully closed trades · Open trades counted separately</p></div><aside class="calendar-review" aria-label="Month review"><div id="month-summary"></div><div id="weekly-summary"></div><div class="emotion-panel" id="emotion-summary"></div></aside></div><section class="selected-day" aria-labelledby="day-title"><div class="panel-head"><h3 id="day-title">Selected day</h3><span id="day-count"></span></div><div class="day-table-scroll"><table><thead><tr><th>Symbol</th><th>Side</th><th>Status</th><th class="num">Result (R)</th><th>Emotion</th><th>Review</th></tr></thead><tbody id="day-trades"></tbody></table></div><p class="day-note">Open trades have no realised R. Select a trade to review its entries, exits and notes.</p></section></section>
+        <section id="view-trades" role="tabpanel" aria-labelledby="tab-trades" hidden><div class="table-scroll"><table id="trades"><thead><tr><th data-sort="date" tabindex="0" aria-sort="descending">Date</th><th>Symbol / side</th><th>Setup</th><th>Status</th><th class="num" data-sort="r" tabindex="0">Result (R)</th><th>Emotion</th><th>Review</th></tr></thead><tbody id="trades-body"></tbody></table></div><div class="empty" id="empty" hidden></div><div class="journal-table-footer" id="trade-count"></div></section>
+        <section id="view-insights" role="tabpanel" aria-labelledby="tab-insights" hidden><div class="panel-head"><h3>What the record says</h3><span>Average R by setup, session and emotion</span></div><div class="panel-body ins-grid" id="insights"></div></section>
+      </section><footer class="journal-footer"><span>Journal analytics · No broker execution</span><a href="charts.html">Open chart workspace <span data-j-icon="external"></span></a></footer>
     </main>
 
     <!-- ------------------------------------------------------------ drawer -->
@@ -529,6 +310,8 @@
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script src="../assets/store.js"></script>
+    <script src="../assets/home-icons.js"></script>
+    <script src="../assets/journal-calendar.js"></script>
     <script src="../assets/journal.js"></script>
     <script src="../assets/instruments.js"></script>
     <script src="../assets/lessons.js"></script>

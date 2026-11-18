@@ -247,8 +247,10 @@ window.Shell = (() => {
       { id: "dashboard", label: "Dashboard", href: P.dashboard },
     ];
 
+  const modernWorkspace = ["dashboard", "journal"].includes(page);
+
   function navHTML() {
-    const links = (page === "dashboard" ? DASHBOARD_NAV : NAV).map(
+    const links = (modernWorkspace ? DASHBOARD_NAV : NAV).map(
       (n) =>
         `<a href="${n.href}"${page === n.id ? ' aria-current="page"' : ""}>${n.label}</a>`,
     ).join("");
@@ -261,7 +263,7 @@ window.Shell = (() => {
     const more = MORE_LINKS.map(([l, href]) => `<a href="${href}">${l}</a>`).join("");
 
     const avatarMarkup = (() => {
-      if (page !== "dashboard") return initials;
+      if (!modernWorkspace) return initials;
       const meta = user && user.user_metadata || {};
       const raw = meta.avatar_url || meta.picture || "";
       try {
@@ -292,13 +294,13 @@ window.Shell = (() => {
 
     return `<div class="wrap nav-row">
       <a class="brand" href="${P.home}" aria-label="TheOnePercent home">
-        ${page === "dashboard" ? `<img class="workspace-brand" src="../assets/home/logo.svg" alt="" width="29" height="32">` : `<span class="brand-mark" aria-hidden="true">1%</span>`}
+        ${modernWorkspace ? `<img class="workspace-brand" src="../assets/home/logo.svg" alt="" width="29" height="32">` : `<span class="brand-mark" aria-hidden="true">1%</span>`}
         <span class="brand-name">TheOnePercent</span>
       </a>
 
       <nav class="nav-links" aria-label="Primary">
         ${links}
-        ${page === "dashboard" ? "" : `<div class="dd">
+        ${modernWorkspace ? "" : `<div class="dd">
           <button class="dd-trigger" data-dd="markets" aria-expanded="false" aria-controls="dd-markets">Markets ${ICON.caret}</button>
           <div class="dd-panel" id="dd-markets">${markets}</div>
         </div>
@@ -326,7 +328,7 @@ window.Shell = (() => {
   }
 
   function sheetHTML() {
-    const links = (page === "dashboard" ? DASHBOARD_NAV : NAV).map(
+    const links = (modernWorkspace ? DASHBOARD_NAV : NAV).map(
       (n) =>
         `<a class="sheet-link" href="${n.href}"${page === n.id ? ' aria-current="page"' : ""}>${n.label}</a>`,
     ).join("");

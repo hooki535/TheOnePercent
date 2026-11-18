@@ -4,6 +4,8 @@ window.HomeIcons = (() => {
   const uiShapes = {
     layers:'<path d="m12 3 10 6-10 6L2 9l10-6ZM2 13l10 6 10-6M2 17l10 6 10-6"/>',
     shield:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/>',
+    'chevron-left':'<path d="m15 5-7 7 7 7"/>',
+    'chevron-right':'<path d="m9 5 7 7-7 7"/>',
     menu:'<path d="M4 6.5h16M4 12h16M4 17.5h16"/>',
     search:'<circle cx="10.75" cy="10.75" r="6.75"/><path d="m16 16 4.5 4.5"/>',
     moon:'<path d="M20.2 14.4A8.6 8.6 0 0 1 9.6 3.8a8.6 8.6 0 1 0 10.6 10.6Z"/>',
