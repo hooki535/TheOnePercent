@@ -344,7 +344,8 @@
         <span class="tag">${esc(t.market || "—")}</span>
         <span class="dr-r ${c.open ? "" : dir(c.r)}">${c.open ? "Open" : rfmt(c.r)}</span>
       </div>
-      ${t.shot ? `<img class="dr-shot" src="${esc(t.shot)}" alt="Chart screenshot for ${esc(t.symbol)}">` : ""}
+      ${t.exitShot ? `<h3>Exit screenshot</h3><img class="dr-shot" src="${esc(t.exitShot)}" alt="Exit screenshot for ${esc(t.symbol)}">` : ""}
+      ${t.shot ? `<h3>Entry screenshot</h3><img class="dr-shot" src="${esc(t.shot)}" alt="Chart screenshot for ${esc(t.symbol)}">` : ""}
       <dl class="kv">
         <div><dt>Entry</dt><dd>${esc(t.entry)}</dd></div>
         <div><dt>Stop</dt><dd>${esc(t.stop)}</dd></div>
@@ -458,6 +459,10 @@
   }
 
   let shotData = null;
+  let exitShotData = null;
+  let attachmentSession = 0;
+  const attachmentPending = {entry:false, exit:false};
+  const attachmentRequests = {entry:0, exit:0};
 
   /* Set when the charts screen hands over a trade. The screenshot proves
      what the chart looked like; this records what it *was* — symbol,
@@ -513,6 +518,7 @@
       },
       exits,
       shot: shotData,
+      exitShot: exitShotData,
       chartState: pendingChartState || (existing && existing.chartState) || null,
     };
   }
@@ -705,6 +711,11 @@
       <div><div class="k">R multiple</div><div class="v ${c.r === null ? "" : dir(c.r)}">${c.open ? "—" : rfmt(c.r)}</div></div>
       <div><div class="k">Discipline</div><div class="v">${d}/100</div></div>`;
 
+    const exited = (t.exits || []).reduce((sum, e) => sum + Math.max(0, e.size), 0);
+    const remaining = Number.isFinite(t.size) ? Math.max(0, t.size - exited) : null;
+    const status = !Number.isFinite(t.size) ? "Enter position details" : exited === 0 ? "Open position" : remaining > 1e-8 ? "Partially closed" : "Closed position";
+    $("#fm-position-status").textContent = status;
+    $("#position-summary").innerHTML = `<h3>${esc(t.symbol || "Your trade")}</h3><p class="trade-direction">${esc(t.side)} · ${status}</p><dl><dt>Planned R:R</dt><dd>${Number.isFinite(c.plannedRR) ? c.plannedRR.toFixed(2) + " R" : "—"}</dd><dt>Position size</dt><dd>${Number.isFinite(t.size) ? t.size : "—"}</dd><dt>Recorded exits</dt><dd>${exited}</dd><dt>Remaining size</dt><dd>${remaining === null ? "—" : Number(remaining.toPrecision(10))}</dd><dt>Realised R</dt><dd>${c.open ? "—" : rfmt(c.r)}</dd></dl><div class="trade-risk-note"><strong>Money risk unavailable</strong><p>Trade currency and compatible account units are not recorded.</p></div>`;
     renderChecklist(t, c);
   }
 
@@ -723,11 +734,17 @@
     $("#exits").innerHTML = "";
     f.elements.tradeId.value = "";
     shotData = null;
+    exitShotData = null;
+    attachmentSession++;
+    attachmentPending.entry = attachmentPending.exit = false;
+    $("#exit-shot-preview").hidden = true;
+    $("#exit-shot-preview").innerHTML = "";
     pendingChartState = null;
     $("#shot-preview").hidden = true;
     $("#shot-preview").innerHTML = "";
 
     const t = id ? Store.trades.find(id) : null;
+    $("#fm-account").textContent = "Account · " + ((t && t.account) || settings().accountName || "Default");
     $("#fm-title").textContent = t ? "Edit trade" : "Log a trade";
     $("#del-trade").hidden = !t;
 
@@ -766,6 +783,7 @@
       f.chkStop.checked = !!(t.checks && t.checks.stopInvalidates);
       f.chkNotRevenge.checked = !!(t.checks && t.checks.notRevenge);
       (t.exits || []).forEach((e) => $("#exits").appendChild(exitRow(e)));
+      if (t.exitShot) { exitShotData = t.exitShot; showShot("exit"); }
       if (t.shot) {
         shotData = t.shot;
         showShot();
@@ -820,40 +838,50 @@
     setTimeout(() => f.symbol.focus(), 240);
   }
 
-  function showShot() {
-    const p = $("#shot-preview");
-    p.hidden = false;
-    p.innerHTML = `<img src="${esc(shotData)}" alt="Chart screenshot preview">
-      <button type="button" class="btn btn-quiet sm">Remove screenshot</button>`;
+  function showShot(kind = "entry") {
+    const isExit = kind === "exit";
+    const p = $(isExit ? "#exit-shot-preview" : "#shot-preview");
+    const data = isExit ? exitShotData : shotData;
+    p.hidden = !data;
+    p.innerHTML = data ? `<img src="${esc(data)}" alt="${isExit ? "Exit" : "Entry"} screenshot preview"><button type="button" class="btn btn-quiet sm">Remove screenshot</button>` : "";
+    if (!data) return;
     $("button", p).onclick = () => {
-      shotData = null;
-      p.hidden = true;
-      p.innerHTML = "";
+      attachmentRequests[kind]++;
+      attachmentPending[kind] = false;
+      if (isExit) exitShotData = null; else shotData = null;
+      $(isExit ? "#fm-exit-shot" : "#fm-shot").value = "";
+      showShot(kind);
     };
   }
 
-  /* Screenshots go into the same store as the trades, so they are
-     downscaled hard before saving — a 4 MB PNG would blow the quota
-     after a dozen trades. */
-  function loadShot(file) {
+  function loadShot(file, kind = "entry") {
+    if (!file.type.startsWith("image/") || file.size > 15 * 1024 * 1024) {
+      toast("Choose an image smaller than 15 MB"); return;
+    }
+    const session = attachmentSession, request = ++attachmentRequests[kind];
+    const current = () => session === attachmentSession && request === attachmentRequests[kind];
+    attachmentPending[kind] = true;
+    const done = () => { if (current()) attachmentPending[kind] = false; };
     const reader = new FileReader();
+    reader.onerror = () => { if (current()) { done(); toast("That image could not be read"); } };
     reader.onload = () => {
+      if (!current()) return;
       const img = new Image();
       img.onload = () => {
-        const max = 960;
-        const scale = Math.min(1, max / img.width);
+        if (!current()) return;
+        const scale = Math.min(1, 1280 / Math.max(img.width, img.height));
         const cv = document.createElement("canvas");
-        cv.width = Math.round(img.width * scale);
-        cv.height = Math.round(img.height * scale);
-        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+        cv.width = Math.max(1, Math.round(img.width * scale));
+        cv.height = Math.max(1, Math.round(img.height * scale));
         try {
-          shotData = cv.toDataURL("image/jpeg", 0.72);
-        } catch (e) {
-          shotData = reader.result;
-        }
-        showShot();
+          cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+          const data = cv.toDataURL("image/jpeg", 0.78);
+          if (kind === "exit") exitShotData = data; else shotData = data;
+          done();
+          showShot(kind);
+        } catch (_) { done(); toast("That image could not be processed"); }
       };
-      img.onerror = () => toast("That file could not be read as an image");
+      img.onerror = () => { if (current()) { done(); toast("That file could not be read as an image"); } };
       img.src = reader.result;
     };
     reader.readAsDataURL(file);
@@ -861,6 +889,7 @@
 
   function saveForm(e) {
     e.preventDefault();
+    if (attachmentPending.entry || attachmentPending.exit) { toast("Please wait for your screenshot to finish processing"); return; }
     const t = readForm();
 
     const problems = [];
@@ -1381,6 +1410,13 @@
       close($("#form-drawer"));
       toast("Trade deleted");
     };
+    $$("[data-form-section]").forEach(button => button.addEventListener("click", () => {
+      const target = document.getElementById(button.dataset.formSection);
+      target.scrollIntoView({block:"start", behavior:"smooth"}); target.focus({preventScroll:true});
+    }));
+    $("#fm-exit-shot").addEventListener("change", e => {
+      if (e.target.files && e.target.files[0]) loadShot(e.target.files[0], "exit");
+    });
     $("#fm-shot").addEventListener("change", (e) => {
       if (e.target.files && e.target.files[0]) loadShot(e.target.files[0]);
     });

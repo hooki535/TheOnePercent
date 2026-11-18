@@ -129,3 +129,42 @@ body[data-page=journal]{--journal-sidebar:204px;background:var(--paper);font-siz
 @media(max-width:720px){body[data-page=journal]{--journal-sidebar:0px}[data-page=journal] #main{padding:20px 12px 16px}.journal-sidebar{position:static;width:100%;padding:8px 12px;border-right:0;border-bottom:1px solid var(--line)}.journal-sidebar>.workspace-caption,.journal-academy{display:none}.journal-sidebar nav{display:flex;overflow:auto;gap:4px}.journal-sidebar nav a{white-space:nowrap;padding:8px;font-size:12px}.journal-sidebar nav a:nth-child(n+4){display:none}#journal-theme{padding:6px 8px;margin:4px 0 0;font-size:11px}.journal-heading h1{font-size:27px}.journal-heading p{font-size:14px}.journal-heading{gap:16px;margin-bottom:18px}.jh-actions{width:100%;justify-content:space-between}.jh-actions .btn{font-size:13px}#new-trade kbd{display:none}.journal-filter-bar{gap:8px;padding:8px}.journal-filter-bar .sel{min-width:110px;flex:1}.journal-filter-bar .jf-search{min-width:100%;order:3}.journal-filter-bar>#toggle-filters{padding-inline:8px}.journal-summary{gap:8px}.journal-summary .stat{padding:12px}.journal-summary .stat .v{font-size:23px}.journal-stat-label{font-size:12px}.journal-summary .stat .n{font-size:11px}.journal-stat-label .ui-icon{display:none}.journal-view-head{padding:14px}.journal-view-head h2{font-size:18px;width:100%}.journal-view-head .tabs button{font-size:13px;padding:7px 12px}.calendar-modes button{padding:7px 9px;font-size:11px}.calendar-layout{padding:10px;gap:12px}.calendar-main{padding:8px;overflow-x:auto}.cal{min-width:500px}.calendar-heading{min-width:400px;gap:5px}.calendar-heading h3{font-size:18px}.calendar-review{grid-template-columns:repeat(2,minmax(0,1fr))}.emotion-panel{grid-column:1/-1}.selected-day{margin:0 10px 12px}.selected-day .panel-head{align-items:start;gap:12px}.selected-day h3{font-size:14px}.journal-advanced-filters{grid-template-columns:repeat(2,minmax(0,1fr))}#more-summary{grid-template-columns:repeat(2,minmax(0,1fr))}[data-page=journal] .topbar .wrap{padding:0 12px}[data-page=journal] .nav-row{height:60px}[data-page=journal] .brand-name{font-size:17px}.journal-footer{font-size:11px}.day-note{font-size:11px}}
 .journal-content .num.up,.month-card>.up,.week-card>.up{color:var(--up)}
 .journal-content .num.down,.month-card>.down,.week-card>.down{color:var(--down)}
+
+/* Trade entry workspace: preserve the journal form and its stored record shape. */
+#form-drawer .drawer-panel {inset:3vh 0 auto;margin:auto;width:min(1140px,96vw);height:94vh;border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+#form-drawer .drawer-head {padding:20px 26px;background:var(--paper);}
+#form-drawer .drawer-head h2 {font-size:24px;font-weight:650;}
+.trade-subtitle {margin:5px 0 0;color:var(--muted);font-size:14px;}
+.trade-sections {display:flex;gap:24px;padding:0 26px;border-bottom:1px solid var(--line);background:var(--paper);}
+.trade-sections button {background:none;border:0;border-bottom:2px solid transparent;padding:14px 0;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;}
+.trade-sections button:hover,.trade-sections button:focus-visible {color:var(--accent);border-color:var(--accent);}
+#form-drawer #trade-form {padding:0;display:flex;flex-direction:column;overflow:hidden;}
+.trade-form-layout {display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:28px;padding:24px 26px;overflow:auto;flex:1;min-height:0;scroll-behavior:smooth;}
+.trade-form-fields {min-width:0;}
+#form-drawer .fs {padding:0 0 24px;margin:0 0 24px;scroll-margin-top:10px;}
+#form-drawer .fs h3 {font-size:17px;margin:0 0 16px;}
+.trade-section-heading {display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+.trade-account {color:var(--muted);font-size:13px;}
+#form-drawer .fld span {font-size:14px;}
+#form-drawer .fld :is(input:not([type=checkbox]),select,textarea) {font-size:15px;min-height:42px;border-radius:7px;}
+#form-drawer .grid-3 {gap:16px;}
+#form-drawer .hint {font-size:13px;line-height:1.65;}
+.trade-summary {position:sticky;top:0;align-self:start;background:var(--surface);border:1px solid var(--line);padding:22px;border-radius:12px;}
+.trade-summary h3 {font-size:24px;margin:16px 0 5px;}
+.trade-direction {color:var(--muted);font-size:14px;margin:0 0 24px;}
+.trade-summary dl {display:grid;grid-template-columns:1fr auto;gap:18px 8px;font-size:14px;}
+.trade-summary dt {color:var(--muted);}.trade-summary dd {margin:0;font-variant-numeric:tabular-nums;font-weight:600;}
+.trade-risk-note {border-top:1px solid var(--line);padding-top:18px;margin-top:24px;font-size:14px;}.trade-risk-note p {font-size:13px;color:var(--muted);line-height:1.6;}
+.trade-summary details {font-size:13px;border-top:1px solid var(--line);padding-top:15px;margin-top:18px;}.trade-summary summary {cursor:pointer;}
+#form-drawer #calc {display:grid;grid-template-columns:1fr 1fr;gap:16px;border:0;background:none;padding:0;margin-top:16px;}
+#form-drawer #calc .v {font-size:16px;}
+.trade-attachment-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px;}.trade-upload {border:1px dashed var(--line-strong);border-radius:10px;padding:16px;background:var(--surface);min-width:0;}
+#form-drawer .trade-upload input {font-size:12px;min-height:unset;max-width:100%;padding:10px 0;border:0;background:none;}
+#form-drawer .shot-preview img {max-height:150px;object-fit:contain;width:100%;}
+#form-drawer .form-foot {flex-shrink:0;margin:0;padding:16px 26px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;background:var(--paper);}
+.trade-save-note {font-size:12px;color:var(--muted);margin-right:auto;}
+#form-drawer .pt-split {grid-template-columns:1fr;gap:16px;}
+#form-drawer .pretrade {margin-bottom:0;}
+@media(max-width:800px){#form-drawer .drawer-panel{inset:0;width:100%;height:100dvh;border-radius:0;}.trade-form-layout{grid-template-columns:1fr;padding:20px;}.trade-summary{position:static;}.trade-sections{gap:20px;overflow-x:auto;white-space:nowrap;padding:0 20px;}.trade-save-note{display:none;}#form-drawer .grid-3{grid-template-columns:1fr 1fr;}#form-drawer .drawer-head{padding:18px 20px;}}
+@media(max-width:460px){#form-drawer .grid-3,.trade-attachment-grid{grid-template-columns:1fr;}.trade-subtitle{font-size:12px;}.trade-section-heading{align-items:start;flex-direction:column;gap:0;}.trade-account{margin-bottom:14px;}#form-drawer .form-foot{padding:12px 16px;}.trade-sections{gap:16px;}}
+#form-drawer .form-foot [data-close] {order:2;}#form-drawer .form-foot [type=submit] {order:3;}#form-drawer .form-foot #del-trade {order:1;}
