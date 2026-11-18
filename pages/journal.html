@@ -79,15 +79,16 @@
         tabindex="-1"
       >
         <div class="drawer-head">
-          <h2 id="fm-title">Log a trade</h2>
+          <div><h2 id="fm-title">Log a trade</h2><p class="trade-subtitle">Capture the setup. Record the execution. Learn from the outcome.</p></div>
           <button class="icon-btn" data-close aria-label="Close">✕</button>
         </div>
 
+        <nav class="trade-sections" aria-label="Trade sections"><button type="button" data-form-section="trade-details">Trade details</button><button type="button" data-form-section="trade-exits">Exits</button><button type="button" data-form-section="trade-review">Review</button><button type="button" data-form-section="trade-attachments">Attachments</button></nav>
         <form class="drawer-body" id="trade-form" novalidate>
           <input type="hidden" name="tradeId" />
 
-          <div class="fs">
-            <h3>The trade</h3>
+          <div class="trade-form-layout"><div class="trade-form-fields"><div class="fs" id="trade-details" tabindex="-1">
+            <div class="trade-section-heading"><h3>Trade details</h3><span id="fm-account" class="trade-account"></span></div>
             <div class="grid-3">
               <label class="fld"
                 ><span>Date and time</span
@@ -124,7 +125,7 @@
           </div>
 
           <div class="fs">
-            <h3>Levels and size</h3>
+            <h3>Levels &amp; position size</h3>
             <div class="grid-3">
               <label class="fld"
                 ><span>Entry</span
@@ -187,11 +188,11 @@
             </p>
           </div>
 
-          <div class="fs">
-            <h3>Exits</h3>
+          <div class="fs" id="trade-exits" tabindex="-1">
+            <div class="trade-section-heading"><h3>Exits</h3><span id="fm-position-status" class="trade-account">Open position</span></div>
             <div id="exits"></div>
             <button type="button" class="btn btn-quiet sm" id="add-exit">
-              Add an exit
+              + Add partial exit
             </button>
             <button type="button" class="btn btn-quiet sm" id="close-trade">Close remaining position</button>
             <p class="hint">
@@ -200,8 +201,8 @@
             </p>
           </div>
 
-          <div class="fs">
-            <h3>The honest part</h3>
+          <div class="fs" id="trade-review" tabindex="-1">
+            <h3>Review &amp; mindset</h3>
             <div class="grid-3">
               <label class="fld"
                 ><span>Emotion while holding</span
@@ -228,12 +229,11 @@
                 placeholder="What did you see, what did you do, and what would you repeat?"
               ></textarea>
             </label>
-            <label class="fld"
-              ><span>Chart screenshot</span
-              ><input type="file" name="shot" id="fm-shot" accept="image/*"
-            /></label>
-            <div id="shot-preview" class="shot-preview" hidden></div>
           </div>
+          <div class="fs" id="trade-attachments" tabindex="-1"><h3>Chart screenshots</h3><p class="hint">Keep your entry idea and exit execution together. Images are optional and resized before saving.</p><div class="trade-attachment-grid">
+            <div class="trade-upload"><label class="fld"><span>Entry screenshot</span><input type="file" name="shot" id="fm-shot" accept="image/*"></label><div id="shot-preview" class="shot-preview" hidden></div></div>
+            <div class="trade-upload"><label class="fld"><span>Exit screenshot</span><input type="file" name="exitShot" id="fm-exit-shot" accept="image/*"></label><div id="exit-shot-preview" class="shot-preview" hidden></div></div>
+          </div></div>
 
           <!-- ------------------------------------------------ the gate
            Everything above this line is a record. This is the only part of
@@ -286,10 +286,11 @@
             <div class="pt-verdict" id="pt-verdict" aria-live="polite"></div>
           </div>
 
-          <!-- live arithmetic, so the numbers are visible before saving -->
+          </div><aside class="trade-summary"><div class="workspace-caption">POSITION SUMMARY</div><div id="position-summary"></div><details><summary>Recorded-unit calculations</summary><p class="hint">These calculations use your recorded value per point. Currency compatibility is not verified.</p>
           <div class="calc" id="calc" aria-live="polite"></div>
 
-          <div class="form-foot">
+          </details></aside></div>
+          <div class="form-foot"><span class="trade-save-note">Saves a journal record · No broker order is placed</span>
             <button type="submit" class="btn btn-primary">Save trade</button>
             <button type="button" class="btn btn-quiet" data-close>
               Cancel

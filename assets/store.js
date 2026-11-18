@@ -111,10 +111,11 @@ window.Store = (() => {
     if (!Array.isArray(value)) return null;
     let dropped = false;
     const lean = value.map((row) => {
-      if (row && typeof row === "object" && row.shot) {
+      if (row && typeof row === "object" && (row.shot || row.exitShot)) {
         dropped = true;
         const copy = Object.assign({}, row);
         delete copy.shot;
+        delete copy.exitShot;
         return copy;
       }
       return row;
