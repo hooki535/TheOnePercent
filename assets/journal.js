@@ -18,7 +18,7 @@
     result: "all",
     market: "all",
     emotion: "all",
-    range: "all",
+    range: "month",
     account: "all",
     symbol: "",
     side: "all",
@@ -27,7 +27,9 @@
     setup: "",
     sort: "date",
     asc: false,
-    tab: "trades",
+    tab: "calendar",
+    calendarMode: "r",
+    selectedDay: dayKey(new Date()),
     month: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   };
 
@@ -97,13 +99,12 @@
 
   function rowsFor() {
     const all = Store.trades.list();
-    const cut =
-      state.range === "all" ? null : Date.now() - parseInt(state.range, 10) * 864e5;
+
     const q = state.q.trim().toLowerCase();
 
     return all
       .filter((t) => {
-        if (cut && new Date(t.date).getTime() < cut) return false;
+        if (!JournalCalendar.inRange(t.date, state.range)) return false;
         const date = String(t.date || "").slice(0, 10);
         if (state.from && date < state.from) return false;
         if (state.to && date > state.to) return false;
@@ -116,6 +117,7 @@
         if (state.emotion !== "all" && t.emotion !== state.emotion) return false;
         if (state.result !== "all") {
           const calc = Store.compute(t);
+          if (state.result === "closed" && calc.open) return false;
           if (state.result === "open" && !calc.open && calc.result !== "Open") return false;
           if (state.result === "win" && (calc.open || calc.result !== "Win")) return false;
           if (state.result === "loss" && (calc.open || calc.result !== "Loss")) return false;
@@ -190,14 +192,16 @@
         n: s.avgRiskPct === null ? "risk not sized" : "avg risk " + pct(s.avgRiskPct, 2),
       },
     ];
-    $("#summary").innerHTML = cards
-      .map(
-        (c) =>
-          `<div class="stat"><div class="k">${esc(c.k)}</div>` +
-          `<div class="v ${c.cls || ""}">${esc(c.v)}</div>` +
-          `<div class="n">${esc(c.n)}</div></div>`
-      )
-      .join("");
+    const coverage = JournalCalendar.summarize(rows);
+    const primary = [
+      {k:"Net P/L",v:"Unavailable",n:"Compatible currency units not recorded",icon:"bank"},
+      {k:"Average R",v:rfmt(s.averageR),n:s.eligibleR+" eligible closed trades · recorded stop",cls:dir(s.averageR),icon:"layers"},
+      {k:"Win rate",v:pct(s.winRate,1),n:s.eligiblePL+" eligible closed trades",icon:"chart"},
+      {k:"Emotion log",v:coverage.tagged+" / "+coverage.count,n:"Trades with a recorded emotion",icon:"user"},
+    ];
+    const card = c => `<div class="stat"><div class="journal-stat-label"><span>${esc(c.k)}</span>${HomeIcons.ui(c.icon || "chart")}</div><div class="v ${c.cls || ""}">${esc(c.v)}</div><div class="n">${esc(c.n)}</div></div>`;
+    $("#summary").innerHTML = primary.map(card).join("");
+    $("#more-summary").innerHTML = cards.map(card).join("");
   }
 
   /* ------------------------------------------------------------ table */
@@ -235,70 +239,45 @@
 
     body.innerHTML = rows
       .map(({ t, c, d }) => {
-        const dt = new Date(t.date);
-        const band = d >= 75 ? "" : d >= 50 ? "mid" : "low";
-        const thumb = t.shot
-          ? `<img class="thumb" src="${esc(t.shot)}" alt="Chart for ${esc(t.symbol)}">`
-          : "";
-        return `<tr tabindex="0" data-id="${esc(t.id)}">
-          <td class="t-date"><b>${dayKey(dt).slice(5)}</b><small>${dt.getFullYear()} · ${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}</small></td>
-          <td><div class="t-sym"><span class="side ${t.side === "Short" ? "short" : "long"}">${esc(t.side || "Long")}</span>
-              <span><b>${esc(t.symbol)}</b><small>${esc(t.market || "")}</small></span></div></td>
-          <td>${esc(t.setup || "—")}${t.session ? `<br><small style="color:var(--faint)">${esc(t.session)}</small>` : ""}</td>
-          <td class="num">${pct(c.riskPct, 2)}</td>
-          <td class="num ${c.r === null ? "" : dir(c.r)}">${c.open ? '<span class="t-open">open</span>' : rfmt(c.r)}</td>
-          <td class="num ${c.open ? "" : dir(c.netPL)}">${c.open ? "—" : bare(c.netPL, true)}</td>
-          <td>${t.emotion ? `<span class="tag">${esc(t.emotion)}</span>` : "—"}</td>
-          <td class="num"><span class="disc"><span>${d}</span><span class="disc-bar ${band}"><i style="width:${d}%"></i></span></span></td>
-          <td>${thumb}</td>
-        </tr>`;
+        return `<tr data-id="${esc(t.id)}">
+          <td class="t-date"><b>${esc(String(t.date || "").slice(5,10))}</b><small>${esc(String(t.date || "").slice(0,4))}</small></td>
+          <td><div class="t-sym"><span class="side ${t.side === "Short" ? "short" : "long"}">${esc(t.side || "Long")}</span><span><b>${esc(t.symbol)}</b><small>${esc(t.market || "")}</small></span></div></td>
+          <td>${esc(t.setup || "—")}</td><td><span class="journal-status ${c.open ? "is-open" : ""}">${c.open ? "Open" : "Closed"}</span></td>
+          <td class="num ${c.open ? "" : dir(c.r)}">${c.open ? "—" : rfmt(c.r)}</td>
+          <td>${esc(t.emotion || "Not recorded")}</td><td><button class="review-trade" data-review="${esc(t.id)}" aria-label="Review ${esc(t.symbol)} trade on ${esc(String(t.date).slice(0,10))}">${HomeIcons.ui(t.shot ? "news" : "book")}</button></td></tr>`;
       })
       .join("");
 
-    $$("#trades-body tr").forEach((tr) => {
+    $$("#trades-body tr").forEach(tr => {
       tr.onclick = () => openDetail(tr.dataset.id);
-      tr.onkeydown = (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          openDetail(tr.dataset.id);
-        }
-      };
     });
   }
 
   /* ------------------------------------------------------------ calendar */
 
   function renderCalendar(rows) {
-    const m = state.month;
-    $("#cal-title").textContent = MONTHS[m.getMonth()] + " " + m.getFullYear();
-
-    const byDay = new Map();
-    rows.forEach(({ t, c }) => {
-      if (c.open) return;
-      const k = String(t.date).slice(0, 10);
-      const cur = byDay.get(k) || { n: 0 };
-      cur.n += 1;
-      byDay.set(k, cur);
-    });
-
-    const first = new Date(m.getFullYear(), m.getMonth(), 1);
-    const days = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
-    /* Monday-first, matching the way trading weeks are talked about */
-    const lead = (first.getDay() + 6) % 7;
+    const model = JournalCalendar.month(rows, state.month);
+    $("#cal-title").textContent = MONTHS[state.month.getMonth()] + " " + state.month.getFullYear();
     const today = dayKey(new Date());
+    const result = group => group.r === null ? (group.closed ? "R unavailable" : "—") : rfmt(group.r);
+    const count = group => group.closed + " closed" + (group.open ? " · " + group.open + " open" : "");
+    $("#cal").innerHTML = DOW.map(d => `<div class="dow">${d}</div>`).join("") + model.cells.map(cell => {
+      const label = cell.key + ", " + cell.count + (cell.count === 1 ? " trade" : " trades") + (cell.count ? ", " + count(cell) + ", " + result(cell) : "");
+      return `<button type="button" data-day="${cell.key}" aria-label="${esc(label)}" aria-pressed="${cell.key === state.selectedDay}" ${cell.key === today ? 'aria-current="date"' : ''} class="day ${cell.inMonth ? "" : "outside"} ${cell.r === null ? "" : dir(cell.r)} ${cell.key === today ? "today" : ""}"><span class="d">${cell.day}</span>${cell.count ? `<strong class="day-result">${state.calendarMode === "r" ? result(cell) : cell.count + (cell.count === 1 ? " trade" : " trades")}</strong><small class="ct">${count(cell)}</small>` : ""}</button>`;
+    }).join("");
+    $("#month-summary").innerHTML = `<article class="month-card"><h3>Month in review</h3><strong class="${dir(model.r)}">${result(model)}</strong><small>${count(model)}</small>${model.missing ? `<small>${model.missing} closed trade(s) lack valid R</small>` : ""}</article>`;
+    const activeWeeks = model.weeks.filter(w => w.count);
+    $("#weekly-summary").innerHTML = activeWeeks.length ? activeWeeks.map(w => `<article class="week-card"><h3>${esc(w.start.slice(8))}–${esc(w.end.slice(8))} ${MONTHS[state.month.getMonth()].slice(0,3)}</h3><strong class="${dir(w.r)}">${result(w)}</strong><small>${count(w)}</small></article>`).join("") : '<p class="calendar-empty-note">No trades in this month match the current filters. Log a trade or widen the period.</p>';
+    $("#emotion-summary").innerHTML = '<h3>Emotion breakdown</h3>' + (model.emotions.length ? model.emotions.map(e => `<div class="emotion-row"><span>${esc(e.name)}</span><b>${e.n}</b><i style="width:${(e.n/model.count*100).toFixed(1)}%"></i></div>`).join("") : '<p>No emotions recorded for this month.</p>') + `<small>Self-reported · ${model.untagged} untagged trade(s)</small>`;
+    renderSelectedDay(rows);
+  }
 
-    let html = DOW.map((d) => `<div class="dow">${d}</div>`).join("");
-    for (let i = 0; i < lead; i++) html += '<div class="day pad"></div>';
-    for (let d = 1; d <= days; d++) {
-      const key = dayKey(new Date(m.getFullYear(), m.getMonth(), d));
-      const hit = byDay.get(key);
-      const cls = "";
-      html += `<div class="day ${cls} ${key === today ? "today" : ""}">
-        <div class="d">${d}</div>
-        ${hit ? `<div class="ct">${hit.n} fully closed trade${hit.n > 1 ? "s" : ""}</div>` : ""}
-      </div>`;
-    }
-    $("#cal").innerHTML = html;
+  function renderSelectedDay(rows) {
+    const selected = rows.filter(({t}) => String(t.date || "").slice(0,10) === state.selectedDay);
+    const date = JournalCalendar.parse(state.selectedDay);
+    $("#day-title").textContent = date ? date.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : "Selected day";
+    $("#day-count").textContent = selected.length + (selected.length === 1 ? " trade" : " trades");
+    $("#day-trades").innerHTML = selected.length ? selected.map(({t,c}) => `<tr><td><b>${esc(t.symbol)}</b></td><td><span class="side ${t.side === "Short" ? "short" : "long"}">${esc(t.side)}</span></td><td><span class="journal-status ${c.open ? "is-open" : ""}">${c.open ? "Open" : "Closed"}</span></td><td class="num ${c.open ? "" : dir(c.r)}">${c.open ? "—" : rfmt(c.r)}</td><td>${esc(t.emotion || "Not recorded")}</td><td><button class="review-trade" data-review="${esc(t.id)}" aria-label="Review ${esc(t.symbol)}">${HomeIcons.ui("book")}</button></td></tr>`).join("") : '<tr><td colspan="6" class="day-empty">No trades for this date match the current filters.</td></tr>';
   }
 
   /* ------------------------------------------------------------ insights */
@@ -456,6 +435,7 @@
     e = e || {};
     const div = document.createElement("div");
     div.className = "exit-row";
+    div._journalExit = {...e};
     div.innerHTML = `
       <label class="fld"><span>Exit price</span><input class="ex-price" type="number" step="any" inputmode="decimal" value="${e.price === undefined ? "" : esc(e.price)}"></label>
       <label class="fld"><span>Size closed</span><input class="ex-size" type="number" step="any" inputmode="decimal" value="${e.size === undefined ? "" : esc(e.size)}"></label>
@@ -490,6 +470,7 @@
     const f = $("#trade-form");
     const fd = new FormData(f);
     const exits = $$(".exit-row").map((row) => ({
+      ...(row._journalExit || {}),
       price: parseFloat($(".ex-price", row).value),
       size: parseFloat($(".ex-size", row).value),
     })).filter((e) => Number.isFinite(e.price) && Number.isFinite(e.size));
@@ -499,6 +480,8 @@
     const existing = fd.get("tradeId") ? Store.trades.find(fd.get("tradeId")) : null;
 
     return {
+      ...(existing || {}),
+      account: existing ? existing.account : settings().accountName,
       id: fd.get("tradeId") || undefined,
       balanceAtOpen: (existing && existing.balanceAtOpen) || settings().balance,
       date: fd.get("date"),
@@ -775,7 +758,7 @@
       f.size.value = t.size;
       f.contractValue.value = t.contractValue || 1;
       f.fees.value = t.fees || 0;
-      f.emotion.value = t.emotion || V.EMOTIONS[0];
+      f.emotion.value = t.emotion || "";
       f.tags.value = (t.tags || []).join(", ");
       f.stopHonoured.checked = t.stopHonoured !== false;
       f.review.value = t.review || "";
@@ -887,6 +870,11 @@
     if (!Number.isFinite(t.size) || t.size <= 0) problems.push("size");
     if (Number.isFinite(t.entry) && Number.isFinite(t.stop) && t.entry === t.stop)
       problems.push("a stop different from the entry");
+
+    const exitRows = $$(".exit-row");
+    if (exitRows.some(row => !Number.isFinite(parseFloat($(".ex-price",row).value)) || !(parseFloat($(".ex-size",row).value)>0))) problems.push("valid exit prices and positive exit sizes");
+    const closedSize = t.exits.reduce((sum, leg) => sum + leg.size, 0);
+    if (closedSize > t.size + Math.max(1,Math.abs(t.size))*1e-9) problems.push("exit sizes no greater than the position size");
 
     if (problems.length) {
       toast("Still needed: " + problems.join(", "));
@@ -1188,7 +1176,7 @@
 
   function buildChips() {
     chipSet($("#f-result"), [
-      { v: "all", l: "All" }, { v: "win", l: "Wins" }, { v: "loss", l: "Losses" }, { v: "open", l: "Open" },
+      { v: "all", l: "All" }, { v: "closed", l: "Closed" }, { v: "win", l: "Wins" }, { v: "loss", l: "Losses" }, { v: "open", l: "Open" },
     ], "result");
     chipSet($("#f-market"), [{ v: "all", l: "All markets" }].concat(V.MARKETS.map((m) => ({ v: m, l: m }))), "market");
     chipSet($("#f-emotion"), [{ v: "all", l: "Any emotion" }].concat(V.EMOTIONS.map((m) => ({ v: m, l: m }))), "emotion");
@@ -1197,24 +1185,6 @@
   /* ------------------------------------------------------------ render */
 
   function render() {
-    const rows = sortRows(rowsFor());
-    renderSummary(rows);
-    renderTable(rows);
-    renderCalendar(rows);
-    renderInsights(rows);
-    renderGuardrails();
-
-    const dirty = state.q || state.result !== "all" || state.market !== "all" || state.emotion !== "all";
-    $("#f-clear").hidden = !dirty;
-
-    const cur = $("#trades th[data-sort='netPL'] .cur");
-    if (cur) cur.textContent = settings().currency || "";
-
-    $$("#trades th[data-sort]").forEach((th) => {
-      th.classList.toggle("on", th.dataset.sort === state.sort);
-      th.classList.toggle("asc", th.dataset.sort === state.sort && state.asc);
-    });
-
     /* account filter list is derived from the trades themselves, so a
        renamed account never leaves an orphan option behind */
     const accounts = Array.from(new Set(Store.trades.list().map((t) => t.account).filter(Boolean)));
@@ -1228,12 +1198,36 @@
       sel.value = accounts.indexOf(state.account) >= 0 ? state.account : "all";
       state.account = sel.value;
     }
+    const rows = sortRows(rowsFor());
+    renderSummary(rows);
+    renderTable(rows);
+    $("#trade-count").textContent = rows.length + " matching trade(s) · Select a review icon for details";
+    renderCalendar(rows);
+    renderInsights(rows);
+    renderGuardrails();
+
+    const dirty = state.q || state.result !== "all" || state.market !== "all" || state.emotion !== "all" || state.symbol || state.side !== "all" || state.from || state.to || state.setup;
+    $("#f-clear").hidden = !dirty;
+
+    const cur = $("#trades th[data-sort='netPL'] .cur");
+    if (cur) cur.textContent = settings().currency || "";
+
+    $$("#trades th[data-sort]").forEach((th) => {
+      th.setAttribute("aria-sort", th.dataset.sort === state.sort ? (state.asc ? "ascending" : "descending") : "none");
+      th.classList.toggle("on", th.dataset.sort === state.sort);
+      th.classList.toggle("asc", th.dataset.sort === state.sort && state.asc);
+    });
+
+
   }
 
   function showTab(name) {
     state.tab = name;
+    $("#journal-view-title").textContent = {trades:"Trade history",calendar:"Performance calendar",insights:"Journal insights"}[name];
+    $(".calendar-modes").hidden = name !== "calendar";
     ["trades", "calendar", "insights"].forEach((n) => {
       $("#tab-" + n).setAttribute("aria-selected", String(n === name));
+      $("#tab-" + n).tabIndex = n === name ? 0 : -1;
       $("#view-" + n).hidden = n !== name;
     });
   }
@@ -1268,10 +1262,35 @@
   }
 
   function init() {
+    document.querySelectorAll("[data-j-icon]").forEach(el => { el.innerHTML = HomeIcons.ui(el.dataset.jIcon); });
+    $("#journal-theme").onclick = () => Theme.toggle();
+    $("#toggle-filters").onclick = () => {
+      const hidden = !$("#advanced-filters").hidden;
+      $("#advanced-filters").hidden = hidden;
+      $("#toggle-filters").setAttribute("aria-expanded",String(!hidden));
+    };
+    $("#cal").addEventListener("click", e => {
+      const button = e.target.closest("[data-day]"); if (!button) return;
+      state.selectedDay = button.dataset.day;
+      const date = JournalCalendar.parse(state.selectedDay);
+      if(date && (date.getMonth() !== state.month.getMonth() || date.getFullYear() !== state.month.getFullYear())) state.month = new Date(date.getFullYear(),date.getMonth(),1);
+      render();
+    });
+    $("#cal").addEventListener("keydown", e => {
+      const b=e.target.closest("[data-day]");if(!b)return;
+      const step={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(!step)return;
+      e.preventDefault();const date=JournalCalendar.parse(b.dataset.day);date.setDate(date.getDate()+step);
+      state.selectedDay=dayKey(date);state.month=new Date(date.getFullYear(),date.getMonth(),1);render();
+      const next=$("[data-day='"+state.selectedDay+"']");if(next)next.focus();
+    });
+    $("#day-trades").addEventListener("click",e=>{const b=e.target.closest("[data-review]");if(b)openDetail(b.dataset.review);});
+    $$("[data-cal-mode]").forEach(b => { b.onclick = () => {state.calendarMode=b.dataset.calMode;$$("[data-cal-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderCalendar(sortRows(rowsFor()));}; });
+    $$("[data-j-tab]").forEach(b=>{b.onclick=e=>{e.preventDefault();showTab(b.dataset.jTab);};});
+    $("#cal-today").onclick = () => {const now=new Date();state.month=new Date(now.getFullYear(),now.getMonth(),1);state.selectedDay=dayKey(now);state.range="month";$("#f-range").value="month";render();};
     fillSelect($("#fm-market"), V.MARKETS);
     fillSelect($("#fm-setup"), V.SETUPS, "Choose the setup");
     fillSelect($("#fm-session"), V.SESSIONS, "Choose the session");
-    fillSelect($("#fm-emotion"), V.EMOTIONS);
+    fillSelect($("#fm-emotion"), V.EMOTIONS, "Not recorded");
     buildChips();
 
     $("#storage-warn").hidden = !Store.storageBlocked();
@@ -1282,6 +1301,11 @@
     });
     $("#f-range").addEventListener("change", (e) => {
       state.range = e.target.value;
+      const now = new Date();
+      if (["month","lastMonth","quarter"].includes(state.range)) {
+        state.month = new Date(now.getFullYear(), state.range === "lastMonth" ? now.getMonth()-1 : now.getMonth(), 1);
+        state.selectedDay = dayKey(new Date(state.month.getFullYear(),state.month.getMonth(),state.range === "lastMonth" ? 1 : now.getDate()));
+      }
       render();
     });
     $("#f-account").addEventListener("change", (e) => {
@@ -1298,7 +1322,7 @@
     $("#close-trade").onclick = () => {
       const f = $("#trade-form");
       const total = Number(f.elements.size.value);
-      const already = $(".exit-row").reduce((sum, row) => sum + (Number($(".ex-size", row).value) || 0), 0);
+      const already = $$(".exit-row").reduce((sum, row) => sum + (Number($(".ex-size", row).value) || 0), 0);
       const remaining = total - already;
       if (!(remaining > 0)) return toast("No remaining size to close");
       const row = exitRow({ size: remaining });
@@ -1309,6 +1333,7 @@
     $("#f-clear").onclick = clearFilters;
 
     $$("#trades th[data-sort]").forEach((th) => {
+      th.onkeydown = e => {if(e.key === "Enter" || e.key === " "){e.preventDefault();th.click();}};
       th.onclick = () => {
         if (state.sort === th.dataset.sort) state.asc = !state.asc;
         else {
@@ -1321,14 +1346,21 @@
 
     ["trades", "calendar", "insights"].forEach((n) => {
       $("#tab-" + n).onclick = () => showTab(n);
+      $("#tab-" + n).onkeydown = e => {
+        const names=["trades","calendar","insights"],i=names.indexOf(n);
+        const next = e.key==="ArrowRight" ? names[(i+1)%3] : e.key==="ArrowLeft" ? names[(i+2)%3] : e.key==="Home" ? names[0] : e.key==="End" ? names[2] : null;
+        if(next){e.preventDefault();showTab(next);$("#tab-"+next).focus();}
+      };
     });
 
     $("#cal-prev").onclick = () => {
       state.month = new Date(state.month.getFullYear(), state.month.getMonth() - 1, 1);
+      state.selectedDay = dayKey(state.month); state.range="all"; $("#f-range").value="all";
       render();
     };
     $("#cal-next").onclick = () => {
       state.month = new Date(state.month.getFullYear(), state.month.getMonth() + 1, 1);
+      state.selectedDay = dayKey(state.month); state.range="all"; $("#f-range").value="all";
       render();
     };
 
@@ -1395,7 +1427,17 @@
 
     document.addEventListener("keydown", (e) => {
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "").toUpperCase());
+      if (e.key === "Tab") {
+        const drawer = $('.drawer[aria-hidden="false"]');
+        if(drawer){
+          const controls=$$('button,input,select,textarea,a[href],[tabindex="0"]',drawer).filter(x=>!x.disabled && x.offsetParent!==null);
+          const first=controls[0],last=controls[controls.length-1];
+          if(first && e.shiftKey && (document.activeElement===first || document.activeElement===$(".drawer-panel",drawer))){e.preventDefault();last.focus();}
+          else if(last && !e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}
+        }
+      }
       if (e.key === "Escape") {
+        panel.classList.remove("open");trigger.setAttribute("aria-expanded","false");
         const openDrawer = $('.drawer[aria-hidden="false"]');
         if (openDrawer) close(openDrawer);
         return;
@@ -1408,7 +1450,7 @@
 
     window.addEventListener("storechange", render);
     render();
-    showTab("trades");
+    showTab("calendar");
 
     /* arrived from a calculator or from the chart: open the form with its
        numbers already in, and consume the draft so a reload does not

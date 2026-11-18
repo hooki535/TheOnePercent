@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Journal design preview — TheOnePercent</title>
+    <meta
+      name="description"
+      content="Log every trade with risk, R multiple, emotion and a discipline score — the record the rest of TheOnePercent is built on."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="../assets/home/logo.svg" type="image/svg+xml">
+    <script src="../assets/theme.js"></script>
+    <script>if(!Theme.isExplicit())document.documentElement.dataset.theme="light";</script>
+
+
+    <link rel="stylesheet" href="../assets/shell.css" />
+    <link rel="stylesheet" href="../assets/components.css" />
+    <link rel="stylesheet" href="../assets/journal.css" />
+    <link rel="stylesheet" href="../assets/journal-workspace.css" />
+  </head>
+  <body data-page="journal" data-depth="1" data-shell="nav" data-auth="out">
+    <aside class="journal-sidebar" aria-label="Journal workspace"><div class="workspace-caption">WORKSPACE</div><nav>
+      <a href="dashboard.html"><span data-j-icon="grid"></span>Overview</a>
+      <a href="#main" aria-current="page"><span data-j-icon="book"></span>Trading Journal</a>
+      <a href="#view-insights" data-j-tab="insights"><span data-j-icon="chart"></span>Analytics</a>
+      <a href="calculators.html"><span data-j-icon="shield"></span>Risk tools</a>
+      <a href="charts.html"><span data-j-icon="layers"></span>Chart workspace</a>
+      <a href="settings.html"><span data-j-icon="settings"></span>Settings</a>
+    </nav><a class="journal-academy" href="learn.html"><span data-j-icon="book"></span>Academy <span data-j-icon="external"></span></a><button type="button" id="journal-theme"><span data-j-icon="moon"></span>Switch colour theme</button></aside>
+    <main id="main"><div class="journal-preview-banner"><strong>Design preview · Example trades</strong> · Changes stay in this preview and reset on reload. <a href="journal.html">Open your journal →</a></div>
+      <header class="journal-heading"><div><div class="workspace-caption">YOUR TRADING RECORD</div><h1>Trading Journal</h1><p>Track performance. Understand your decisions.</p></div><div class="jh-actions">
+        <div class="dd"><button class="btn btn-quiet" id="more-trigger" aria-expanded="false" aria-haspopup="true"><span data-j-icon="external"></span>Import / Export</button><div class="dd-panel right" id="jmore"><button type="button" data-act="import">Import from CSV…</button><button type="button" data-act="export">Export CSV</button><button type="button" data-act="sample">Load 20 sample trades</button><button type="button" data-act="wipe" class="danger">Delete all trades</button></div></div>
+        <button class="btn btn-primary" id="new-trade"><span data-j-icon="plus"></span>Log trade <kbd>N</kbd></button><input type="file" id="csv-input" accept=".csv,text/csv" hidden>
+      </div></header>
+      <div class="journal-filter-bar" role="search"><label class="sel"><span class="sr">Account</span><select id="f-account"></select></label><label class="sel"><span class="sr">Period</span><select id="f-range"><option value="month" selected>This month</option><option value="lastMonth">Last month</option><option value="quarter">This quarter</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="all">All time</option></select></label><div class="search-field jf-search"><span data-j-icon="search"></span><input id="f-q" type="search" placeholder="Search symbol, setup, tag or note" autocomplete="off" aria-label="Search trades"></div><button class="btn btn-quiet" id="toggle-filters" aria-expanded="false" aria-controls="advanced-filters"><span data-j-icon="settings"></span>Filters</button><button class="btn btn-quiet sm" id="f-clear" hidden>Clear filters</button></div>
+      <div id="advanced-filters" hidden><div class="journal-advanced-filters" role="group" aria-label="Additional trade filters"><label>Symbol<input id="f-symbol" type="search" placeholder="EURUSD" autocomplete="off"></label><label>Direction<select id="f-side"><option value="all">Both</option><option value="Long">Long</option><option value="Short">Short</option></select></label><label>From<input id="f-from" type="date"></label><label>To<input id="f-to" type="date"></label><label>Setup / tag<input id="f-setup" type="search" placeholder="Setup or tag" autocomplete="off"></label></div><div class="journal-chip-filters"><div class="chip-set" id="f-result" role="group" aria-label="Filter by result"></div><div class="chip-set" id="f-market" role="group" aria-label="Filter by market"></div><div class="chip-set" id="f-emotion" role="group" aria-label="Filter by emotion"></div></div></div>
+      <div class="notice warn" id="storage-warn" hidden><span><b>This browser is blocking storage</b><small>Records saved in this visit may not survive reload. Export your trades before leaving.</small></span></div>
+      <div class="stat-grid journal-summary" id="summary" aria-live="polite"></div><details class="journal-method"><summary>Calculation details and additional metrics</summary><p>Money totals require compatible currency units. R uses the recorded stop, which can change after entry. Cohort uses journal date because close timestamps are absent. All views use the current account, period and search filters.</p><div class="stat-grid" id="more-summary"></div></details>
+      <div class="notice guard" id="guard-warn" hidden></div>
+      <section class="journal-content"><div class="journal-view-head"><h2 id="journal-view-title">Performance calendar</h2><div class="tabs" role="tablist" aria-label="Journal views"><button role="tab" id="tab-trades" aria-controls="view-trades" aria-selected="false" tabindex="-1">Trades</button><button role="tab" id="tab-calendar" aria-controls="view-calendar" aria-selected="true" tabindex="0">Calendar</button><button role="tab" id="tab-insights" aria-controls="view-insights" aria-selected="false" tabindex="-1">Insights</button></div><div class="calendar-modes" role="group" aria-label="Calendar values"><button data-cal-mode="r" aria-pressed="true">R multiples</button><button data-cal-mode="count" aria-pressed="false">Trade count</button></div></div>
+        <section id="view-calendar" role="tabpanel" aria-labelledby="tab-calendar"><div class="calendar-layout"><div class="calendar-main"><div class="calendar-heading"><button class="icon-btn" id="cal-prev" aria-label="Previous month"><span data-j-icon="chevron-left"></span></button><h3 id="cal-title">Calendar</h3><button class="icon-btn" id="cal-next" aria-label="Next month"><span data-j-icon="chevron-right"></span></button><button class="btn btn-quiet sm" id="cal-today">Today</button></div><div class="cal" id="cal" aria-label="Journal dates"></div><p class="cal-key">Journal dates · R for eligible fully closed trades · Open trades counted separately</p></div><aside class="calendar-review" aria-label="Month review"><div id="month-summary"></div><div id="weekly-summary"></div><div class="emotion-panel" id="emotion-summary"></div></aside></div><section class="selected-day" aria-labelledby="day-title"><div class="panel-head"><h3 id="day-title">Selected day</h3><span id="day-count"></span></div><div class="day-table-scroll"><table><thead><tr><th>Symbol</th><th>Side</th><th>Status</th><th class="num">Result (R)</th><th>Emotion</th><th>Review</th></tr></thead><tbody id="day-trades"></tbody></table></div><p class="day-note">Open trades have no realised R. Select a trade to review its entries, exits and notes.</p></section></section>
+        <section id="view-trades" role="tabpanel" aria-labelledby="tab-trades" hidden><div class="table-scroll"><table id="trades"><thead><tr><th data-sort="date" tabindex="0" aria-sort="descending">Date</th><th>Symbol / side</th><th>Setup</th><th>Status</th><th class="num" data-sort="r" tabindex="0">Result (R)</th><th>Emotion</th><th>Review</th></tr></thead><tbody id="trades-body"></tbody></table></div><div class="empty" id="empty" hidden></div><div class="journal-table-footer" id="trade-count"></div></section>
+        <section id="view-insights" role="tabpanel" aria-labelledby="tab-insights" hidden><div class="panel-head"><h3>What the record says</h3><span>Average R by setup, session and emotion</span></div><div class="panel-body ins-grid" id="insights"></div></section>
+      </section><footer class="journal-footer"><span>Journal analytics · No broker execution</span><a href="charts.html">Open chart workspace <span data-j-icon="external"></span></a></footer>
+    </main>
+
+    <!-- ------------------------------------------------------------ drawer -->
+    <div class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-veil" data-close></div>
+      <aside
+        class="drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dr-title"
+        tabindex="-1"
+      >
+        <div class="drawer-head">
+          <h2 id="dr-title">Trade</h2>
+          <button class="icon-btn" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="drawer-body" id="dr-body"></div>
+      </aside>
+    </div>
+
+    <!-- ------------------------------------------------------------ log form -->
+    <div class="drawer wide" id="form-drawer" aria-hidden="true">
+      <div class="drawer-veil" data-close></div>
+      <aside
+        class="drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fm-title"
+        tabindex="-1"
+      >
+        <div class="drawer-head">
+          <h2 id="fm-title">Log a trade</h2>
+          <button class="icon-btn" data-close aria-label="Close">✕</button>
+        </div>
+
+        <form class="drawer-body" id="trade-form" novalidate>
+          <input type="hidden" name="tradeId" />
+
+          <div class="fs">
+            <h3>The trade</h3>
+            <div class="grid-3">
+              <label class="fld"
+                ><span>Date and time</span
+                ><input type="datetime-local" name="date" required
+              /></label>
+              <label class="fld"
+                ><span>Symbol</span
+                ><input
+                  name="symbol"
+                  placeholder="EURUSD"
+                  required
+                  autocomplete="off"
+              /></label>
+              <label class="fld"
+                ><span>Market</span
+                ><select name="market" id="fm-market"></select
+              ></label>
+              <label class="fld"
+                ><span>Direction</span>
+                <select name="side">
+                  <option>Long</option>
+                  <option>Short</option>
+                </select>
+              </label>
+              <label class="fld"
+                ><span>Setup</span
+                ><select name="setup" id="fm-setup"></select
+              ></label>
+              <label class="fld"
+                ><span>Session</span
+                ><select name="session" id="fm-session"></select
+              ></label>
+            </div>
+          </div>
+
+          <div class="fs">
+            <h3>Levels and size</h3>
+            <div class="grid-3">
+              <label class="fld"
+                ><span>Entry</span
+                ><input
+                  name="entry"
+                  type="number"
+                  step="any"
+                  inputmode="decimal"
+                  required
+              /></label>
+              <label class="fld"
+                ><span>Stop</span
+                ><input
+                  name="stop"
+                  type="number"
+                  step="any"
+                  inputmode="decimal"
+                  required
+              /></label>
+              <label class="fld"
+                ><span>Target</span
+                ><input
+                  name="target"
+                  type="number"
+                  step="any"
+                  inputmode="decimal"
+              /></label>
+              <label class="fld"
+                ><span>Size <small>units</small></span
+                ><input
+                  name="size"
+                  type="number"
+                  step="any"
+                  inputmode="decimal"
+                  required
+              /></label>
+              <label class="fld"
+                ><span>Value per point <small>per unit</small></span
+                ><input
+                  name="contractValue"
+                  type="number"
+                  step="any"
+                  inputmode="decimal"
+                  value="1"
+              /></label>
+              <label class="fld"
+                ><span>Fees and commission</span
+                ><input
+                  name="fees"
+                  type="number"
+                  step="any"
+                  inputmode="decimal"
+                  value="0"
+              /></label>
+            </div>
+            <p class="hint">
+              A stop is required. Without one the trade has no risk, and with no
+              risk there is no R — which means it cannot be compared to anything
+              else you have ever done.
+            </p>
+          </div>
+
+          <div class="fs">
+            <h3>Exits</h3>
+            <div id="exits"></div>
+            <button type="button" class="btn btn-quiet sm" id="add-exit">
+              Add an exit
+            </button>
+            <button type="button" class="btn btn-quiet sm" id="close-trade">Close remaining position</button>
+            <p class="hint">
+              Leave this empty while the trade is still open. Add a row per
+              scale-out and the result is size-weighted.
+            </p>
+          </div>
+
+          <div class="fs">
+            <h3>The honest part</h3>
+            <div class="grid-3">
+              <label class="fld"
+                ><span>Emotion while holding</span
+                ><select name="emotion" id="fm-emotion"></select
+              ></label>
+              <label class="fld"
+                ><span>Tags</span
+                ><input
+                  name="tags"
+                  placeholder="breakout, london, A+"
+                  autocomplete="off"
+              /></label>
+              <label class="fld chk"
+                ><input type="checkbox" name="stopHonoured" checked /><span
+                  >I honoured my stop</span
+                ></label
+              >
+            </div>
+            <label class="fld"
+              ><span>Review <small>one or two honest sentences</small></span
+              ><textarea
+                name="review"
+                rows="3"
+                placeholder="What did you see, what did you do, and what would you repeat?"
+              ></textarea>
+            </label>
+            <label class="fld"
+              ><span>Chart screenshot</span
+              ><input type="file" name="shot" id="fm-shot" accept="image/*"
+            /></label>
+            <div id="shot-preview" class="shot-preview" hidden></div>
+          </div>
+
+          <!-- ------------------------------------------------ the gate
+           Everything above this line is a record. This is the only part of
+           the app that can change an outcome, because it is the only part
+           that runs before the money is committed. It is deliberately split:
+           the app checks what the app can know, and asks the trader only the
+           two things it cannot. -->
+          <div class="fs pretrade" id="pre-trade">
+            <h3 id="pt-title">Before you enter</h3>
+            <p class="hint" id="pt-intro">
+              Nothing here blocks you. It just makes taking the trade anyway a
+              decision you made on purpose.
+            </p>
+
+            <div class="pt-split">
+              <div class="pt-col" id="pt-auto">
+                <h4>What the app already knows</h4>
+                <ul class="pt-checks" id="pt-checks"></ul>
+              </div>
+
+              <div class="pt-col">
+                <h4>What only you can answer</h4>
+                <label class="fld">
+                  <span
+                    >Why this trade
+                    <small>one line, written before entry</small></span
+                  >
+                  <textarea
+                    name="plan"
+                    rows="2"
+                    placeholder="Bought the retest of the London high because the sweep failed and sellers gave up."
+                  ></textarea>
+                </label>
+                <label class="fld chk"
+                  ><input type="checkbox" name="chkStop" /><span
+                    >My stop is where the idea is wrong, not at the loss I can
+                    stomach</span
+                  ></label
+                >
+                <label class="fld chk"
+                  ><input type="checkbox" name="chkNotRevenge" /><span
+                    id="pt-revenge"
+                    >I am taking this because it is my setup, not because of the
+                    last trade</span
+                  ></label
+                >
+              </div>
+            </div>
+
+            <div class="pt-verdict" id="pt-verdict" aria-live="polite"></div>
+          </div>
+
+          <!-- live arithmetic, so the numbers are visible before saving -->
+          <div class="calc" id="calc" aria-live="polite"></div>
+
+          <div class="form-foot">
+            <button type="submit" class="btn btn-primary">Save trade</button>
+            <button type="button" class="btn btn-quiet" data-close>
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-quiet danger"
+              id="del-trade"
+              hidden
+            >
+              Delete
+            </button>
+          </div>
+        </form>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="../assets/store.js"></script>
+    <script src="../assets/journal-preview.js"></script>
+    <script src="../assets/home-icons.js"></script>
+    <script src="../assets/journal-calendar.js"></script>
+    <script src="../assets/journal.js"></script>
+    <script src="../assets/instruments.js"></script>
+    <script src="../assets/lessons.js"></script>
+    <script src="../assets/shell.js"></script>
+  </body>
+</html>
