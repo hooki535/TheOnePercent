@@ -29,6 +29,7 @@
     asc: false,
     tab: "calendar",
     calendarMode: "r",
+    analyticsGroup: "setup", analyticsSetup: "", selection: null,
     selectedDay: dayKey(new Date()),
     month: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   };
@@ -123,14 +124,15 @@
           if (state.result === "loss" && (calc.open || calc.result !== "Loss")) return false;
         }
         if (q) {
-          const hay = [t.symbol, t.setup, t.session, t.review, (t.tags || []).join(" ")]
+          const hay = [t.symbol, t.setup, t.session, t.plan, t.review, t.whatWentWell, t.nextTime, (t.tags || []).join(" ")]
             .join(" ")
             .toLowerCase();
           if (hay.indexOf(q) < 0) return false;
         }
         return true;
       })
-      .map((t) => ({ t, c: Store.compute(t), d: Store.discipline(t, settings()) }));
+      .map((t) => ({ t, c: Store.compute(t), d: Store.discipline(t, settings()) }))
+      .filter(row => (!state.analyticsSetup || (String(row.t.setup || "").trim() || "Not recorded") === state.analyticsSetup) && JournalAnalytics.matches(row,state.selection));
   }
 
   function sortRows(rows) {
@@ -282,49 +284,17 @@
 
   /* ------------------------------------------------------------ insights */
 
-  function groupBy(rows, field) {
-    const map = new Map();
-    rows.forEach((row) => {
-      if (row.c.open || !Number.isFinite(row.c.r)) return;
-      const k = row.t[field] || "Untagged";
-      const cur = map.get(k) || { n: 0, r: 0, wins: 0 };
-      cur.n += 1;
-      cur.r += row.c.r;
-      if (row.c.r > 0) cur.wins += 1;
-      map.set(k, cur);
-    });
-    return Array.from(map.entries())
-      .map(([k, v]) => ({ label: k, n: v.n, exp: v.r / v.n, wr: (v.wins / v.n) * 100 }))
-      .sort((a, b) => a.exp - b.exp);
-  }
-
-  function insightBlock(title, list, note) {
-    if (!list.length) {
-      return `<div class="ins"><h3>${esc(title)}</h3><p class="hint">Nothing closed yet in this group.</p></div>`;
-    }
-    const max = Math.max(...list.map((g) => Math.abs(g.exp)), 0.5);
-    const rows = list
-      .map((g) => {
-        const w = (Math.abs(g.exp) / max) * 50;
-        const left = g.exp >= 0 ? 50 : 50 - w;
-        return `<div class="ins-row">
-          <div>
-            <div class="lab">${esc(g.label)}<small>${g.n} eligible R trade${g.n > 1 ? "s" : ""} · ${g.wr.toFixed(0)}% positive R</small></div>
-            <div class="track"><i class="${g.exp < 0 ? "neg" : ""}" style="left:${left}%;width:${w}%"></i></div>
-          </div>
-          <div class="val ${dir(g.exp)}">${rfmt(g.exp)}</div>
-        </div>`;
-      })
-      .join("");
-    return `<div class="ins"><h3>${esc(title)}</h3>${rows}${note ? `<p class="hint">${esc(note)}</p>` : ""}</div>`;
-  }
-
+  let analyticsModel = null;
   function renderInsights(rows) {
-    $("#insights").innerHTML =
-      insightBlock("By setup", groupBy(rows, "setup"), "The worst row is the one to stop trading first.") +
-      insightBlock("By emotion", groupBy(rows, "emotion"), "If one feeling keeps costing you R, that is a rule, not a mood.") +
-      insightBlock("By session", groupBy(rows, "session")) +
-      insightBlock("By market", groupBy(rows, "market"));
+    analyticsModel = JournalAnalytics.build(rows, state.analyticsGroup);
+    $("#insights").innerHTML = JournalAnalytics.render(analyticsModel, state.analyticsGroup);
+    const setups = Array.from(new Set(Store.trades.list().map(t => String(t.setup || "").trim() || "Not recorded"))).sort();
+    if(state.analyticsSetup && !setups.includes(state.analyticsSetup)) setups.push(state.analyticsSetup);
+    $("#a-setup").innerHTML = '<option value="">All setups</option>' + setups.map(value=>`<option>${esc(value)}</option>`).join("");
+    $("#a-setup").value = state.analyticsSetup;
+    $("#a-market").value = state.market;
+    $("#analytics-selection").hidden = !state.selection && !state.analyticsSetup;
+    $("#analytics-selection-text").textContent = (state.analyticsSetup ? "Setup: "+state.analyticsSetup+" · " : "") + (state.selection ? (state.selection.kind === "group" ? state.selection.field+": "+state.selection.value : state.selection.kind === "no-plan" ? "No recorded plan" : "Unavailable closed-trade R") : "");
   }
 
   /* ------------------------------------------------------------ detail */
@@ -1170,6 +1140,7 @@
 
   function clearFilters() {
     state.q = "";
+    state.selection = null; state.analyticsSetup = "";
     state.result = "all";
     state.market = "all";
     state.emotion = "all";
@@ -1215,7 +1186,7 @@
     renderInsights(rows);
     renderGuardrails();
 
-    const dirty = state.q || state.result !== "all" || state.market !== "all" || state.emotion !== "all" || state.symbol || state.side !== "all" || state.from || state.to || state.setup;
+    const dirty = state.selection || state.analyticsSetup || state.q || state.result !== "all" || state.market !== "all" || state.emotion !== "all" || state.symbol || state.side !== "all" || state.from || state.to || state.setup;
     $("#f-clear").hidden = !dirty;
 
     const cur = $("#trades th[data-sort='netPL'] .cur");
@@ -1232,7 +1203,16 @@
 
   function showTab(name) {
     state.tab = name;
-    $("#journal-view-title").textContent = {trades:"Trade history",calendar:"Performance calendar",insights:"Journal insights"}[name];
+    document.body.classList.toggle("is-analytics",name === "insights");
+    $(".journal-heading h1").textContent = name === "insights" ? "Journal Analytics" : "Trading Journal";
+    $(".journal-heading p").textContent = name === "insights" ? "Find patterns. Refine your execution." : "Track performance. Understand your decisions.";
+    $("#summary").hidden = name === "insights";
+    $(".journal-method").hidden = name === "insights";
+    $$(".journal-sidebar nav a").forEach(link => link.removeAttribute("aria-current"));
+    $(name === "insights" ? '[data-j-tab="insights"]' : '.journal-sidebar nav a[href="#main"]').setAttribute("aria-current","page");
+    if (["#main","#view-insights","#view-trades","#view-calendar",""].includes(location.hash)) history.replaceState(null,"",name === "calendar" ? "#main" : "#view-"+name);
+
+    $("#journal-view-title").textContent = {trades:"Trade history",calendar:"Performance calendar",insights:"Performance analysis"}[name];
     $(".calendar-modes").hidden = name !== "calendar";
     ["trades", "calendar", "insights"].forEach((n) => {
       $("#tab-" + n).setAttribute("aria-selected", String(n === name));
@@ -1272,6 +1252,27 @@
 
   function init() {
     document.querySelectorAll("[data-j-icon]").forEach(el => { el.innerHTML = HomeIcons.ui(el.dataset.jIcon); });
+    $('.journal-sidebar nav a[href="#main"]').addEventListener("click",()=>showTab("calendar"));
+    window.addEventListener("hashchange",()=>{
+      if(location.hash === "#view-insights")showTab("insights");
+      else if(location.hash === "#view-trades")showTab("trades");
+      else if(location.hash === "#main")showTab("calendar");
+    });
+    $("#a-market").onchange = e => {state.market=e.target.value;state.selection=null;buildChips();render();};
+    $("#a-setup").onchange = e => {state.analyticsSetup=e.target.value;state.selection=null;render();};
+    $("#a-reset").onclick = () => {state.account="all";state.range="90";$("#f-account").value="all";$("#f-range").value="90";clearFilters();};
+    $("#analytics-clear-selection").onclick = () => {state.selection=null;state.analyticsSetup="";render();};
+    $("#insights").addEventListener("click",e=>{
+      const group=e.target.closest("[data-analytics-group]");
+      if(group){state.analyticsGroup=group.dataset.analyticsGroup;renderInsights(sortRows(rowsFor()));$(`[data-analytics-group="${state.analyticsGroup}"]`).focus();return;}
+      const trade=e.target.closest("[data-analytics-trade]");
+      if(trade){e.preventDefault();openDetail(trade.dataset.analyticsTrade);return;}
+      const row=e.target.closest("[data-analytics-row]");
+      if(row){const selected=analyticsModel.groups[Number(row.dataset.analyticsRow)];if(selected){state.selection={kind:"group",field:state.analyticsGroup,value:selected.label};render();showTab("trades");$("#tab-trades").focus();}return;}
+      const action=e.target.closest("[data-analytics-action]");
+      if(action){if(action.dataset.analyticsAction === "sessions"){state.analyticsGroup="session";renderInsights(sortRows(rowsFor()));$('[data-analytics-group="session"]').focus();}
+        else {state.selection={kind:action.dataset.analyticsAction};render();showTab("trades");$("#tab-trades").focus();}}
+    });
     $("#journal-theme").onclick = () => Theme.toggle();
     $("#toggle-filters").onclick = () => {
       const hidden = !$("#advanced-filters").hidden;
@@ -1469,7 +1470,7 @@
 
     window.addEventListener("storechange", render);
     render();
-    showTab("calendar");
+    showTab(location.hash === "#view-insights" ? "insights" : location.hash === "#view-trades" ? "trades" : "calendar");
 
     /* arrived from a calculator or from the chart: open the form with its
        numbers already in, and consume the draft so a reload does not
