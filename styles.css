@@ -319,3 +319,146 @@ h1 em {
     padding-bottom: 78px; /* clear the bottom rail on phones */
   }
 }
+
+/* ============================================================
+   Trading-terminal home refresh — TheOnePercent
+   Scoped to the public home page; shared app pages are untouched.
+   ============================================================ */
+body:has(#chart) {
+  background: var(--paper);
+}
+body:has(#chart) .wrap {
+  max-width: 1560px;
+  padding-left: 22px;
+  padding-right: 22px;
+}
+body:has(#chart) .hero {
+  padding: 24px 0 22px;
+  background: var(--paper);
+}
+body:has(#chart) .hero-grid {
+  grid-template-columns: minmax(245px, .34fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+body:has(#chart) .hero-grid > div:first-child {
+  align-self: center;
+  padding: 20px 10px 20px 2px;
+}
+body:has(#chart) h1 {
+  font-size: clamp(27px, 2.3vw, 36px);
+  line-height: 1.08;
+  letter-spacing: -.045em;
+}
+body:has(#chart) .lede {
+  max-width: 34ch;
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+body:has(#chart) .cta-row {
+  margin-top: 18px;
+  gap: 8px;
+}
+body:has(#chart) .chart-card {
+  min-width: 0;
+  padding: 13px 14px 9px;
+  border-radius: 9px;
+  box-shadow: none;
+  background: var(--surface);
+}
+body:has(#chart) .chart-head {
+  min-height: 32px;
+  align-items: center;
+  gap: 10px;
+}
+body:has(#chart) .chart-canvas {
+  height: clamp(280px, 34vw, 430px);
+  margin-top: 8px;
+}
+body:has(#chart) .chart-foot {
+  border-top: 1px solid var(--line-soft);
+  margin-top: 5px;
+  padding-top: 9px;
+}
+body:has(#chart) .summary {
+  padding: 24px 0 30px;
+  background: var(--surface);
+}
+body:has(#chart) .summary-head h2,
+body:has(#chart) .band-head h2 {
+  font-size: 19px;
+  letter-spacing: -.025em;
+}
+body:has(#chart) .summary-head p,
+body:has(#chart) .band-head p {
+  font-size: 12.5px;
+}
+body:has(#chart) .summary-grid {
+  grid-template-columns: minmax(220px, .27fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 15px;
+}
+body:has(#chart) .card,
+body:has(#chart) .table-card {
+  border-radius: 8px;
+  box-shadow: none;
+}
+body:has(#chart) .featured {
+  padding: 15px;
+}
+body:has(#chart) .featured .big {
+  font-size: 30px;
+}
+body:has(#chart) .band {
+  padding: 34px 0;
+}
+body:has(#chart) .band.alt {
+  background: var(--paper);
+}
+body:has(#chart) .band-head {
+  margin-bottom: 16px;
+}
+body:has(#chart) table th {
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+body:has(#chart) table td {
+  font-size: 12px;
+}
+body:has(#chart) .demo-market-notice {
+  min-height: 26px;
+  font-size: 10px;
+}
+body:has(#chart) .tape,
+body:has(#chart) .tape-item {
+  height: 34px;
+}
+@media (max-width: 900px) {
+  body:has(#chart) .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  body:has(#chart) .hero-grid > div:first-child {
+    padding: 4px 0;
+  }
+  body:has(#chart) .summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body:has(#chart) .chart-canvas {
+    height: 330px;
+  }
+}
+@media (max-width: 600px) {
+  body:has(#chart) .wrap {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  body:has(#chart) .hero {
+    padding-top: 18px;
+  }
+  body:has(#chart) .chart-canvas {
+    height: 250px;
+  }
+}
